@@ -178,6 +178,12 @@
       background: linear-gradient(135deg, #333, #222);
     }
 
+    .player.frozen {
+      opacity: 0.6;
+      border-color: #00ccff;
+      background: linear-gradient(135deg, #1a3a4a, #1a4a5a);
+    }
+
     .player-name {
       font-weight: bold;
       color: white;
@@ -191,6 +197,10 @@
 
     .player-status.protected {
       color: #00ff00;
+    }
+
+    .player-status.frozen {
+      color: #00ccff;
     }
 
     /* MAIN */
@@ -430,7 +440,7 @@ class Deck {
 }
 
 // ============================================
-// CLASSE EFFECTS
+// CLASSE EFFECTS - IMPLÉMENTATION COMPLÈTE
 // ============================================
 class Effects {
   static apply(game, playerId, card, targetId, gameState) {
@@ -441,7 +451,7 @@ class Effects {
     let message = `${caster.pseudo} joue ${card.name}`;
 
     switch (card.id) {
-      // 🟢 BONUS
+      // 🟢 CARTES BONUS
       case "GIVE_2":
         if (target) {
           target.drinks = (target.drinks || 0) + 2;
@@ -464,8 +474,8 @@ class Effects {
         break;
 
       case "DOUBLE_DISTRIBUTION": {
-        message += ` → distribue 2 gorgées à deux joueurs`;
-        gameState.waitingForTargets = { card, count: 2 };
+        message += ` → distribue 1 gorgée à deux joueurs`;
+        gameState.waitingForTargets = { card, count: 2, drinkAmount: 1 };
         break;
       }
 
@@ -484,8 +494,8 @@ class Effects {
         break;
 
       case "PROTECTION":
-        caster.protected = true;
-        message += ` → est protégé contre la prochaine attaque`;
+        caster.protection = true;
+        message += ` → est protégé contre le prochain effet de gorgées jusqu'à son prochain tour`;
         break;
 
       case "GIFT":
@@ -503,53 +513,65 @@ class Effects {
         if (target) {
           caster.alliance = targetId;
           target.alliance = playerId;
-          message += ` → alliance entre ${caster.pseudo} et ${target.pseudo}`;
+          message += ` → alliance entre ${caster.pseudo} et ${target.pseudo} (protection mutuelle)`;
         }
         break;
 
       // 🔴 MALUS CIBLÉS
       case "PLUS2":
-        if (target && !target.protected) {
-          target.drinks = (target.drinks || 0) + 2;
-          message += ` → ${target.pseudo} boit 2 🍺`;
+        if (target) {
+          if (!target.protection && !target.alliance) {
+            target.drinks = (target.drinks || 0) + 2;
+            message += ` → ${target.pseudo} boit 2 🍺`;
+          } else {
+            message += ` → ${target.pseudo} est protégé!`;
+          }
         }
         break;
 
       case "PLUS3":
-        if (target && !target.protected) {
-          target.drinks = (target.drinks || 0) + 3;
-          message += ` → ${target.pseudo} boit 3 🍺`;
+        if (target) {
+          if (!target.protection && !target.alliance) {
+            target.drinks = (target.drinks || 0) + 3;
+            message += ` → ${target.pseudo} boit 3 🍺`;
+          } else {
+            message += ` → ${target.pseudo} est protégé!`;
+          }
         }
         break;
 
       case "PLUS5":
-        if (target && !target.protected) {
-          target.drinks = (target.drinks || 0) + 5;
-          message += ` → ${target.pseudo} boit 5 🍺`;
+        if (target) {
+          if (!target.protection && !target.alliance) {
+            target.drinks = (target.drinks || 0) + 5;
+            message += ` → ${target.pseudo} boit 5 🍺`;
+          } else {
+            message += ` → ${target.pseudo} est protégé!`;
+          }
         }
         break;
 
       case "DOUBLE_PENALTY":
-        if (target && !target.protected) {
+        if (target && !target.protection && !target.alliance) {
           target.drinks = (target.drinks || 0) + 2;
           target.delayedDrinks = (target.delayedDrinks || 0) + 2;
-          message += ` → ${target.pseudo} boit 2 maintenant et 2 plus tard`;
+          message += ` → ${target.pseudo} boit 2 maintenant et 2 à son prochain tour`;
         }
         break;
 
       case "RELENTLESS": {
-        if (target && !target.protected) {
+        if (target && !target.protection && !target.alliance) {
           const otherPlayers = Object.values(players).filter(p => p !== target && p.id !== playerId);
           otherPlayers.forEach(p => {
             p.drinks = (p.drinks || 0) + 1;
           });
-          message += ` → tous les autres attaquent ${target.pseudo}`;
+          message += ` → tous les autres attaquent ${target.pseudo} (1 gorgée chacun)`;
         }
         break;
       }
 
       case "TRIBUNAL": {
-        message += ` → tribunal - vote en cours`;
+        message += ` → tribunal - tous les joueurs votent! Le plus votés boit 4 🍺`;
         gameState.voting = true;
         break;
       }
@@ -557,7 +579,7 @@ class Effects {
       case "PUBLIC_ENEMY":
         if (target) {
           target.enemyOfPublic = true;
-          message += ` → ${target.pseudo} est ennemi public (malus +1)`;
+          message += ` → ${target.pseudo} est ennemi public (+1 aux attaques)`;
         }
         break;
 
@@ -582,7 +604,7 @@ class Effects {
         otherPlayers.forEach(p => {
           p.drinks = (p.drinks || 0) + 1;
         });
-        message += ` → tous boivent sauf lui`;
+        message += ` → tous les autres boivent 1 🍺`;
         break;
       }
 
@@ -592,7 +614,7 @@ class Effects {
         const leftIdx = (idx - 1 + playerIds.length) % playerIds.length;
         const leftPlayer = players[playerIds[leftIdx]];
         leftPlayer.drinks = (leftPlayer.drinks || 0) + 3;
-        message += ` → ${leftPlayer.pseudo} boit 3 🍺`;
+        message += ` → ${leftPlayer.pseudo} (à gauche) boit 3 🍺`;
         break;
       }
 
@@ -605,15 +627,15 @@ class Effects {
         break;
       }
 
-      // 🟣 SPÉCIALES
+      // 🟣 CARTES SPÉCIALES
       case "SHIELD":
         caster.shield = true;
-        message += ` → se protège contre la prochaine attaque`;
+        message += ` → annule un effet de gorgées reçu`;
         break;
 
       case "MIRROR":
         caster.mirror = true;
-        message += ` → renvoie la prochaine attaque`;
+        message += ` → renvoie un effet ciblé à son expéditeur`;
         break;
 
       case "DOUBLE_EFFECT":
@@ -623,23 +645,29 @@ class Effects {
 
       case "BOMB":
         gameState.bombActive = true;
-        message += ` → la bombe explose au prochain tour`;
+        message += ` → le prochain joueur boit 5 🍺`;
         break;
 
       case "BACKFIRE":
         caster.backfire = true;
-        message += ` → renvoie le prochain malus`;
+        message += ` → le prochain malus reçu est renvoyé à l'expéditeur`;
         break;
 
-      // 🕵️ INFO
+      // 🕵️ CARTES INFORMATION
       case "SPY":
-        gameState.spyTarget = targetId;
-        message += ` → espionne 2 cartes de ${target?.pseudo}`;
+        if (target) {
+          gameState.spyTarget = targetId;
+          const cardsShown = target.hand.slice(0, 2).map(c => c.name).join(", ");
+          message += ` → regarde 2 cartes de ${target.pseudo}: ${cardsShown}`;
+        }
         break;
 
       case "DETECTIVE":
-        gameState.detectiveTarget = targetId;
-        message += ` → regarde 1 carte aléatoire`;
+        if (target) {
+          gameState.detectiveTarget = targetId;
+          const randomCard = target.hand[Math.floor(Math.random() * target.hand.length)];
+          message += ` → voit une carte aléatoire: ${randomCard.name}`;
+        }
         break;
 
       case "XRAY":
@@ -649,19 +677,22 @@ class Effects {
         }
         break;
 
-      // 🥷 VOL / ÉCHANGE
+      // 🥷 CARTES VOL / ÉCHANGE
       case "THIEF":
         if (target && target.hand.length > 0) {
-          const stolen = target.hand.pop();
+          const randomIdx = Math.floor(Math.random() * target.hand.length);
+          const stolen = target.hand[randomIdx];
+          target.hand.splice(randomIdx, 1);
           caster.hand.push(stolen);
-          message += ` → vole une carte à ${target.pseudo}`;
+          message += ` → vole une carte aléatoire à ${target.pseudo}`;
         }
         break;
 
       case "PICKPOCKET":
         if (target && target.hand.length > 0) {
-          const stolen = target.hand[Math.floor(Math.random() * target.hand.length)];
-          target.hand = target.hand.filter(c => c !== stolen);
+          const randomIdx = Math.floor(Math.random() * target.hand.length);
+          const stolen = target.hand[randomIdx];
+          target.hand.splice(randomIdx, 1);
           caster.hand.push(stolen);
           message += ` → pickpocket une carte de ${target.pseudo}`;
         }
@@ -671,15 +702,15 @@ class Effects {
         const playerIds = Object.keys(players);
         const cardsToSwap = [];
         
-        // ✅ Collecter une carte de chaque joueur
+        // Collecter une carte aléatoire de chaque joueur
         playerIds.forEach((id) => {
           if (players[id].hand.length > 0) {
             const randomIdx = Math.floor(Math.random() * players[id].hand.length);
-            cardsToSwap.push(players[id].hand[randomIdx]);
+            cardsToSwap.push({ card: players[id].hand[randomIdx], fromId: id });
           }
         });
 
-        // ✅ Retirer les cartes
+        // Retirer les cartes
         playerIds.forEach((id) => {
           if (players[id].hand.length > 0) {
             const randomIdx = Math.floor(Math.random() * players[id].hand.length);
@@ -687,13 +718,13 @@ class Effects {
           }
         });
 
-        // ✅ Distribuer à DROITE
-        cardsToSwap.forEach((card, idx) => {
+        // Distribuer à DROITE
+        cardsToSwap.forEach((item, idx) => {
           const rightIdx = (idx + 1) % playerIds.length;
-          players[playerIds[rightIdx]].hand.push(card);
+          players[playerIds[rightIdx]].hand.push(item.card);
         });
 
-        message += ` → tous échangent une carte face cachée avec la droite`;
+        message += ` → tous donnent une carte face cachée à leur voisin de droite`;
         break;
       }
 
@@ -708,23 +739,21 @@ class Effects {
           caster.hand[myCardIdx] = theirCard;
           target.hand[theirCardIdx] = myCard;
           
-          message += ` → échange une carte avec ${target.pseudo}`;
+          message += ` → échange une carte aléatoire avec ${target.pseudo}`;
         }
         break;
 
       case "FULL_SWAP":
         if (target) {
-          // ✅ Échange COMPLET et BIDIRECTIONNEL des mains
           const temp = [...caster.hand];
           caster.hand = [...target.hand];
           target.hand = temp;
-          message += ` → échange TOUTE sa main avec ${target.pseudo}`;
+          message += ` → échange ENTIÈREMENT sa main avec ${target.pseudo}`;
         }
         break;
 
-      // 🔄 UNO-LIKE
+      // 🔄 CARTES STYLE UNO
       case "REVERSE":
-        // ✅ Inverse la direction du jeu
         game.gameDirection = (game.gameDirection || 1) * -1;
         message += ` → ↩️ inverse le sens du jeu!`;
         break;
@@ -732,14 +761,16 @@ class Effects {
       case "SKIP":
         if (target) {
           target.skip = true;
-          message += ` → ${target.pseudo} passe son tour`;
+          target.skipCanBeBlocked = true;
+          message += ` → ${target.pseudo} passe son prochain tour`;
         }
         break;
 
       case "FREEZE":
         if (target) {
           target.frozen = true;
-          message += ` → ${target.pseudo} est gelé`;
+          target.freezeCannotBeBlocked = true;
+          message += ` → ${target.pseudo} perd son prochain tour (ne peut pas être contré)`;
         }
         break;
 
@@ -749,21 +780,22 @@ class Effects {
             p.hand.push(game.deck.pop());
           }
         });
-        message += ` → tout le monde pioche 1 carte`;
+        message += ` → tous les joueurs piochent 1 carte`;
         break;
       }
 
-      // 💀 CHAOS
+      // 💀 CARTES CHAOS
       case "RUSSIAN_ROULETTE": {
         const outcome = Math.random() < 0.5;
         if (outcome) {
           caster.drinks = (caster.drinks || 0) + 4;
-          message += ` → roulette russe... boit 4 🍺`;
+          message += ` → 🎲 tu bois 4 🍺`;
         } else {
-          Object.values(players).filter(p => p !== caster).forEach(p => {
+          const otherPlayers = Object.values(players).filter(p => p !== caster);
+          otherPlayers.forEach(p => {
             p.drinks = (p.drinks || 0) + 4;
           });
-          message += ` → roulette russe... tous les autres boivent 4 🍺`;
+          message += ` → 🎲 tous les autres boivent 4 🍺`;
         }
         break;
       }
@@ -776,20 +808,21 @@ class Effects {
           const right = players[playerIds[(idx + 1) % playerIds.length]];
           left.drinks = (left.drinks || 0) + 2;
           right.drinks = (right.drinks || 0) + 2;
-          message += ` → virus chez ${target.pseudo}, adjacents boivent 2`;
+          message += ` → virus chez ${target.pseudo}, les adjacents boivent 2 🍺`;
         }
         break;
       }
 
       case "CURSE":
         caster.cursed = true;
-        message += ` → est maudit (boit 1 à chaque tour)`;
+        message += ` → est maudit (boit 1 🍺 à chaque début de tour)`;
         break;
 
       case "POISON_GIFT":
-        if (target) {
-          const card = caster.hand[Math.floor(Math.random() * caster.hand.length)];
-          caster.hand = caster.hand.filter(c => c !== card);
+        if (target && caster.hand.length > 0) {
+          const randomIdx = Math.floor(Math.random() * caster.hand.length);
+          const card = caster.hand[randomIdx];
+          caster.hand.splice(randomIdx, 1);
           target.hand.push(card);
           message += ` → donne une carte empoisonnée à ${target.pseudo}`;
         }
@@ -810,6 +843,10 @@ class Effects {
       "SPY", "DETECTIVE", "XRAY",
       "SKIP", "FREEZE", "VIRUS"
     ].includes(cardId);
+  }
+
+  static canBlockSkip(cardId) {
+    return ["SHIELD", "MIRROR"].includes(cardId);
   }
 }
 
@@ -855,14 +892,16 @@ class GameController {
         pseudo,
         hand: [],
         drinks: 0,
-        protected: false,
+        protection: false,
         alliance: null,
         shield: false,
         mirror: false,
         backfire: false,
         cursed: false,
         skip: false,
+        skipCanBeBlocked: false,
         frozen: false,
+        freezeCannotBeBlocked: false,
         enemyOfPublic: false,
         delayedDrinks: 0
       });
@@ -935,23 +974,26 @@ class GameController {
 
       db.ref(`rooms/${this.room}/players/${this.playerId}/hand`).set(hand);
 
-      // ✅ LOGIQUE DE TOUR AMÉLIORÉE AVEC DIRECTION
+      // LOGIQUE DE TOUR AMÉLIORÉE AVEC DIRECTION
       let nextIndex = game.currentPlayerIndex;
       let skipMessage = "";
 
       if (!this.gameState.extraTurn) {
-        // ✅ Utilise la direction du jeu
         const direction = game.gameDirection || 1;
         nextIndex = (game.currentPlayerIndex + direction + players.length) % players.length;
 
-        // Vérifier si le prochain joueur doit sauter son tour
         const nextPlayerId = players[nextIndex];
         const nextPlayer = game.players[nextPlayerId];
 
-        if (nextPlayer.skip) {
-          skipMessage = `⏭️ ${nextPlayer.pseudo} passe son tour!`;
+        // Vérifier SKIP (peut être bloqué par Bouclier/Miroir)
+        if (nextPlayer.skip && nextPlayer.skipCanBeBlocked) {
+          // Le joueur peut jouer Bouclier ou Miroir pour l'éviter
+          skipMessage = `⏭️ ${nextPlayer.pseudo} aurait son tour passé (peut être bloqué)`;
           nextPlayer.skip = false;
-          // Avance au joueur d'après
+        } else if (nextPlayer.skip) {
+          // FREEZE ne peut PAS être bloqué
+          skipMessage = `❄️ ${nextPlayer.pseudo} perd son tour (Gel - non contrable)`;
+          nextPlayer.frozen = false;
           nextIndex = (nextIndex + direction + players.length) % players.length;
         }
       }
@@ -965,7 +1007,6 @@ class GameController {
         gameDirection: game.gameDirection || 1
       });
 
-      // Vérifier victoire
       this.checkWinCondition(game);
     });
   }
@@ -1017,17 +1058,21 @@ class GameController {
         const el = document.createElement("div");
         el.className = "player";
         if (id === this.selectedTarget) el.classList.add("selected");
-        if (player.skip) el.classList.add("skipped");
+        if (player.skip && player.skipCanBeBlocked) el.classList.add("skipped");
+        if (player.frozen) el.classList.add("frozen");
 
         el.style.left = `${x}px`;
         el.style.top = `${y}px`;
         el.style.transform = "translate(-50%, -50%)";
 
+        let status = `${player.hand.length} carte${player.hand.length > 1 ? 's' : ''}`;
+        let statusClass = "";
+        if (player.protection) { status += " 🛡️"; statusClass = "protected"; }
+        if (player.frozen) { status += " ❄️"; statusClass = "frozen"; }
+
         el.innerHTML = `
           <div class="player-name">${player.pseudo}</div>
-          <div class="player-status ${player.protected ? 'protected' : ''}">
-            ${player.protected ? '🛡️' : ''} ${player.hand.length} carte${player.hand.length > 1 ? 's' : ''}
-          </div>
+          <div class="player-status ${statusClass}">${status}</div>
         `;
 
         if (game.started) {
