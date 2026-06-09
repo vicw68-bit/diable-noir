@@ -317,112 +317,111 @@ class Deck {
     // 😈 DIABLE NOIR (unique)
     deck.push({ id: "DIABLE_NOIR", type: "curse", name: "Diable Noir", img: "diable.png" });
 
-    // 🟢 BONUS
+    // 🟢 BONUS (22 cartes)
     const bonus = [
-      { id: "GIVE_2", name: "Donne 2", img: "give2.png" },
-      { id: "GIVE_3", name: "Donne 3", img: "give3.png" },
-      { id: "GIVE_5", name: "Donne 5", img: "give5.png" },
-      { id: "DOUBLE_DISTRIBUTION", name: "Double Distribution", img: "double_dist.png" },
-      { id: "DRAW_2", name: "Pioche 2", img: "draw2.png" },
-      { id: "EXTRA_TURN", name: "Deuxième Tour", img: "extra_turn.png" },
-      { id: "PROTECTION", name: "Protection", img: "protection.png" },
-      { id: "GIFT", name: "Cadeau", img: "gift.png" },
-      { id: "ALLIANCE", name: "Alliance", img: "alliance.png" }
+      { id: "GIVE_2", name: "Donne 2", img: "give2.png", qty: 5 },
+      { id: "GIVE_3", name: "Donne 3", img: "give3.png", qty: 4 },
+      { id: "GIVE_5", name: "Donne 5", img: "give5.png", qty: 3 },
+      { id: "DOUBLE_DISTRIBUTION", name: "Double Distribution", img: "double_dist.png", qty: 3 },
+      { id: "DRAW_2", name: "Pioche 2", img: "draw2.png", qty: 2 },
+      { id: "EXTRA_TURN", name: "Deuxième Tour", img: "extra_turn.png", qty: 2 },
+      { id: "PROTECTION", name: "Protection Temporaire", img: "protection.png", qty: 1 },
+      { id: "GIFT", name: "Cadeau", img: "gift.png", qty: 1 },
+      { id: "ALLIANCE", name: "Alliance", img: "alliance.png", qty: 1 }
     ];
 
     bonus.forEach(card => {
-      for (let i = 0; i < 3; i++) deck.push({ ...card, type: "bonus" });
+      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "bonus", name: card.name, img: card.img });
     });
 
-    // 🔴 MALUS CIBLÉS
+    // 🔴 MALUS CIBLÉS (18 cartes)
     const malusTarget = [
-      { id: "PLUS2", name: "Donne +2", img: "plus2.png" },
-      { id: "PLUS3", name: "Donne +3", img: "plus3.png" },
-      { id: "PLUS5", name: "Donne +5", img: "plus5.png" },
-      { id: "DOUBLE_PENALTY", name: "Double Peine", img: "double_penalty.png" },
-      { id: "RELENTLESS", name: "Acharnement", img: "relentless.png" },
-      { id: "TRIBUNAL", name: "Tribunal", img: "tribunal.png" },
-      { id: "PUBLIC_ENEMY", name: "Ennemi Public", img: "public_enemy.png" }
+      { id: "PLUS2", name: "Donne +2", img: "plus2.png", qty: 4 },
+      { id: "PLUS3", name: "Donne +3", img: "plus3.png", qty: 4 },
+      { id: "PLUS5", name: "Donne +5", img: "plus5.png", qty: 3 },
+      { id: "DOUBLE_PENALTY", name: "Double Peine", img: "double_penalty.png", qty: 2 },
+      { id: "RELENTLESS", name: "Acharnement", img: "relentless.png", qty: 2 },
+      { id: "TRIBUNAL", name: "Tribunal", img: "tribunal.png", qty: 2 },
+      { id: "PUBLIC_ENEMY", name: "Ennemi Public", img: "public_enemy.png", qty: 1 }
     ];
 
     malusTarget.forEach(card => {
-      for (let i = 0; i < 3; i++) deck.push({ ...card, type: "malus_target" });
+      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "malus_target", name: card.name, img: card.img });
     });
 
-    // 🔴 MALUS GÉNÉRAL
+    // 🔴 MALUS GÉNÉRAL (12 cartes)
     const malusGlobal = [
-      { id: "DRINK_2", name: "Bois 2", img: "drink2.png" },
-      { id: "DRINK_3", name: "Bois 3", img: "drink3.png" },
-      { id: "DRINK_5", name: "Bois 5", img: "drink5.png" },
-      { id: "ALL_EXCEPT_YOU", name: "Tous Sauf Toi", img: "all_except.png" },
-      { id: "LEFT", name: "Gauche", img: "left.png" },
-      { id: "DISCARD", name: "Défausse", img: "discard.png" }
+      { id: "DRINK_2", name: "Bois 2", img: "drink2.png", qty: 3 },
+      { id: "DRINK_3", name: "Bois 3", img: "drink3.png", qty: 3 },
+      { id: "DRINK_5", name: "Bois 5", img: "drink5.png", qty: 2 },
+      { id: "ALL_EXCEPT_YOU", name: "Tous Sauf Toi", img: "all_except.png", qty: 2 },
+      { id: "LEFT", name: "Gauche", img: "left.png", qty: 1 },
+      { id: "DISCARD", name: "Défausse", img: "discard.png", qty: 1 }
     ];
 
     malusGlobal.forEach(card => {
-      for (let i = 0; i < 3; i++) deck.push({ ...card, type: "malus_global" });
+      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "malus_global", name: card.name, img: card.img });
     });
 
-    // 🟣 SPÉCIALES
+    // 🟣 CARTES SPÉCIALES (11 cartes)
     const special = [
-      { id: "SHIELD", name: "Bouclier", img: "shield.png" },
-      { id: "MIRROR", name: "Miroir", img: "mirror.png" },
-      { id: "DOUBLE_EFFECT", name: "Double Effet", img: "double_effect.png" },
-      { id: "BOMB", name: "Bombe", img: "bomb.png" },
-      { id: "BACKFIRE", name: "Retour de Flamme", img: "backfire.png" }
+      { id: "SHIELD", name: "Bouclier", img: "shield.png", qty: 3 },
+      { id: "MIRROR", name: "Miroir", img: "mirror.png", qty: 3 },
+      { id: "DOUBLE_EFFECT", name: "Double Effet", img: "double_effect.png", qty: 2 },
+      { id: "BOMB", name: "Bombe", img: "bomb.png", qty: 1 },
+      { id: "BACKFIRE", name: "Retour de Flamme", img: "backfire.png", qty: 2 }
     ];
 
     special.forEach(card => {
-      for (let i = 0; i < 2; i++) deck.push({ ...card, type: "special" });
+      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "special", name: card.name, img: card.img });
     });
 
-    // 🕵️ INFO
+    // 🕵️ INFO (6 cartes)
     const info = [
-      { id: "SPY", name: "Espion", img: "spy.png" },
-      { id: "DETECTIVE", name: "Détective", img: "detective.png" },
-      { id: "XRAY", name: "Rayon X", img: "xray.png" }
+      { id: "SPY", name: "Espion", img: "spy.png", qty: 2 },
+      { id: "DETECTIVE", name: "Détective", img: "detective.png", qty: 2 },
+      { id: "XRAY", name: "Rayon X", img: "xray.png", qty: 2 }
     ];
 
     info.forEach(card => {
-      for (let i = 0; i < 2; i++) deck.push({ ...card, type: "info" });
+      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "info", name: card.name, img: card.img });
     });
 
-    // 🥷 VOL / ÉCHANGE
+    // 🥷 VOL / ÉCHANGE (9 cartes)
     const steal = [
-      { id: "THIEF", name: "Voleur", img: "thief.png" },
-      { id: "PICKPOCKET", name: "Pickpocket", img: "pickpocket.png" },
-      { id: "MYSTERY_HAND", name: "Main Mystère", img: "mystery_hand.png" },
-      { id: "BLACK_MARKET", name: "Marché Noir", img: "black_market.png" },
-      { id: "FULL_SWAP", name: "Échange Total", img: "full_swap.png" }
+      { id: "THIEF", name: "Voleur", img: "thief.png", qty: 3 },
+      { id: "PICKPOCKET", name: "Pickpocket", img: "pickpocket.png", qty: 2 },
+      { id: "MYSTERY_HAND", name: "Main Mystère", img: "mystery_hand.png", qty: 1 },
+      { id: "BLACK_MARKET", name: "Marché Noir", img: "black_market.png", qty: 2 },
+      { id: "FULL_SWAP", name: "Échange Total", img: "full_swap.png", qty: 1 }
     ];
 
     steal.forEach(card => {
-      for (let i = 0; i < 2; i++) deck.push({ ...card, type: "steal" });
+      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "steal", name: card.name, img: card.img });
     });
 
-    // 🔄 UNO-LIKE
+    // 🔄 UNO-LIKE (6 cartes)
     const uno = [
-      { id: "REVERSE", name: "Inversion", img: "reverse.png" },
-      { id: "SKIP", name: "Passe Ton Tour", img: "skip.png" },
-      { id: "FREEZE", name: "Gel", img: "freeze.png" },
-      { id: "ALL_DRAW", name: "Tout le Monde Pioche", img: "all_draw.png" }
+      { id: "REVERSE", name: "Inversion", img: "reverse.png", qty: 2 },
+      { id: "SKIP", name: "Passe Ton Tour", img: "skip.png", qty: 2 },
+      { id: "FREEZE", name: "Gel", img: "freeze.png", qty: 1 },
+      { id: "ALL_DRAW", name: "Tout le Monde Pioche", img: "all_draw.png", qty: 1 }
     ];
 
     uno.forEach(card => {
-      for (let i = 0; i < 3; i++) deck.push({ ...card, type: "uno" });
+      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "uno", name: card.name, img: card.img });
     });
 
-    // 💀 CHAOS
+    // 💀 CHAOS (5 cartes)
     const chaos = [
-      { id: "RUSSIAN_ROULETTE", name: "Roulette Russe", img: "roulette.png" },
-      { id: "VIRUS", name: "Virus", img: "virus.png" },
-      { id: "CURSE", name: "Malédiction", img: "curse.png" },
-      { id: "POISON_GIFT", name: "Cadeau Empoisonné", img: "poison_gift.png" },
-      { id: "PANIC", name: "Panique", img: "panic.png" }
+      { id: "RUSSIAN_ROULETTE", name: "Roulette Russe", img: "roulette.png", qty: 2 },
+      { id: "VIRUS", name: "Virus", img: "virus.png", qty: 1 },
+      { id: "CURSE", name: "Malédiction", img: "curse.png", qty: 1 },
+      { id: "POISON_GIFT", name: "Cadeau Empoisonné", img: "poison_gift.png", qty: 1 }
     ];
 
     chaos.forEach(card => {
-      for (let i = 0; i < 2; i++) deck.push({ ...card, type: "chaos" });
+      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "chaos", name: card.name, img: card.img });
     });
 
     // Mélange
@@ -795,36 +794,6 @@ class Effects {
           message += ` → donne une carte empoisonnée à ${target.pseudo}`;
         }
         break;
-
-      case "PANIC": {
-        const playerIds = Object.keys(players);
-        const cardsToSwap = [];
-        
-        // ✅ Collecter une carte aléatoire de chaque joueur
-        playerIds.forEach((id) => {
-          if (players[id].hand.length > 0) {
-            const randomIdx = Math.floor(Math.random() * players[id].hand.length);
-            cardsToSwap.push(players[id].hand[randomIdx]);
-          }
-        });
-
-        // ✅ Retirer les cartes
-        playerIds.forEach((id) => {
-          if (players[id].hand.length > 0) {
-            const randomIdx = Math.floor(Math.random() * players[id].hand.length);
-            players[id].hand.splice(randomIdx, 1);
-          }
-        });
-
-        // ✅ Distribuer à DROITE
-        cardsToSwap.forEach((card, idx) => {
-          const rightIdx = (idx + 1) % playerIds.length;
-          players[playerIds[rightIdx]].hand.push(card);
-        });
-
-        message += ` → panique! Tous échangent une carte aléatoire à droite`;
-        break;
-      }
     }
 
     return message;
@@ -1001,127 +970,105 @@ class GameController {
     });
   }
 
-  checkWinCondition(game) {
-    // Vérifier si la pioche est vide
-    if (game.deck.length === 0) {
-      const players = Object.values(game.players);
-      const hasDevilNoir = players.find(p => p.hand.some(c => c.id === "DIABLE_NOIR"));
-
-      if (hasDevilNoir) {
-        alert(`😈 ${hasDevilNoir.pseudo} a le Diable Noir et perd immédiatement!`);
-        this.reset();
-      }
-    }
-  }
-
-  reset() {
-    db.ref(`rooms/${this.room}`).remove();
-    document.getElementById("game").classList.add("hidden");
-    document.getElementById("login").classList.remove("hidden");
-    document.getElementById("pseudo").value = "";
-  }
-
-  updateUI(game) {
-    const players = Object.values(game.players || {});
-    const playerIds = Object.keys(game.players || {});
-
-    // Boutons
-    document.getElementById("resetBtn").classList.toggle("hidden", !game.started);
-    document.getElementById("startBtn").classList.toggle("hidden", game.started);
-
-    // Cercle de joueurs
-    const circle = document.getElementById("circle");
-    circle.innerHTML = "";
-
-    const radius = 150;
-    players.forEach((p, i) => {
-      const angle = (i / players.length) * 2 * Math.PI;
-      const x = 200 + radius * Math.cos(angle);
-      const y = 200 + radius * Math.sin(angle);
-
-      const div = document.createElement("div");
-      div.className = "player";
-      if (p.skip) div.classList.add("skipped");
-      div.style.left = x + "px";
-      div.style.top = y + "px";
-
-      const name = document.createElement("div");
-      name.className = "player-name";
-      name.innerText = p.pseudo;
-
-      const status = document.createElement("div");
-      status.className = "player-status";
-      status.innerText = `${p.hand.length} carte(s)`;
-
-      if (p.protected || p.shield || p.mirror) {
-        status.classList.add("protected");
-        status.innerText += " 🛡️";
-      }
-
-      div.appendChild(name);
-      div.appendChild(status);
-
-      const playerIdTarget = playerIds[i];
-      div.onclick = () => {
-        this.selectedTarget = playerIdTarget;
-        document.querySelectorAll(".player").forEach(el => el.classList.remove("selected"));
-        div.classList.add("selected");
-        document.getElementById("message").innerText = `🎯 Cible : ${p.pseudo}`;
-      };
-
-      circle.appendChild(div);
-    });
-
-    // Info du centre
-    const center = document.getElementById("center");
-    if (game.started) {
-      const currentId = playerIds[game.currentPlayerIndex];
-      const current = game.players[currentId];
-      const direction = (game.gameDirection || 1) === 1 ? "➡️" : "⬅️";
-      center.innerText = `👉 Tour de : ${current.pseudo} ${direction}`;
-    } else {
-      center.innerText = "En attente...";
-    }
-
-    // Message
-    if (game.message) {
-      document.getElementById("message").innerText = game.message;
-    }
-
-    // Main du joueur
-    const myHand = game.players[this.playerId]?.hand || [];
-    const handDiv = document.getElementById("hand");
-    handDiv.innerHTML = "";
-
-    myHand.forEach((card, i) => {
-      const div = document.createElement("div");
-      div.className = "card";
-
-      if (card.id === "DIABLE_NOIR") {
-        div.classList.add("diable-noir");
-      }
-
-      const img = document.createElement("img");
-      img.src = card.img || "back.png";
-      img.title = card.name;
-
-      div.appendChild(img);
-      div.onclick = () => this.playCard(i);
-
-      handDiv.appendChild(div);
-    });
+  selectTarget(targetId) {
+    this.selectedTarget = this.selectedTarget === targetId ? null : targetId;
+    this.renderGame();
   }
 
   listenGame() {
     db.ref(`rooms/${this.room}`).on("value", (snapshot) => {
+      if (snapshot.exists()) {
+        this.renderGame();
+      }
+    });
+  }
+
+  renderGame() {
+    db.ref(`rooms/${this.room}`).once("value").then((snapshot) => {
       const game = snapshot.val();
       if (!game) return;
-      this.updateUI(game);
+
+      const players = game.players || {};
+      const playerIds = Object.keys(players);
+
+      // Affichage central
+      const center = document.getElementById("center");
+      if (!game.started) {
+        center.textContent = `⏳ En attente... (${playerIds.length} joueur${playerIds.length > 1 ? 's' : ''})`;
+        document.getElementById("startBtn").classList.toggle("hidden", this.playerId !== playerIds[0]);
+      } else {
+        const currentPlayerId = playerIds[game.currentPlayerIndex];
+        const currentPlayer = players[currentPlayerId];
+        center.textContent = currentPlayerId === this.playerId ? "🎮 C'est TON TOUR!" : `🎮 Tour de ${currentPlayer.pseudo}`;
+      }
+
+      // Message
+      document.getElementById("message").textContent = game.message || "";
+
+      // Cercle de joueurs
+      const circle = document.getElementById("circle");
+      circle.innerHTML = "";
+      playerIds.forEach((id, idx) => {
+        const player = players[id];
+        const angle = (idx / playerIds.length) * 2 * Math.PI - Math.PI / 2;
+        const x = 150 + 100 * Math.cos(angle);
+        const y = 150 + 100 * Math.sin(angle);
+
+        const el = document.createElement("div");
+        el.className = "player";
+        if (id === this.selectedTarget) el.classList.add("selected");
+        if (player.skip) el.classList.add("skipped");
+
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        el.style.transform = "translate(-50%, -50%)";
+
+        el.innerHTML = `
+          <div class="player-name">${player.pseudo}</div>
+          <div class="player-status ${player.protected ? 'protected' : ''}">
+            ${player.protected ? '🛡️' : ''} ${player.hand.length} carte${player.hand.length > 1 ? 's' : ''}
+          </div>
+        `;
+
+        if (game.started) {
+          el.onclick = () => this.selectTarget(id);
+        }
+
+        circle.appendChild(el);
+      });
+
+      // Main
+      const hand = document.getElementById("hand");
+      hand.innerHTML = "";
+      const myHand = players[this.playerId]?.hand || [];
+      myHand.forEach((card, idx) => {
+        const el = document.createElement("div");
+        el.className = "card";
+        if (card.id === "DIABLE_NOIR") el.classList.add("diable-noir");
+        el.innerHTML = `<img src="assets/${card.img}" alt="${card.name}" title="${card.name}">`;
+        el.onclick = () => this.playCard(idx);
+        hand.appendChild(el);
+      });
     });
+  }
+
+  checkWinCondition(game) {
+    const players = game.players || {};
+    Object.values(players).forEach(player => {
+      if (player.hand.some(c => c.id === "DIABLE_NOIR") && game.deck.length === 0) {
+        db.ref(`rooms/${this.room}`).update({
+          message: "💀 " + player.pseudo + " avait le Diable Noir! IL PERD!"
+        });
+      }
+    });
+  }
+
+  reset() {
+    db.ref(`rooms/${this.room}`).remove();
+    location.reload();
   }
 }
 
-// Initialiser le contrôleur
 const gameController = new GameController();
 </script>
 
