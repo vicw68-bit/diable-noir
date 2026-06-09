@@ -137,6 +137,7 @@
       margin: 10px 0;
       font-size: 0.95em;
       min-height: 20px;
+      word-wrap: break-word;
     }
 
     /* CERCLE DE JOUEURS */
@@ -245,6 +246,11 @@
 
     .card.diable-noir img {
       filter: brightness(0.7) saturate(2);
+    }
+
+    .card.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     /* RESPONSIVE */
@@ -440,9 +446,19 @@ class Deck {
 }
 
 // ============================================
-// CLASSE EFFECTS - IMPLÉMENTATION COMPLÈTE
+// CLASSE EFFECTS - AVEC PROTECTIONS COMPLÈTES
 // ============================================
 class Effects {
+  static isProtected(player, cardType) {
+    // Protection Temporaire protège de TOUS les malus
+    if (player.protection) return true;
+    
+    // Alliance protège contre les malus CIBLÉS
+    if (player.alliance && (cardType === "malus_target" || cardType === "steal")) return true;
+    
+    return false;
+  }
+
   static apply(game, playerId, card, targetId, gameState) {
     const players = game.players;
     const caster = players[playerId];
@@ -453,23 +469,29 @@ class Effects {
     switch (card.id) {
       // 🟢 CARTES BONUS
       case "GIVE_2":
-        if (target) {
+        if (target && !this.isProtected(target, "bonus")) {
           target.drinks = (target.drinks || 0) + 2;
           message += ` → ${target.pseudo} boit 2 🍺`;
+        } else if (target) {
+          message += ` → ${target.pseudo} est protégé!`;
         }
         break;
 
       case "GIVE_3":
-        if (target) {
+        if (target && !this.isProtected(target, "bonus")) {
           target.drinks = (target.drinks || 0) + 3;
           message += ` → ${target.pseudo} boit 3 🍺`;
+        } else if (target) {
+          message += ` → ${target.pseudo} est prot��gé!`;
         }
         break;
 
       case "GIVE_5":
-        if (target) {
+        if (target && !this.isProtected(target, "bonus")) {
           target.drinks = (target.drinks || 0) + 5;
           message += ` → ${target.pseudo} boit 5 🍺`;
+        } else if (target) {
+          message += ` → ${target.pseudo} est protégé!`;
         }
         break;
 
@@ -495,7 +517,7 @@ class Effects {
 
       case "PROTECTION":
         caster.protection = true;
-        message += ` → est protégé contre le prochain effet de gorgées jusqu'à son prochain tour`;
+        message += ` → 🛡️ est protégé contre TOUS les malus jusqu'à son prochain tour`;
         break;
 
       case "GIFT":
@@ -513,54 +535,60 @@ class Effects {
         if (target) {
           caster.alliance = targetId;
           target.alliance = playerId;
-          message += ` → alliance entre ${caster.pseudo} et ${target.pseudo} (protection mutuelle)`;
+          message += ` → 🤝 alliance entre ${caster.pseudo} et ${target.pseudo} (protection mutuelle)`;
         }
         break;
 
       // 🔴 MALUS CIBLÉS
       case "PLUS2":
         if (target) {
-          if (!target.protection && !target.alliance) {
+          if (this.isProtected(target, "malus_target")) {
+            message += ` → ${target.pseudo} est protégé!`;
+          } else {
             target.drinks = (target.drinks || 0) + 2;
             message += ` → ${target.pseudo} boit 2 🍺`;
-          } else {
-            message += ` → ${target.pseudo} est protégé!`;
           }
         }
         break;
 
       case "PLUS3":
         if (target) {
-          if (!target.protection && !target.alliance) {
+          if (this.isProtected(target, "malus_target")) {
+            message += ` → ${target.pseudo} est protégé!`;
+          } else {
             target.drinks = (target.drinks || 0) + 3;
             message += ` → ${target.pseudo} boit 3 🍺`;
-          } else {
-            message += ` → ${target.pseudo} est protégé!`;
           }
         }
         break;
 
       case "PLUS5":
         if (target) {
-          if (!target.protection && !target.alliance) {
+          if (this.isProtected(target, "malus_target")) {
+            message += ` → ${target.pseudo} est protégé!`;
+          } else {
             target.drinks = (target.drinks || 0) + 5;
             message += ` → ${target.pseudo} boit 5 🍺`;
-          } else {
-            message += ` → ${target.pseudo} est protégé!`;
           }
         }
         break;
 
       case "DOUBLE_PENALTY":
-        if (target && !target.protection && !target.alliance) {
-          target.drinks = (target.drinks || 0) + 2;
-          target.delayedDrinks = (target.delayedDrinks || 0) + 2;
-          message += ` → ${target.pseudo} boit 2 maintenant et 2 à son prochain tour`;
+        if (target) {
+          if (this.isProtected(target, "malus_target")) {
+            message += ` → ${target.pseudo} est protégé!`;
+          } else {
+            target.drinks = (target.drinks || 0) + 2;
+            target.delayedDrinks = (target.delayedDrinks || 0) + 2;
+            message += ` → ${target.pseudo} boit 2 maintenant et 2 à son prochain tour`;
+          }
         }
         break;
 
       case "RELENTLESS": {
-        if (target && !target.protection && !target.alliance) {
+        if (target && this.isProtected(target, "malus_target")) {
+          message += ` → ${target.pseudo} est protégé!`;
+        } else if (target) {
           const otherPlayers = Object.values(players).filter(p => p !== target && p.id !== playerId);
           otherPlayers.forEach(p => {
             p.drinks = (p.drinks || 0) + 1;
@@ -627,15 +655,15 @@ class Effects {
         break;
       }
 
-      // 🟣 CARTES SPÉCIALES
+      // 🟣 CARTES SPÉCIALES - RÉACTIVES
       case "SHIELD":
-        caster.shield = true;
-        message += ` → annule un effet de gorgées reçu`;
+        caster.shieldActive = true;
+        message += ` → 🛡️ annule le prochain malus reçu`;
         break;
 
       case "MIRROR":
-        caster.mirror = true;
-        message += ` → renvoie un effet ciblé à son expéditeur`;
+        caster.mirrorActive = true;
+        message += ` → 🪞 renvoie le prochain malus ciblé`;
         break;
 
       case "DOUBLE_EFFECT":
@@ -656,45 +684,51 @@ class Effects {
       // 🕵️ CARTES INFORMATION
       case "SPY":
         if (target) {
-          gameState.spyTarget = targetId;
           const cardsShown = target.hand.slice(0, 2).map(c => c.name).join(", ");
-          message += ` → regarde 2 cartes de ${target.pseudo}: ${cardsShown}`;
+          message += ` → 🕵️ regarde 2 cartes de ${target.pseudo}: ${cardsShown}`;
         }
         break;
 
       case "DETECTIVE":
         if (target) {
-          gameState.detectiveTarget = targetId;
           const randomCard = target.hand[Math.floor(Math.random() * target.hand.length)];
-          message += ` → voit une carte aléatoire: ${randomCard.name}`;
+          message += ` → 🕵️ voit une carte: ${randomCard.name}`;
         }
         break;
 
       case "XRAY":
         if (target) {
           const specialCount = target.hand.filter(c => c.type === "special").length;
-          message += ` → ${target.pseudo} a ${specialCount} carte(s) spéciale(s)`;
+          message += ` → 📡 ${target.pseudo} a ${specialCount} carte(s) spéciale(s)`;
         }
         break;
 
       // 🥷 CARTES VOL / ÉCHANGE
       case "THIEF":
         if (target && target.hand.length > 0) {
-          const randomIdx = Math.floor(Math.random() * target.hand.length);
-          const stolen = target.hand[randomIdx];
-          target.hand.splice(randomIdx, 1);
-          caster.hand.push(stolen);
-          message += ` → vole une carte aléatoire à ${target.pseudo}`;
+          if (this.isProtected(target, "steal")) {
+            message += ` → ${target.pseudo} est protégé!`;
+          } else {
+            const randomIdx = Math.floor(Math.random() * target.hand.length);
+            const stolen = target.hand[randomIdx];
+            target.hand.splice(randomIdx, 1);
+            caster.hand.push(stolen);
+            message += ` → 🥷 vole une carte à ${target.pseudo}`;
+          }
         }
         break;
 
       case "PICKPOCKET":
         if (target && target.hand.length > 0) {
-          const randomIdx = Math.floor(Math.random() * target.hand.length);
-          const stolen = target.hand[randomIdx];
-          target.hand.splice(randomIdx, 1);
-          caster.hand.push(stolen);
-          message += ` → pickpocket une carte de ${target.pseudo}`;
+          if (this.isProtected(target, "steal")) {
+            message += ` → ${target.pseudo} est protégé!`;
+          } else {
+            const randomIdx = Math.floor(Math.random() * target.hand.length);
+            const stolen = target.hand[randomIdx];
+            target.hand.splice(randomIdx, 1);
+            caster.hand.push(stolen);
+            message += ` → 🥷 pickpocket une carte de ${target.pseudo}`;
+          }
         }
         break;
 
@@ -702,7 +736,6 @@ class Effects {
         const playerIds = Object.keys(players);
         const cardsToSwap = [];
         
-        // Collecter une carte aléatoire de chaque joueur
         playerIds.forEach((id) => {
           if (players[id].hand.length > 0) {
             const randomIdx = Math.floor(Math.random() * players[id].hand.length);
@@ -710,7 +743,6 @@ class Effects {
           }
         });
 
-        // Retirer les cartes
         playerIds.forEach((id) => {
           if (players[id].hand.length > 0) {
             const randomIdx = Math.floor(Math.random() * players[id].hand.length);
@@ -718,13 +750,12 @@ class Effects {
           }
         });
 
-        // Distribuer à DROITE
         cardsToSwap.forEach((item, idx) => {
           const rightIdx = (idx + 1) % playerIds.length;
           players[playerIds[rightIdx]].hand.push(item.card);
         });
 
-        message += ` → tous donnent une carte face cachée à leur voisin de droite`;
+        message += ` → 🥷 tous donnent une carte à leur voisin de droite`;
         break;
       }
 
@@ -739,7 +770,7 @@ class Effects {
           caster.hand[myCardIdx] = theirCard;
           target.hand[theirCardIdx] = myCard;
           
-          message += ` → échange une carte aléatoire avec ${target.pseudo}`;
+          message += ` → 🥷 échange une carte avec ${target.pseudo}`;
         }
         break;
 
@@ -748,7 +779,7 @@ class Effects {
           const temp = [...caster.hand];
           caster.hand = [...target.hand];
           target.hand = temp;
-          message += ` → échange ENTIÈREMENT sa main avec ${target.pseudo}`;
+          message += ` → 🥷 échange ENTIÈREMENT sa main avec ${target.pseudo}`;
         }
         break;
 
@@ -769,8 +800,7 @@ class Effects {
       case "FREEZE":
         if (target) {
           target.frozen = true;
-          target.freezeCannotBeBlocked = true;
-          message += ` → ${target.pseudo} perd son prochain tour (ne peut pas être contré)`;
+          message += ` → ❄️ ${target.pseudo} perd son prochain tour (non contrable)`;
         }
         break;
 
@@ -808,7 +838,7 @@ class Effects {
           const right = players[playerIds[(idx + 1) % playerIds.length]];
           left.drinks = (left.drinks || 0) + 2;
           right.drinks = (right.drinks || 0) + 2;
-          message += ` → virus chez ${target.pseudo}, les adjacents boivent 2 🍺`;
+          message += ` → 🦠 virus chez ${target.pseudo}, les adjacents boivent 2 🍺`;
         }
         break;
       }
@@ -824,7 +854,7 @@ class Effects {
           const card = caster.hand[randomIdx];
           caster.hand.splice(randomIdx, 1);
           target.hand.push(card);
-          message += ` → donne une carte empoisonnée à ${target.pseudo}`;
+          message += ` → ☠️ donne une carte empoisonnée à ${target.pseudo}`;
         }
         break;
     }
@@ -845,7 +875,7 @@ class Effects {
     ].includes(cardId);
   }
 
-  static canBlockSkip(cardId) {
+  static isReactive(cardId) {
     return ["SHIELD", "MIRROR"].includes(cardId);
   }
 }
@@ -865,7 +895,9 @@ class GameController {
       bombActive: false,
       waitingForTargets: null,
       spyTarget: null,
-      detectiveTarget: null
+      detectiveTarget: null,
+      waitingForReaction: false,
+      reactionData: null
     };
 
     this.setupListeners();
@@ -894,14 +926,13 @@ class GameController {
         drinks: 0,
         protection: false,
         alliance: null,
-        shield: false,
-        mirror: false,
+        shieldActive: false,
+        mirrorActive: false,
         backfire: false,
         cursed: false,
         skip: false,
         skipCanBeBlocked: false,
         frozen: false,
-        freezeCannotBeBlocked: false,
         enemyOfPublic: false,
         delayedDrinks: 0
       });
@@ -974,7 +1005,7 @@ class GameController {
 
       db.ref(`rooms/${this.room}/players/${this.playerId}/hand`).set(hand);
 
-      // LOGIQUE DE TOUR AMÉLIORÉE AVEC DIRECTION
+      // LOGIQUE DE TOUR AMÉLIORÉE
       let nextIndex = game.currentPlayerIndex;
       let skipMessage = "";
 
@@ -985,18 +1016,18 @@ class GameController {
         const nextPlayerId = players[nextIndex];
         const nextPlayer = game.players[nextPlayerId];
 
-        // Vérifier SKIP (peut être bloqué par Bouclier/Miroir)
-        if (nextPlayer.skip && nextPlayer.skipCanBeBlocked) {
-          // Le joueur peut jouer Bouclier ou Miroir pour l'éviter
-          skipMessage = `⏭️ ${nextPlayer.pseudo} aurait son tour passé (peut être bloqué)`;
-          nextPlayer.skip = false;
-        } else if (nextPlayer.skip) {
-          // FREEZE ne peut PAS être bloqué
+        if (nextPlayer.frozen) {
           skipMessage = `❄️ ${nextPlayer.pseudo} perd son tour (Gel - non contrable)`;
           nextPlayer.frozen = false;
           nextIndex = (nextIndex + direction + players.length) % players.length;
         }
       }
+
+      // Réinitialiser les protections après le tour
+      Object.values(game.players).forEach(p => {
+        p.protection = false;
+        p.alliance = null;
+      });
 
       this.gameState.extraTurn = false;
       this.selectedTarget = null;
