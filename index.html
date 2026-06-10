@@ -66,6 +66,25 @@
 
     .quit-btn:hover:not(:disabled) { background: #555; transform: none; }
 
+    .force-pass-btn {
+      background: #5a4500;
+      border: 1px solid #cc9900;
+      padding: 8px 12px;
+      font-size: 0.82rem;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+
+    .force-pass-btn:hover:not(:disabled) {
+      background: #7a6000;
+      transform: none;
+    }
+
+    @media (max-width: 480px) {
+      .force-pass-btn .force-pass-label { display: none; }
+      .quit-btn { padding: 8px 10px; }
+    }
+
     .app-main {
       flex: 1;
       width: 100%;
@@ -687,6 +706,7 @@
     <div class="app-subtitle">Multijoueur en ligne</div>
   </div>
   <div class="header-actions">
+    <button id="forcePassBtn" class="force-pass-btn hidden" onclick="gameController.forcePassTurn()" title="Anti-bug : annule l'action en cours, passe ton tour et pioche 1 carte">⏭️ <span class="force-pass-label">Passer</span></button>
     <button id="quitBtn" class="quit-btn hidden" onclick="gameController.quitAndReset()" title="Quitter et nouvelle partie">🚪 Quitter</button>
   </div>
 </header>
@@ -1860,6 +1880,7 @@ class GameController {
         document.getElementById("login").classList.add("hidden");
         document.getElementById("game").classList.remove("hidden");
         document.getElementById("quitBtn").classList.remove("hidden");
+        document.getElementById("forcePassBtn").classList.remove("hidden");
         document.getElementById("handLabel").classList.remove("hidden");
         this.listenGame();
       })
@@ -2102,6 +2123,62 @@ class GameController {
     if (game.deck.length > 0) {
       game.players[playerId].hand.push(game.deck.pop());
     }
+  }
+
+  clearBlockingActions(shared) {
+    shared.pendingReaction = null;
+    shared.tribunal = null;
+    shared.pickpocket = null;
+    shared.extraTurn = false;
+  }
+
+  forcePassTurn() {
+    this.roomRef().once("value").then((snapshot) => {
+      const game = snapshot.val();
+      if (!game?.started) return alert("La partie n'a pas encore commencé.");
+      if (game.sharedState?.finished) return alert("Partie terminée.");
+
+      const order = game.playerOrder || Object.keys(game.players || {});
+      if (order[game.currentPlayerIndex] !== this.playerId) {
+        return alert("Ce n'est pas ton tour — seul le joueur actif peut utiliser ce bouton.");
+      }
+
+      if (!confirm(
+        "Passer ton tour de force (anti-bug) ?\n\n" +
+        "• Annule toute action en cours (Tribunal, Pickpocket, contre…)\n" +
+        "• Passe au joueur suivant\n" +
+        "• Tu pioches 1 carte bonus"
+      )) return;
+
+      this.selectedTarget = null;
+
+      this.roomRef().transaction((g) => {
+        if (!g?.started) return;
+
+        const shared = g.sharedState || defaultSharedState();
+        if (shared.finished) return;
+
+        const ord = g.playerOrder || Object.keys(g.players || {});
+        if (ord[g.currentPlayerIndex] !== this.playerId) return;
+
+        const passer = g.players[this.playerId];
+        if (!passer) return;
+
+        this.clearBlockingActions(shared);
+        this.drawCardAfterPlay(g, this.playerId);
+
+        const result = this.advanceTurn(g, shared);
+        g.currentPlayerIndex = result.index;
+
+        let msg = `⏭️ ${passer.pseudo} passe son tour (anti-bug) — action annulée, +1 carte bonus.`;
+        if (result.messages.length) msg = result.messages.join("\n") + "\n" + msg;
+
+        g.message = msg;
+        g.sharedState = shared;
+        this.checkWinCondition(g);
+        return g;
+      });
+    });
   }
 
   finishPlayAfterReaction(game, shared, casterId, reactionMsg, sourceCard) {
@@ -2481,6 +2558,7 @@ const gameController = db
   : {
       join() { alert(FirebaseSetup.errorMessage || "Firebase non configuré."); },
       quitAndReset() { location.reload(); },
+      forcePassTurn() {},
       declineReaction() {},
     };
 </script>
