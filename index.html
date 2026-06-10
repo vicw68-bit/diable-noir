@@ -554,6 +554,97 @@
 
     .floating-panel .card { width: 64px; height: 96px; }
 
+    /* Aperçu carte — appui long */
+    .card-inspect {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      pointer-events: none;
+    }
+
+    .card-inspect.hidden { display: none; }
+
+    .card-inspect__backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(4px);
+    }
+
+    .card-inspect__panel {
+      position: relative;
+      z-index: 1;
+      width: min(340px, 92vw);
+      background: linear-gradient(160deg, #1a1a1a, #0d0d0d);
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 20px 18px 16px;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7), 0 0 30px var(--accent-glow);
+      animation: inspect-in 0.2s ease-out;
+    }
+
+    @keyframes inspect-in {
+      from { opacity: 0; transform: scale(0.92) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .card-inspect__preview {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+
+    .card-inspect__preview .card {
+      width: 120px;
+      height: 180px;
+      pointer-events: none;
+    }
+
+    .card-inspect__preview .card-face__icon { font-size: 2.4rem; }
+    .card-inspect__preview .card-face__name { font-size: 0.75rem; }
+    .card-inspect__preview .card-face__badge { font-size: 0.72rem; }
+
+    .card-inspect__title {
+      color: var(--cyan);
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .card-inspect__desc {
+      color: #ccc;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      text-align: left;
+    }
+
+    .card-inspect__hint {
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: #666;
+    }
+
+    .card.hold-hint .card-inner {
+      box-shadow: 0 0 16px rgba(0, 255, 204, 0.5);
+      transform: scale(1.04);
+    }
+
+    .card.hold-hint::after {
+      content: "ℹ️";
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      font-size: 0.65rem;
+      z-index: 5;
+    }
+
+    .card { position: relative; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+
     .firebase-status {
       margin-top: 8px;
       padding: 10px 16px;
@@ -649,8 +740,18 @@
   <div id="pickpocketCards" class="panel-cards"></div>
 </div>
 
-<div id="handLabel" class="hand-label hidden">Ta main</div>
+<div id="handLabel" class="hand-label hidden">Ta main — appui long pour lire la carte</div>
 <div id="hand" class="hand"></div>
+
+<div id="cardInspect" class="card-inspect hidden" aria-hidden="true">
+  <div class="card-inspect__backdrop"></div>
+  <div class="card-inspect__panel">
+    <div id="cardInspectPreview" class="card-inspect__preview"></div>
+    <h3 id="cardInspectTitle" class="card-inspect__title"></h3>
+    <p id="cardInspectDesc" class="card-inspect__desc"></p>
+    <p class="card-inspect__hint">Relâche pour fermer · clic rapide pour jouer</p>
+  </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -773,55 +874,59 @@ const CardVisuals = {
   },
 
   ART: {
-    DIABLE_NOIR: { icon: "😈", badge: "PERDU" },
-    CURSE: { icon: "☠️", badge: "MALÉDICTION" },
-    GIVE_2: { icon: "🍻", badge: "+2 🍺" },
-    GIVE_3: { icon: "🍻", badge: "+3 🍺" },
-    GIVE_5: { icon: "🍻", badge: "+5 🍺" },
-    DOUBLE_DISTRIBUTION: { icon: "👥", badge: "×2 cibles" },
-    DRAW_2: { icon: "🃏", badge: "+2 cartes" },
-    EXTRA_TURN: { icon: "🔁", badge: "Rejoue" },
-    PROTECTION: { icon: "🔰", badge: "Anti-gorgée" },
-    GIFT: { icon: "🎁", badge: "+2 pioche" },
-    ALLIANCE: { icon: "🤝", badge: "Pacte" },
-    PLUS2: { icon: "➕", badge: "+2 malus" },
-    PLUS3: { icon: "➕", badge: "+3 malus" },
-    PLUS5: { icon: "➕", badge: "+5 malus" },
-    DOUBLE_PENALTY: { icon: "⏳", badge: "Différé" },
-    RELENTLESS: { icon: "🎯", badge: "Acharnement" },
-    TRIBUNAL: { icon: "⚖️", badge: "4 🍺" },
-    PUBLIC_ENEMY: { icon: "👿", badge: "Ennemi" },
-    DRINK_2: { icon: "🍺", badge: "Bois 2" },
-    DRINK_3: { icon: "🍺", badge: "Bois 3" },
-    DRINK_5: { icon: "🍺", badge: "Bois 5" },
-    ALL_EXCEPT_YOU: { icon: "👥", badge: "Tous -1" },
-    LEFT: { icon: "⬅️", badge: "Gauche 3" },
-    DISCARD: { icon: "🗑️", badge: "Défausse" },
-    SHIELD: { icon: "🛡️", badge: "Passif" },
-    MIRROR: { icon: "🪞", badge: "Contre" },
-    DOUBLE_EFFECT: { icon: "⚡", badge: "×2 effet" },
-    BOMB: { icon: "💣", badge: "5 🍺" },
-    BACKFIRE: { icon: "🔥", badge: "Contre" },
-    SPY: { icon: "🕵️", badge: "Espion" },
-    DETECTIVE: { icon: "🔍", badge: "Aléatoire" },
-    XRAY: { icon: "📡", badge: "Spéciales" },
-    THIEF: { icon: "🥷", badge: "Vol" },
-    PICKPOCKET: { icon: "🎭", badge: "Au choix" },
-    MYSTERY_HAND: { icon: "🎲", badge: "Mystère" },
-    BLACK_MARKET: { icon: "🏴", badge: "Échange" },
-    FULL_SWAP: { icon: "🔄", badge: "Mains" },
-    REVERSE: { icon: "↩️", badge: "Sens" },
-    SKIP: { icon: "⏭️", badge: "Skip" },
-    FREEZE: { icon: "❄️", badge: "Gel" },
-    ALL_DRAW: { icon: "📥", badge: "Tous +1" },
-    RUSSIAN_ROULETTE: { icon: "🎰", badge: "50/50" },
-    VIRUS: { icon: "🦠", badge: "Voisins" },
-    POISON_GIFT: { icon: "☠️", badge: "Empoisonné" },
-    PANIC: { icon: "😱", badge: "Panique" },
+    DIABLE_NOIR: { icon: "😈", badge: "PERDU", desc: "Non jouable, non défaussable. Si tu l'as encore en main quand le deck est vide, tu perds la partie." },
+    CURSE: { icon: "☠️", badge: "MALÉDICTION", desc: "Non jouable. Tant qu'elle reste dans ta main, tu bois 1 🍺 au début de chaque tour." },
+    GIVE_2: { icon: "🍻", badge: "+2 🍺", desc: "Cible 1 joueur : il boit 2 🍺. Contrable avec Protection ou Miroir." },
+    GIVE_3: { icon: "🍻", badge: "+3 🍺", desc: "Cible 1 joueur : il boit 3 🍺. Contrable avec Protection ou Miroir." },
+    GIVE_5: { icon: "🍻", badge: "+5 🍺", desc: "Cible 1 joueur : il boit 5 🍺. Contrable avec Protection ou Miroir." },
+    DOUBLE_DISTRIBUTION: { icon: "👥", badge: "×2 cibles", desc: "Après avoir joué la carte, clique 2 joueurs différents dans le cercle (1 🍺 chacun). Contre possible." },
+    DRAW_2: { icon: "🃏", badge: "+2 cartes", desc: "Pioche 2 cartes immédiatement." },
+    EXTRA_TURN: { icon: "🔁", badge: "Rejoue", desc: "Tu rejoues immédiatement après ce tour (sans passer la main)." },
+    PROTECTION: { icon: "🔰", badge: "Anti-gorgée", desc: "Cible 1 joueur (toi inclus) : protégé contre la prochaine gorgée jusqu'à son prochain tour." },
+    GIFT: { icon: "🎁", badge: "+2 pioche", desc: "Cible 1 joueur : il pioche 2 cartes." },
+    ALLIANCE: { icon: "🤝", badge: "Pacte", desc: "Cible 1 joueur : alliance mutuelle. Les effets ciblés entre alliés sont bloqués jusqu'au prochain tour de chacun." },
+    PLUS2: { icon: "➕", badge: "+2 malus", desc: "Cible 1 joueur : il boit 2 🍺. Contrable (Miroir, Protection, Retour de Flamme). Bouclier passif possible." },
+    PLUS3: { icon: "➕", badge: "+3 malus", desc: "Cible 1 joueur : il boit 3 🍺. Contrable (Miroir, Protection, Retour de Flamme)." },
+    PLUS5: { icon: "➕", badge: "+5 malus", desc: "Cible 1 joueur : il boit 5 🍺. Contrable (Miroir, Protection, Retour de Flamme)." },
+    DOUBLE_PENALTY: { icon: "⏳", badge: "Différé", desc: "Cible 1 joueur : boit 2 🍺 maintenant + 2 🍺 supplémentaires au début de son prochain tour." },
+    RELENTLESS: { icon: "🎯", badge: "Acharnement", desc: "Cible 1 joueur : boit 1 🍺 × nombre d'adversaires. Contrable." },
+    TRIBUNAL: { icon: "⚖️", badge: "4 🍺", desc: "Chaque joueur vote en cliquant sur le cercle. Le plus voté boit 4 🍺 (égalité = tirage au sort)." },
+    PUBLIC_ENEMY: { icon: "👿", badge: "Ennemi", desc: "Cible 1 joueur : Ennemi Public jusqu'à son prochain tour (+1 🍺 sur les cartes Donne +2/+3/+5 reçues)." },
+    DRINK_2: { icon: "🍺", badge: "Bois 2", desc: "Tu bois 2 🍺 toi-même." },
+    DRINK_3: { icon: "🍺", badge: "Bois 3", desc: "Tu bois 3 🍺 toi-même." },
+    DRINK_5: { icon: "🍺", badge: "Bois 5", desc: "Tu bois 5 🍺 toi-même." },
+    ALL_EXCEPT_YOU: { icon: "👥", badge: "Tous -1", desc: "Tous les autres joueurs boivent 1 🍺." },
+    LEFT: { icon: "⬅️", badge: "Gauche 3", desc: "Le joueur à ta gauche (selon le sens du jeu) boit 3 🍺." },
+    DISCARD: { icon: "🗑️", badge: "Défausse", desc: "Défausse une carte aléatoire de ta main (sauf Diable Noir et Malédiction)." },
+    SHIELD: { icon: "🛡️", badge: "Passif", desc: "Bouclier passif : absorbe automatiquement le prochain malus ou gorgée ciblée contre toi, puis disparaît." },
+    MIRROR: { icon: "🪞", badge: "Contre", desc: "Contre en main : annule une attaque et la renvoie à l'attaquant. Ou joue-la pour un miroir passif (prochain malus renvoyé)." },
+    DOUBLE_EFFECT: { icon: "⚡", badge: "×2 effet", desc: "Ta prochaine carte à gorgées (jouée ou reçue) a son effet doublé, puis l'effet expire." },
+    BOMB: { icon: "💣", badge: "5 🍺", desc: "Le prochain joueur à jouer (après toi) boit 5 🍺 au début de son tour." },
+    BACKFIRE: { icon: "🔥", badge: "Contre", desc: "Contre en main : renvoie un malus ciblé. Ou joue-la pour un retour passif (prochain malus renvoyé)." },
+    SPY: { icon: "🕵️", badge: "Espion", desc: "Cible 1 joueur : tu vois les 2 premières cartes de sa main." },
+    DETECTIVE: { icon: "🔍", badge: "Aléatoire", desc: "Cible 1 joueur : tu vois 1 carte aléatoire de sa main." },
+    XRAY: { icon: "📡", badge: "Spéciales", desc: "Cible 1 joueur : tu apprends combien de cartes spéciales il a en main." },
+    THIEF: { icon: "🥷", badge: "Vol", desc: "Cible 1 joueur : vole 1 carte aléatoire. Bloqué par alliance ou protection vol." },
+    PICKPOCKET: { icon: "🎭", badge: "Au choix", desc: "Cible 1 joueur, puis choisis précisément quelle carte voler dans sa main." },
+    MYSTERY_HAND: { icon: "🎲", badge: "Mystère", desc: "Chaque joueur donne une carte aléatoire à son voisin de droite." },
+    BLACK_MARKET: { icon: "🏴", badge: "Échange", desc: "Cible 1 joueur : échange 1 carte aléatoire entre vos deux mains." },
+    FULL_SWAP: { icon: "🔄", badge: "Mains", desc: "Cible 1 joueur : vous échangez toutes vos cartes en main." },
+    REVERSE: { icon: "↩️", badge: "Sens", desc: "Inverse le sens du jeu (horaire ↔ anti-horaire)." },
+    SKIP: { icon: "⏭️", badge: "Skip", desc: "Cible 1 joueur : il passe son prochain tour. Contrable avec Miroir ou Protection." },
+    FREEZE: { icon: "❄️", badge: "Gel", desc: "Cible 1 joueur : gelé — perd son prochain tour. Non contrable." },
+    ALL_DRAW: { icon: "📥", badge: "Tous +1", desc: "Tous les joueurs piochent 1 carte." },
+    RUSSIAN_ROULETTE: { icon: "🎰", badge: "50/50", desc: "50 % : tu bois 4 🍺. 50 % : tous les autres boivent 4 🍺 chacun." },
+    VIRUS: { icon: "🦠", badge: "Voisins", desc: "Cible 1 joueur au centre : ses voisins immédiats boivent 2 🍺 chacun." },
+    POISON_GIFT: { icon: "☠️", badge: "Empoisonné", desc: "Cible 1 joueur : tu lui donnes une carte aléatoire de ta main." },
+    PANIC: { icon: "😱", badge: "Panique", desc: "Échange aléatoire de cartes avec ton voisin (selon le sens du jeu)." },
   },
 
   meta(card) {
-    return this.ART[card.id] || { icon: "🃏", badge: card.type || "" };
+    return this.ART[card.id] || { icon: "🃏", badge: card.type || "", desc: "Carte du jeu Diable Noir." };
+  },
+
+  description(card) {
+    return this.meta(card).desc || "Carte du jeu Diable Noir.";
   },
 
   faceHtml(card) {
@@ -839,7 +944,7 @@ const CardVisuals = {
       </div>`;
   },
 
-  fillCardElement(el, card) {
+  fillCardElement(el, card, { inspect = true } = {}) {
     const typeClass = `card-type-${(card.type || "bonus").replace(/_/g, "-")}`;
     el.dataset.id = card.id;
     el.classList.add(typeClass);
@@ -848,6 +953,111 @@ const CardVisuals = {
         <img class="card-photo" src="${assetUrl(card.img)}" alt="${card.name.replace(/"/g, "&quot;")}" loading="lazy" onerror="this.remove()">
         ${this.faceHtml(card)}
       </div>`;
+    if (inspect) CardInspect.attach(el, card);
+  },
+};
+
+/** Appui long : description tant que le doigt/souris est maintenu */
+const CardInspect = {
+  HOLD_MS: 420,
+  MOVE_PX: 14,
+  _timer: null,
+  _activeEl: null,
+  _startX: 0,
+  _startY: 0,
+  _showing: false,
+  _suppressClick: false,
+
+  attach(el, card) {
+    el.addEventListener("click", (e) => {
+      if (this._suppressClick) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        this._suppressClick = false;
+      }
+    }, true);
+
+    const onDown = (x, y) => {
+      this._clearTimer();
+      this._activeEl = el;
+      this._startX = x;
+      this._startY = y;
+      this._showing = false;
+
+      el.classList.add("hold-hint");
+      this._timer = setTimeout(() => {
+        if (this._activeEl !== el) return;
+        this._showing = true;
+        this.show(card);
+        if (navigator.vibrate) navigator.vibrate(12);
+      }, this.HOLD_MS);
+    };
+
+    const onMove = (x, y) => {
+      if (this._activeEl !== el) return;
+      if (Math.hypot(x - this._startX, y - this._startY) > this.MOVE_PX) this._cancelHold(el);
+    };
+
+    const onUp = () => {
+      if (this._activeEl !== el) return;
+      if (this._showing) this._suppressClick = true;
+      this._cancelHold(el);
+      this.hide();
+    };
+
+    el.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      onDown(e.clientX, e.clientY);
+    });
+    el.addEventListener("pointermove", (e) => onMove(e.clientX, e.clientY));
+    el.addEventListener("pointerup", onUp);
+    el.addEventListener("pointercancel", onUp);
+    el.addEventListener("pointerleave", (e) => {
+      if (this._showing && this._activeEl === el) this.hide();
+      if (this._activeEl === el && e.buttons === 0) this._cancelHold(el);
+    });
+  },
+
+  _clearTimer() {
+    if (this._timer) {
+      clearTimeout(this._timer);
+      this._timer = null;
+    }
+  },
+
+  _cancelHold(el) {
+    this._clearTimer();
+    el?.classList.remove("hold-hint");
+    this._activeEl = null;
+    this._showing = false;
+  },
+
+  show(card) {
+    const overlay = document.getElementById("cardInspect");
+    const preview = document.getElementById("cardInspectPreview");
+    if (!overlay || !preview) return;
+
+    preview.innerHTML = "";
+    const big = document.createElement("div");
+    big.className = "card";
+    if (card.id === "DIABLE_NOIR" || card.id === "CURSE") big.classList.add("diable-noir");
+    CardVisuals.fillCardElement(big, card, { inspect: false });
+    preview.appendChild(big);
+
+    document.getElementById("cardInspectTitle").textContent = card.name;
+    document.getElementById("cardInspectDesc").textContent = CardVisuals.description(card);
+    overlay.classList.remove("hidden");
+    overlay.setAttribute("aria-hidden", "false");
+  },
+
+  hide() {
+    const overlay = document.getElementById("cardInspect");
+    if (!overlay) return;
+    overlay.classList.add("hidden");
+    overlay.setAttribute("aria-hidden", "true");
+    document.querySelectorAll(".card.hold-hint").forEach(el => el.classList.remove("hold-hint"));
+    this._showing = false;
+    this._activeEl = null;
   },
 };
 
