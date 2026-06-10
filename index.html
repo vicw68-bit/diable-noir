@@ -5,29 +5,76 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>😈 Diable Noir - Jeu de Cartes</title>
   <style>
+    :root {
+      --accent: #ff3333;
+      --accent-glow: rgba(255, 51, 51, 0.45);
+      --cyan: #00ffcc;
+      --bg: #0a0a0a;
+      --panel: #141414;
+      --hand-h: 150px;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      background: #0f0f0f;
+      background: var(--bg);
+      background-image: radial-gradient(ellipse at top, #1a0808 0%, var(--bg) 55%);
       color: white;
-      font-family: 'Arial', sans-serif;
-      text-align: center;
+      font-family: 'Segoe UI', system-ui, Arial, sans-serif;
       min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
+    }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 300;
+      display: flex;
       align-items: center;
-      justify-content: center;
-      padding-bottom: 160px;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(10, 10, 10, 0.92);
+      border-bottom: 1px solid #2a2a2a;
+      backdrop-filter: blur(8px);
     }
 
-    h1 {
-      color: #ff3333;
-      font-size: 3em;
-      margin-bottom: 20px;
-      text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+    .app-title {
+      color: var(--accent);
+      font-size: clamp(1.1rem, 4vw, 1.6rem);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-shadow: 0 0 12px var(--accent-glow);
     }
 
-    .screen { width: 100%; max-width: 1200px; }
+    .app-subtitle {
+      font-size: 0.75rem;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    .quit-btn {
+      background: #333;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      border-radius: 8px;
+    }
+
+    .quit-btn:hover:not(:disabled) { background: #555; transform: none; }
+
+    .app-main {
+      flex: 1;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 12px 16px calc(var(--hand-h) + 24px);
+    }
+
+    .screen { width: 100%; }
     .screen.hidden { display: none; }
 
     #login {
@@ -35,6 +82,7 @@
       flex-direction: column;
       align-items: center;
       gap: 20px;
+      padding-top: 10vh;
     }
 
     .login-container {
@@ -42,288 +90,324 @@
       gap: 10px;
       flex-wrap: wrap;
       justify-content: center;
+      width: 100%;
+      max-width: 420px;
     }
 
     input {
-      padding: 12px 15px;
-      border: 2px solid #ff3333;
-      border-radius: 5px;
-      background: #1a1a1a;
+      flex: 1;
+      min-width: 160px;
+      padding: 14px 16px;
+      border: 2px solid var(--accent);
+      border-radius: 10px;
+      background: var(--panel);
       color: white;
       font-size: 1em;
-      min-width: 200px;
     }
 
     input:focus {
       outline: none;
-      box-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+      box-shadow: 0 0 12px var(--accent-glow);
     }
 
     button {
       padding: 12px 20px;
-      background: #ff3333;
+      background: var(--accent);
       border: none;
       color: white;
-      border-radius: 5px;
+      border-radius: 10px;
       cursor: pointer;
-      font-weight: bold;
-      font-size: 1em;
-      transition: all 0.2s;
+      font-weight: 700;
+      font-size: 0.95em;
+      transition: background 0.15s, transform 0.15s;
     }
 
     button:hover:not(:disabled) {
       background: #ff5555;
-      transform: scale(1.05);
+      transform: translateY(-1px);
     }
 
     button:disabled { opacity: 0.5; cursor: not-allowed; }
     button.hidden { display: none; }
 
-    .game-container { width: 100%; padding: 20px; }
+    .game-container { width: 100%; }
 
     .top-section {
       display: flex;
       gap: 10px;
       justify-content: center;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
       flex-wrap: wrap;
     }
 
-    #resetBtn { background: #444; }
-    #resetBtn:hover { background: #666; }
-    #startBtn { background: #00aa00; }
-    #startBtn:hover { background: #00dd00; }
+    #startBtn { background: #0a8a0a; }
+    #startBtn:hover { background: #0bb50b; }
+
+    .status-bar {
+      background: var(--panel);
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
 
     .center-info {
-      font-size: 1.5em;
-      color: #00ffcc;
-      margin: 20px 0;
-      min-height: 30px;
+      font-size: clamp(1rem, 3.5vw, 1.35rem);
+      color: var(--cyan);
+      font-weight: 700;
+      min-height: 1.5em;
     }
 
     .message {
-      color: #00ffcc;
-      margin: 10px 0;
-      font-size: 0.95em;
-      min-height: 20px;
+      color: #9fd;
+      margin-top: 8px;
+      font-size: 0.9em;
+      min-height: 1.2em;
       word-wrap: break-word;
       white-space: pre-wrap;
+      line-height: 1.45;
+      max-height: 120px;
+      overflow-y: auto;
     }
 
     .circle {
       position: relative;
-      width: min(400px, 90vw);
-      height: min(400px, 90vw);
-      margin: 30px auto;
-      border: 2px solid #ff3333;
+      width: min(420px, 92vw);
+      height: min(420px, 92vw);
+      margin: 8px auto 0;
+      border: 2px solid var(--accent);
       border-radius: 50%;
+      box-shadow: 0 0 30px var(--accent-glow), inset 0 0 40px rgba(0,0,0,0.5);
     }
 
     .player {
       position: absolute;
-      background: linear-gradient(135deg, #222, #333);
-      padding: 12px;
+      background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
+      padding: 10px 12px;
       border-radius: 10px;
-      border: 2px solid #ff3333;
+      border: 2px solid var(--accent);
       cursor: pointer;
-      transition: all 0.2s;
-      min-width: 100px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      min-width: 88px;
+      max-width: 120px;
       text-align: center;
       transform: translate(-50%, -50%);
+      font-size: 0.82rem;
     }
 
     .player:hover {
-      transform: translate(-50%, -50%) scale(1.1);
-      background: linear-gradient(135deg, #333, #444);
-      box-shadow: 0 0 15px rgba(255, 51, 51, 0.7);
+      transform: translate(-50%, -50%) scale(1.06);
+      box-shadow: 0 0 14px var(--accent-glow);
     }
 
     .player.selected {
-      background: linear-gradient(135deg, #ff3333, #ff5555);
-      box-shadow: 0 0 20px rgba(255, 51, 51, 0.9);
+      background: linear-gradient(145deg, #ff3333, #cc2222);
+      box-shadow: 0 0 18px var(--accent-glow);
     }
 
-    .player.skipped {
-      opacity: 0.5;
-      border-color: #ffaa00;
-    }
-
+    .player.skipped { opacity: 0.55; border-color: #ffaa00; }
     .player.frozen {
-      opacity: 0.6;
+      opacity: 0.85;
       border-color: #00ccff;
-      background: linear-gradient(135deg, #1a3a4a, #1a4a5a);
+      background: linear-gradient(145deg, #1a3a4a, #1a4a5a);
+    }
+    .player.protected { border-color: #00ff88; }
+    .player.enemy { border-color: #ff00ff; }
+
+    .player-name { font-weight: 700; font-size: 0.9em; }
+    .player-badges { font-size: 1em; margin: 4px 0; letter-spacing: 1px; min-height: 1.3em; }
+    .player-status { font-size: 0.75em; color: #999; }
+
+    /* Bandeau d'action (non bloquant) */
+    .action-banner {
+      position: fixed;
+      top: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 250;
+      width: min(520px, 94vw);
+      background: rgba(20, 30, 40, 0.96);
+      border: 2px solid var(--cyan);
+      border-radius: 12px;
+      padding: 12px 16px;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
     }
 
-    .player.enemy {
-      border-color: #ff00ff;
-      box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+    .action-banner.hidden { display: none; }
+    .action-banner h3 { color: var(--cyan); font-size: 1rem; margin-bottom: 4px; }
+    .action-banner p { color: #ccc; font-size: 0.88rem; }
+
+    /* Panneau réaction / pickpocket — AU-DESSUS de la main, cliquable */
+    .floating-panel {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: var(--hand-h);
+      z-index: 280;
+      background: linear-gradient(to top, rgba(10,10,10,0.98), rgba(20,10,10,0.95));
+      border-top: 2px solid var(--accent);
+      padding: 12px 16px 14px;
+      text-align: center;
     }
 
-    .player-name { font-weight: bold; color: white; }
+    .floating-panel.hidden { display: none; }
 
-    .player-status {
-      font-size: 0.8em;
-      color: #aaa;
-      margin-top: 5px;
+    .floating-panel h3 {
+      color: #ff6666;
+      font-size: 1rem;
+      margin-bottom: 6px;
     }
 
-    .player-status.protected { color: #00ff00; }
-    .player-status.frozen { color: #00ccff; }
-
-    .player-badges {
-      font-size: 1.1em;
-      margin-top: 6px;
-      letter-spacing: 2px;
-      min-height: 1.4em;
+    .floating-panel p {
+      color: #bbb;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+      line-height: 1.4;
     }
+
+    .panel-cards {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 10px 0;
+    }
+
+    .panel-pass {
+      margin-top: 8px;
+      background: #444;
+      font-size: 0.85rem;
+      padding: 10px 18px;
+    }
+
+    .panel-pass:hover { background: #666; transform: none; }
 
     .hand {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(15, 15, 15, 0.95);
-      border-top: 2px solid #ff3333;
-      padding: 15px;
+      height: var(--hand-h);
+      background: rgba(8, 8, 8, 0.97);
+      border-top: 2px solid var(--accent);
+      padding: 10px 12px;
       display: flex;
       justify-content: center;
-      align-items: flex-end;
-      gap: 10px;
-      flex-wrap: wrap;
-      max-height: 150px;
-      overflow-y: auto;
-      z-index: 10;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      z-index: 200;
+      -webkit-overflow-scrolling: touch;
     }
 
+    .hand-label {
+      position: fixed;
+      bottom: var(--hand-h);
+      left: 0;
+      right: 0;
+      z-index: 199;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #666;
+      padding: 2px;
+      background: rgba(0,0,0,0.6);
+    }
+
+    .hand-label.hidden { display: none; }
+
     .card {
-      width: 80px;
-      height: 120px;
+      width: 72px;
+      height: 108px;
       cursor: pointer;
-      position: relative;
-      transition: all 0.2s;
       flex-shrink: 0;
+      transition: transform 0.15s;
     }
 
     .card img {
       width: 100%;
       height: 100%;
       border-radius: 8px;
-      border: 2px solid #ff3333;
+      border: 2px solid var(--accent);
       object-fit: cover;
+      display: block;
     }
 
-    .card:hover:not(.disabled) {
-      transform: translateY(-15px) scale(1.1);
-      filter: drop-shadow(0 0 10px rgba(255, 51, 51, 0.7));
-    }
+    .card:hover:not(.disabled) { transform: translateY(-10px) scale(1.05); }
 
     .card.diable-noir img,
     .card.curse-card img {
       filter: brightness(0.7) saturate(2);
     }
 
-    .card.disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-
-    .overlay.hidden { display: none; }
-
-    .modal {
-      background: #1a1a1a;
-      border: 2px solid #ff3333;
-      border-radius: 12px;
-      padding: 24px;
-      max-width: 90vw;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-
-    .modal h2 {
-      color: #ff3333;
-      margin-bottom: 16px;
-    }
-
-    .modal-cards {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 12px;
-    }
-
-    .modal .card { width: 70px; height: 105px; }
+    .card.disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
 
     .card.counter-pick {
-      outline: 3px solid #00ffcc;
-      animation: pulse-counter 1s infinite;
+      outline: 3px solid var(--cyan);
+      animation: pulse-counter 1.2s infinite;
     }
 
     @keyframes pulse-counter {
-      0%, 100% { box-shadow: 0 0 8px rgba(0, 255, 204, 0.6); }
-      50% { box-shadow: 0 0 18px rgba(0, 255, 204, 1); }
+      0%, 100% { box-shadow: 0 0 8px rgba(0, 255, 204, 0.5); }
+      50% { box-shadow: 0 0 20px rgba(0, 255, 204, 0.95); }
     }
 
-    .modal-pass {
-      margin-top: 16px;
-      background: #444;
-    }
-
-    .modal-pass:hover { background: #666; }
+    .floating-panel .card { width: 64px; height: 96px; }
 
     .firebase-status {
-      margin-top: 12px;
+      margin-top: 8px;
       padding: 10px 16px;
-      border-radius: 6px;
-      font-size: 0.9em;
-      max-width: 520px;
+      border-radius: 8px;
+      font-size: 0.88em;
+      max-width: 420px;
       line-height: 1.4;
     }
 
-    .firebase-status.ok {
-      background: rgba(0, 170, 0, 0.15);
-      border: 1px solid #00aa00;
-      color: #88ff88;
-    }
-
-    .firebase-status.error {
-      background: rgba(255, 51, 51, 0.15);
-      border: 1px solid #ff3333;
-      color: #ffaaaa;
-      text-align: left;
-    }
-
-    .firebase-status.loading {
-      background: rgba(255, 170, 0, 0.15);
-      border: 1px solid #ffaa00;
-      color: #ffdd88;
-    }
+    .firebase-status.ok { background: rgba(0,170,0,0.12); border: 1px solid #0a0; color: #8f8; }
+    .firebase-status.error { background: rgba(255,51,51,0.12); border: 1px solid var(--accent); color: #faa; text-align: left; }
+    .firebase-status.loading { background: rgba(255,170,0,0.12); border: 1px solid #fa0; color: #fd8; }
 
     @media (max-width: 768px) {
-      h1 { font-size: 2em; }
-      .player { min-width: 80px; padding: 8px; font-size: 0.85em; }
-      .card { width: 60px; height: 90px; }
-      .hand { max-height: 120px; }
+      :root { --hand-h: 130px; }
+      .player { min-width: 72px; padding: 6px 8px; font-size: 0.75rem; }
+      .card { width: 58px; height: 87px; }
+      .floating-panel .card { width: 56px; height: 84px; }
+      .app-main { padding-bottom: calc(var(--hand-h) + 16px); }
+      .action-banner { top: 52px; font-size: 0.9rem; }
     }
+
+    @media (min-width: 900px) {
+      :root { --hand-h: 165px; }
+      .card { width: 80px; height: 120px; }
+      .circle { width: 440px; height: 440px; }
+    }
+
+    body.panel-open .app-main {
+      padding-bottom: calc(var(--hand-h) + 200px);
+    }
+
+    body.panel-open .hand-label { display: none; }
+
+    body:not(.in-game) .hand,
+    body:not(.in-game) .hand-label,
+    body:not(.in-game) .floating-panel,
+    body:not(.in-game) .action-banner { display: none !important; }
   </style>
 </head>
 <body>
 
-<h1>😈 DIABLE NOIR</h1>
-<p style="margin-bottom:16px;color:#888;">
-  <a href="https://vicw68-bit.github.io/diable-noir/" style="color:#00ffcc;">Jouer en ligne</a>
-  · Multijoueur via Firebase
-</p>
+<header class="app-header">
+  <div>
+    <div class="app-title">😈 DIABLE NOIR</div>
+    <div class="app-subtitle">Multijoueur en ligne</div>
+  </div>
+  <div class="header-actions">
+    <button id="quitBtn" class="quit-btn hidden" onclick="gameController.quitAndReset()" title="Quitter et nouvelle partie">🚪 Quitter</button>
+  </div>
+</header>
+
+<main class="app-main">
 
 <div id="login" class="screen">
   <div class="login-container">
@@ -336,24 +420,38 @@
 <div id="game" class="screen hidden">
   <div class="game-container">
     <div class="top-section">
-      <button id="resetBtn" class="hidden" onclick="gameController.reset()">🔄 Recommencer</button>
-      <button id="startBtn" class="hidden" onclick="gameController.start()">Démarrer</button>
+      <button id="startBtn" class="hidden" onclick="gameController.start()">▶ Démarrer la partie</button>
     </div>
-    <div id="center" class="center-info">En attente...</div>
-    <div id="message" class="message"></div>
+    <div class="status-bar">
+      <div id="center" class="center-info">En attente...</div>
+      <div id="message" class="message"></div>
+    </div>
     <div id="circle" class="circle"></div>
-    <div id="hand" class="hand"></div>
   </div>
 </div>
 
-<div id="overlay" class="overlay hidden">
-  <div class="modal">
-    <h2 id="modalTitle"></h2>
-    <p id="modalText"></p>
-    <div id="modalCards" class="modal-cards"></div>
-    <button id="modalPass" class="hidden modal-pass" onclick="gameController.declineReaction()">Passer (subir l'effet)</button>
-  </div>
+</main>
+
+<div id="actionBanner" class="action-banner hidden">
+  <h3 id="bannerTitle"></h3>
+  <p id="bannerText"></p>
 </div>
+
+<div id="reactionPanel" class="floating-panel hidden">
+  <h3 id="reactionTitle">⚔️ Tu es visé !</h3>
+  <p id="reactionText"></p>
+  <div id="reactionCards" class="panel-cards"></div>
+  <button class="panel-pass" onclick="gameController.declineReaction()">Passer (subir l'effet)</button>
+</div>
+
+<div id="pickpocketPanel" class="floating-panel hidden">
+  <h3>🥷 Pickpocket — choisis une carte</h3>
+  <p id="pickpocketText"></p>
+  <div id="pickpocketCards" class="panel-cards"></div>
+</div>
+
+<div id="handLabel" class="hand-label hidden">Ta main</div>
+<div id="hand" class="hand"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -1184,8 +1282,11 @@ class GameController {
         return this.roomRef().child(`players/${this.playerId}`).set(defaultPlayer(pseudo));
       })
       .then(() => {
+        document.body.classList.add("in-game");
         document.getElementById("login").classList.add("hidden");
         document.getElementById("game").classList.remove("hidden");
+        document.getElementById("quitBtn").classList.remove("hidden");
+        document.getElementById("handLabel").classList.remove("hidden");
         this.listenGame();
       })
       .catch((err) => {
@@ -1658,21 +1759,19 @@ class GameController {
     if (!game.started) {
       center.textContent = `⏳ En attente... (${order.length} joueur${order.length > 1 ? "s" : ""})`;
       document.getElementById("startBtn").classList.toggle("hidden", this.playerId !== order[0]);
-      document.getElementById("resetBtn").classList.add("hidden");
     } else {
       const currentId = order[game.currentPlayerIndex];
       const pr = shared.pendingReaction;
       if (pr?.targetId === this.playerId) {
-        center.textContent = "⚔️ TU ES VISÉ! Choisis un contre (Miroir / Protection / Retour de Flamme)";
+        center.textContent = "⚔️ Choisis ta carte contre ci-dessous";
       } else if (pr) {
-        center.textContent = `⏳ ${players[pr.targetId]?.pseudo} doit choisir un contre…`;
+        center.textContent = `⏳ ${players[pr.targetId]?.pseudo} choisit un contre…`;
       } else {
         center.textContent = currentId === this.playerId
-          ? "🎮 C'est TON TOUR!"
+          ? "🎮 C'est TON TOUR !"
           : `🎮 Tour de ${players[currentId]?.pseudo}`;
       }
       document.getElementById("startBtn").classList.add("hidden");
-      document.getElementById("resetBtn").classList.remove("hidden");
     }
 
     document.getElementById("message").textContent = game.message || "";
@@ -1745,77 +1844,99 @@ class GameController {
       handEl.appendChild(el);
     });
 
-    this.renderModal(game, shared);
+    this.renderActionUI(game, shared, myHand, counterIndices, isTargeted);
   }
 
-  renderModal(game, shared) {
-    const overlay = document.getElementById("overlay");
-    const title = document.getElementById("modalTitle");
-    const text = document.getElementById("modalText");
-    const cards = document.getElementById("modalCards");
-    const passBtn = document.getElementById("modalPass");
-    cards.innerHTML = "";
-    passBtn.classList.add("hidden");
+  renderActionUI(game, shared, myHand, counterIndices, isTargeted) {
+    const banner = document.getElementById("actionBanner");
+    const reactionPanel = document.getElementById("reactionPanel");
+    const pickpocketPanel = document.getElementById("pickpocketPanel");
+    const reactionCards = document.getElementById("reactionCards");
+    const pickpocketCards = document.getElementById("pickpocketCards");
 
-    if (shared.pendingReaction?.targetId === this.playerId) {
+    banner.classList.add("hidden");
+    reactionPanel.classList.add("hidden");
+    pickpocketPanel.classList.add("hidden");
+    reactionCards.innerHTML = "";
+    pickpocketCards.innerHTML = "";
+
+    let panelOpen = false;
+
+    if (isTargeted && shared.pendingReaction) {
+      panelOpen = true;
       const pr = shared.pendingReaction;
       const attack = pr.attack;
-      overlay.classList.remove("hidden");
-      title.textContent = "⚔️ Tu es visé!";
-      let desc = `${game.players[pr.casterId].pseudo} joue ${attack.cardName} contre toi.`;
-      if (attack.kind === "drinks") desc += ` (${attack.amount} 🍺)`;
-      if (attack.kind === "skip") desc += " (passe ton tour)";
-      text.textContent = desc + " Clique une carte contre surlignée (Miroir, Protection, Retour de Flamme) ou passe.";
-      passBtn.classList.remove("hidden");
-      return;
+      reactionPanel.classList.remove("hidden");
+      document.getElementById("reactionText").textContent =
+        `${game.players[pr.casterId].pseudo} joue ${attack.cardName} contre toi` +
+        (attack.kind === "drinks" ? ` (${attack.amount} 🍺)` : "") +
+        (attack.kind === "skip" ? " — passe ton tour" : "") +
+        ". Clique une carte :";
+
+      counterIndices.forEach((idx) => {
+        const card = myHand[idx];
+        const el = document.createElement("div");
+        el.className = "card counter-pick";
+        el.innerHTML = `<img src="${assetUrl(card.img)}" alt="${card.name}">`;
+        el.onclick = () => this.playReaction(idx);
+        reactionCards.appendChild(el);
+      });
     }
 
     if (shared.tribunal && !shared.tribunal.votes[this.playerId]) {
-      overlay.classList.remove("hidden");
-      title.textContent = "⚖️ Tribunal";
-      text.textContent = "Clique sur un joueur dans le cercle pour voter.";
-      return;
+      banner.classList.remove("hidden");
+      document.getElementById("bannerTitle").textContent = "⚖️ Tribunal";
+      document.getElementById("bannerText").textContent = "Clique sur un joueur dans le cercle pour voter.";
     }
 
     if (shared.doubleDistribution?.casterId === this.playerId) {
-      overlay.classList.remove("hidden");
-      title.textContent = "Double Distribution";
+      banner.classList.remove("hidden");
       const dd = shared.doubleDistribution;
-      text.textContent = `Choisis ${dd.needed - dd.targets.length} joueur(s) restant(s) dans le cercle.`;
-      return;
+      document.getElementById("bannerTitle").textContent = "Double Distribution";
+      document.getElementById("bannerText").textContent =
+        `Choisis ${dd.needed - dd.targets.length} joueur(s) dans le cercle.`;
     }
 
     if (shared.pickpocket?.casterId === this.playerId) {
-      overlay.classList.remove("hidden");
-      title.textContent = "🥷 Pickpocket";
-      text.textContent = "Choisis une carte à voler:";
-      const targetHand = game.players[shared.pickpocket.targetId].hand;
-      targetHand.forEach((card, idx) => {
+      panelOpen = true;
+      pickpocketPanel.classList.remove("hidden");
+      const target = game.players[shared.pickpocket.targetId];
+      document.getElementById("pickpocketText").textContent =
+        `Main de ${target.pseudo} — choisis une carte à voler :`;
+      target.hand.forEach((card, idx) => {
         const el = document.createElement("div");
         el.className = "card";
         el.innerHTML = `<img src="${assetUrl(card.img)}" alt="${card.name}">`;
-        el.onclick = () => {
-          overlay.classList.add("hidden");
-          this.pickpocketSteal(idx);
-        };
-        cards.appendChild(el);
+        el.onclick = () => this.pickpocketSteal(idx);
+        pickpocketCards.appendChild(el);
       });
-      return;
     }
 
-    overlay.classList.add("hidden");
+    document.body.classList.toggle("panel-open", panelOpen);
+  }
+
+  quitAndReset() {
+    if (!confirm("Quitter la partie ?\n\nLa salle Firebase sera supprimée. Tu devras re-entrer ton pseudo.")) return;
+    if (this.roomRef) {
+      this.roomRef().off();
+      this.roomRef().remove().finally(() => location.reload()).catch(() => location.reload());
+    } else {
+      location.reload();
+    }
   }
 
   reset() {
-    if (confirm("Recommencer la partie ?")) {
-      this.roomRef().remove().then(() => location.reload());
-    }
+    this.quitAndReset();
   }
 }
 
 const gameController = db
   ? new GameController()
-  : { join() { alert(FirebaseSetup.errorMessage || "Firebase non configuré."); } };
+  : {
+      join() { alert(FirebaseSetup.errorMessage || "Firebase non configuré."); },
+      quitAndReset() { location.reload(); },
+      declineReaction() {},
+    };
 </script>
 </body>
 </html>
