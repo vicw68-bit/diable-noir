@@ -5,11 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>😈 Diable Noir - Jeu de Cartes</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       background: #0f0f0f;
@@ -18,8 +14,10 @@
       text-align: center;
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      padding-bottom: 160px;
     }
 
     h1 {
@@ -29,17 +27,9 @@
       text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
     }
 
-    .screen {
-      width: 100%;
-      max-width: 1200px;
-      transition: opacity 0.3s;
-    }
+    .screen { width: 100%; max-width: 1200px; }
+    .screen.hidden { display: none; }
 
-    .screen.hidden {
-      display: none;
-    }
-
-    /* LOGIN */
     #login {
       display: flex;
       flex-direction: column;
@@ -86,20 +76,10 @@
       transform: scale(1.05);
     }
 
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.hidden { display: none; }
 
-    button.hidden {
-      display: none;
-    }
-
-    /* GAME */
-    .game-container {
-      width: 100%;
-      padding: 20px;
-    }
+    .game-container { width: 100%; padding: 20px; }
 
     .top-section {
       display: flex;
@@ -109,21 +89,10 @@
       flex-wrap: wrap;
     }
 
-    #resetBtn {
-      background: #444;
-    }
-
-    #resetBtn:hover {
-      background: #666;
-    }
-
-    #startBtn {
-      background: #00aa00;
-    }
-
-    #startBtn:hover {
-      background: #00dd00;
-    }
+    #resetBtn { background: #444; }
+    #resetBtn:hover { background: #666; }
+    #startBtn { background: #00aa00; }
+    #startBtn:hover { background: #00dd00; }
 
     .center-info {
       font-size: 1.5em;
@@ -138,13 +107,13 @@
       font-size: 0.95em;
       min-height: 20px;
       word-wrap: break-word;
+      white-space: pre-wrap;
     }
 
-    /* CERCLE DE JOUEURS */
     .circle {
       position: relative;
-      width: 400px;
-      height: 400px;
+      width: min(400px, 90vw);
+      height: min(400px, 90vw);
       margin: 30px auto;
       border: 2px solid #ff3333;
       border-radius: 50%;
@@ -160,10 +129,11 @@
       transition: all 0.2s;
       min-width: 100px;
       text-align: center;
+      transform: translate(-50%, -50%);
     }
 
     .player:hover {
-      transform: scale(1.1);
+      transform: translate(-50%, -50%) scale(1.1);
       background: linear-gradient(135deg, #333, #444);
       box-shadow: 0 0 15px rgba(255, 51, 51, 0.7);
     }
@@ -176,7 +146,6 @@
     .player.skipped {
       opacity: 0.5;
       border-color: #ffaa00;
-      background: linear-gradient(135deg, #333, #222);
     }
 
     .player.frozen {
@@ -185,10 +154,12 @@
       background: linear-gradient(135deg, #1a3a4a, #1a4a5a);
     }
 
-    .player-name {
-      font-weight: bold;
-      color: white;
+    .player.enemy {
+      border-color: #ff00ff;
+      box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
     }
+
+    .player-name { font-weight: bold; color: white; }
 
     .player-status {
       font-size: 0.8em;
@@ -196,15 +167,9 @@
       margin-top: 5px;
     }
 
-    .player-status.protected {
-      color: #00ff00;
-    }
+    .player-status.protected { color: #00ff00; }
+    .player-status.frozen { color: #00ccff; }
 
-    .player-status.frozen {
-      color: #00ccff;
-    }
-
-    /* MAIN */
     .hand {
       position: fixed;
       bottom: 0;
@@ -220,6 +185,7 @@
       flex-wrap: wrap;
       max-height: 150px;
       overflow-y: auto;
+      z-index: 10;
     }
 
     .card {
@@ -239,7 +205,7 @@
       object-fit: cover;
     }
 
-    .card:hover {
+    .card:hover:not(.disabled) {
       transform: translateY(-15px) scale(1.1);
       filter: drop-shadow(0 0 10px rgba(255, 51, 51, 0.7));
     }
@@ -253,43 +219,93 @@
       cursor: not-allowed;
     }
 
-    /* RESPONSIVE */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .overlay.hidden { display: none; }
+
+    .modal {
+      background: #1a1a1a;
+      border: 2px solid #ff3333;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 90vw;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal h2 {
+      color: #ff3333;
+      margin-bottom: 16px;
+    }
+
+    .modal-cards {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .modal .card { width: 70px; height: 105px; }
+
+    .firebase-status {
+      margin-top: 12px;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 0.9em;
+      max-width: 520px;
+      line-height: 1.4;
+    }
+
+    .firebase-status.ok {
+      background: rgba(0, 170, 0, 0.15);
+      border: 1px solid #00aa00;
+      color: #88ff88;
+    }
+
+    .firebase-status.error {
+      background: rgba(255, 51, 51, 0.15);
+      border: 1px solid #ff3333;
+      color: #ffaaaa;
+      text-align: left;
+    }
+
+    .firebase-status.loading {
+      background: rgba(255, 170, 0, 0.15);
+      border: 1px solid #ffaa00;
+      color: #ffdd88;
+    }
+
     @media (max-width: 768px) {
-      h1 {
-        font-size: 2em;
-      }
-
-      .circle {
-        width: 300px;
-        height: 300px;
-      }
-
-      .player {
-        min-width: 80px;
-        padding: 8px;
-        font-size: 0.85em;
-      }
-
-      .card {
-        width: 60px;
-        height: 90px;
-      }
-
-      .hand {
-        max-height: 120px;
-      }
+      h1 { font-size: 2em; }
+      .player { min-width: 80px; padding: 8px; font-size: 0.85em; }
+      .card { width: 60px; height: 90px; }
+      .hand { max-height: 120px; }
     }
   </style>
 </head>
 <body>
 
 <h1>😈 DIABLE NOIR</h1>
+<p style="margin-bottom:16px;color:#888;">
+  <a href="https://vicw68-bit.github.io/diable-noir/" style="color:#00ffcc;">Jouer en ligne</a>
+  · Multijoueur via Firebase
+</p>
 
 <div id="login" class="screen">
   <div class="login-container">
     <input id="pseudo" placeholder="Pseudo" autocomplete="off">
-    <button onclick="gameController.join()">Entrer</button>
+    <button id="joinBtn" onclick="gameController.join()">Entrer</button>
   </div>
+  <div id="firebaseStatus" class="firebase-status loading">Connexion à Firebase…</div>
 </div>
 
 <div id="game" class="screen hidden">
@@ -298,7 +314,6 @@
       <button id="resetBtn" class="hidden" onclick="gameController.reset()">🔄 Recommencer</button>
       <button id="startBtn" class="hidden" onclick="gameController.start()">Démarrer</button>
     </div>
-
     <div id="center" class="center-info">En attente...</div>
     <div id="message" class="message"></div>
     <div id="circle" class="circle"></div>
@@ -306,34 +321,163 @@
   </div>
 </div>
 
-<!-- Firebase -->
+<div id="overlay" class="overlay hidden">
+  <div class="modal">
+    <h2 id="modalTitle"></h2>
+    <p id="modalText"></p>
+    <div id="modalCards" class="modal-cards"></div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
 <script>
-// ============================================
-// CONFIG FIREBASE
-// ============================================
-const firebaseConfig = {
-  apiKey: "AIzaSy...",
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyA2ThtxpQtHt30ZhXTTYt-TLHu31LzEe5s",
   authDomain: "diable-noir.firebaseapp.com",
   databaseURL: "https://diable-noir-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "diable-noir",
+  storageBucket: "diable-noir.firebasestorage.app",
+  messagingSenderId: "424435202945",
+  appId: "1:424435202945:web:3163b6ca50f09c462bc680",
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+function assetUrl(file) {
+  return new URL(`assets/${file}`, window.location.href).href;
+}
 
-// ============================================
-// CLASSE DECK
-// ============================================
+const FirebaseSetup = (() => {
+  let db = null;
+  let ready = false;
+  let errorMessage = "";
+
+  function setStatus(type, html) {
+    const el = document.getElementById("firebaseStatus");
+    if (!el) return;
+    el.className = `firebase-status ${type}`;
+    el.innerHTML = html;
+  }
+
+  function validateConfig(config) {
+    if (!config?.apiKey || config.apiKey === "VOTRE_API_KEY") {
+      return "Configuration Firebase invalide.";
+    }
+    if (!config.databaseURL?.startsWith("https://")) {
+      return "databaseURL Firebase invalide.";
+    }
+    return "";
+  }
+
+  function formatError(err) {
+    const code = err?.code || "";
+    const msg = err?.message || String(err);
+    if (code === "PERMISSION_DENIED") {
+      return "Accès refusé par Firebase.\n\n→ Console Firebase → Realtime Database → Règles\n→ Autorisez read/write pour tester:\n\n{\n  \"rules\": {\n    \".read\": true,\n    \".write\": true\n  }\n}";
+    }
+    if (msg.includes("API key not valid") || msg.includes("INVALID_API_KEY")) {
+      return "Clé API refusée. Firebase Console → Paramètres → Domaines autorisés : ajoutez vicw68-bit.github.io";
+    }
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+      return "Impossible de joindre Firebase (réseau ou pare-feu).";
+    }
+    return msg;
+  }
+
+  function init() {
+    const configError = validateConfig(typeof FIREBASE_CONFIG !== "undefined" ? FIREBASE_CONFIG : null);
+    if (configError) {
+      errorMessage = configError;
+      setStatus("error", configError.replace(/\n/g, "<br>"));
+      return null;
+    }
+
+    try {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.database();
+    } catch (err) {
+      errorMessage = formatError(err);
+      setStatus("error", errorMessage.replace(/\n/g, "<br>"));
+      return null;
+    }
+
+    db.ref(".info/connected").on("value", (snap) => {
+      if (snap.val() === true) {
+        ready = true;
+        setStatus("ok", "✅ Connecté — entrez un pseudo pour rejoindre la partie");
+      } else {
+        setStatus("loading", "Connexion à Firebase…");
+      }
+    });
+
+    db.ref("_ping").set({ t: Date.now() })
+      .then(() => db.ref("_ping").remove())
+      .catch((err) => {
+        ready = false;
+        errorMessage = formatError(err);
+        setStatus("error", errorMessage.replace(/\n/g, "<br>"));
+      });
+
+    return db;
+  }
+
+  return {
+    init,
+    get db() { return db; },
+    get ready() { return ready; },
+    get errorMessage() { return errorMessage; },
+    formatError,
+    setStatus,
+  };
+})();
+
+const db = FirebaseSetup.init();
+
+function shuffle(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function defaultSharedState() {
+  return {
+    extraTurn: false,
+    doubleNextEffect: false,
+    bombActive: false,
+    doubleDistribution: null,
+    tribunal: null,
+    pickpocket: null,
+    finished: false,
+    loserId: null,
+  };
+}
+
+function defaultPlayer(pseudo) {
+  return {
+    pseudo,
+    hand: [],
+    drinks: 0,
+    protection: false,
+    alliance: null,
+    shieldActive: false,
+    mirrorActive: false,
+    backfire: false,
+    cursed: false,
+    skip: false,
+    frozen: false,
+    enemyOfPublic: false,
+    delayedDrinks: 0,
+  };
+}
+
 class Deck {
   static create() {
     const deck = [];
-
-    // 😈 DIABLE NOIR (unique)
     deck.push({ id: "DIABLE_NOIR", type: "curse", name: "Diable Noir", img: "diable.png" });
 
-    // 🟢 BONUS (22 cartes)
     const bonus = [
       { id: "GIVE_2", name: "Donne 2", img: "give2.png", qty: 5 },
       { id: "GIVE_3", name: "Donne 3", img: "give3.png", qty: 4 },
@@ -343,14 +487,10 @@ class Deck {
       { id: "EXTRA_TURN", name: "Deuxième Tour", img: "extra_turn.png", qty: 2 },
       { id: "PROTECTION", name: "Protection Temporaire", img: "protection.png", qty: 1 },
       { id: "GIFT", name: "Cadeau", img: "gift.png", qty: 1 },
-      { id: "ALLIANCE", name: "Alliance", img: "alliance.png", qty: 1 }
+      { id: "ALLIANCE", name: "Alliance", img: "alliance.png", qty: 1 },
     ];
+    bonus.forEach(c => { for (let i = 0; i < c.qty; i++) deck.push({ id: c.id, type: "bonus", name: c.name, img: c.img }); });
 
-    bonus.forEach(card => {
-      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "bonus", name: card.name, img: card.img });
-    });
-
-    // 🔴 MALUS CIBLÉS (18 cartes)
     const malusTarget = [
       { id: "PLUS2", name: "Donne +2", img: "plus2.png", qty: 4 },
       { id: "PLUS3", name: "Donne +3", img: "plus3.png", qty: 4 },
@@ -358,362 +498,335 @@ class Deck {
       { id: "DOUBLE_PENALTY", name: "Double Peine", img: "double_penalty.png", qty: 2 },
       { id: "RELENTLESS", name: "Acharnement", img: "relentless.png", qty: 2 },
       { id: "TRIBUNAL", name: "Tribunal", img: "tribunal.png", qty: 2 },
-      { id: "PUBLIC_ENEMY", name: "Ennemi Public", img: "public_enemy.png", qty: 1 }
+      { id: "PUBLIC_ENEMY", name: "Ennemi Public", img: "public_enemy.png", qty: 1 },
     ];
+    malusTarget.forEach(c => { for (let i = 0; i < c.qty; i++) deck.push({ id: c.id, type: "malus_target", name: c.name, img: c.img }); });
 
-    malusTarget.forEach(card => {
-      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "malus_target", name: card.name, img: card.img });
-    });
-
-    // 🔴 MALUS GÉNÉRAL (12 cartes)
     const malusGlobal = [
       { id: "DRINK_2", name: "Bois 2", img: "drink2.png", qty: 3 },
       { id: "DRINK_3", name: "Bois 3", img: "drink3.png", qty: 3 },
       { id: "DRINK_5", name: "Bois 5", img: "drink5.png", qty: 2 },
       { id: "ALL_EXCEPT_YOU", name: "Tous Sauf Toi", img: "all_except.png", qty: 2 },
       { id: "LEFT", name: "Gauche", img: "left.png", qty: 1 },
-      { id: "DISCARD", name: "Défausse", img: "discard.png", qty: 1 }
+      { id: "DISCARD", name: "Défausse", img: "discard.png", qty: 1 },
     ];
+    malusGlobal.forEach(c => { for (let i = 0; i < c.qty; i++) deck.push({ id: c.id, type: "malus_global", name: c.name, img: c.img }); });
 
-    malusGlobal.forEach(card => {
-      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "malus_global", name: card.name, img: card.img });
-    });
-
-    // 🟣 CARTES SPÉCIALES (11 cartes)
     const special = [
       { id: "SHIELD", name: "Bouclier", img: "shield.png", qty: 3 },
       { id: "MIRROR", name: "Miroir", img: "mirror.png", qty: 3 },
       { id: "DOUBLE_EFFECT", name: "Double Effet", img: "double_effect.png", qty: 2 },
       { id: "BOMB", name: "Bombe", img: "bomb.png", qty: 1 },
-      { id: "BACKFIRE", name: "Retour de Flamme", img: "backfire.png", qty: 2 }
+      { id: "BACKFIRE", name: "Retour de Flamme", img: "backfire.png", qty: 2 },
     ];
+    special.forEach(c => { for (let i = 0; i < c.qty; i++) deck.push({ id: c.id, type: "special", name: c.name, img: c.img }); });
 
-    special.forEach(card => {
-      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "special", name: card.name, img: card.img });
-    });
-
-    // 🕵️ INFO (6 cartes)
     const info = [
       { id: "SPY", name: "Espion", img: "spy.png", qty: 2 },
       { id: "DETECTIVE", name: "Détective", img: "detective.png", qty: 2 },
-      { id: "XRAY", name: "Rayon X", img: "xray.png", qty: 2 }
+      { id: "XRAY", name: "Rayon X", img: "xray.png", qty: 2 },
     ];
+    info.forEach(c => { for (let i = 0; i < c.qty; i++) deck.push({ id: c.id, type: "info", name: c.name, img: c.img }); });
 
-    info.forEach(card => {
-      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "info", name: card.name, img: card.img });
-    });
-
-    // 🥷 VOL / ÉCHANGE (9 cartes)
     const steal = [
       { id: "THIEF", name: "Voleur", img: "thief.png", qty: 3 },
       { id: "PICKPOCKET", name: "Pickpocket", img: "pickpocket.png", qty: 2 },
       { id: "MYSTERY_HAND", name: "Main Mystère", img: "mystery_hand.png", qty: 1 },
       { id: "BLACK_MARKET", name: "Marché Noir", img: "black_market.png", qty: 2 },
-      { id: "FULL_SWAP", name: "Échange Total", img: "full_swap.png", qty: 1 }
+      { id: "FULL_SWAP", name: "Échange Total", img: "full_swap.png", qty: 1 },
     ];
+    steal.forEach(c => { for (let i = 0; i < c.qty; i++) deck.push({ id: c.id, type: "steal", name: c.name, img: c.img }); });
 
-    steal.forEach(card => {
-      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "steal", name: card.name, img: card.img });
-    });
-
-    // 🔄 UNO-LIKE (6 cartes)
     const uno = [
       { id: "REVERSE", name: "Inversion", img: "reverse.png", qty: 2 },
       { id: "SKIP", name: "Passe Ton Tour", img: "skip.png", qty: 2 },
       { id: "FREEZE", name: "Gel", img: "freeze.png", qty: 1 },
-      { id: "ALL_DRAW", name: "Tout le Monde Pioche", img: "all_draw.png", qty: 1 }
+      { id: "ALL_DRAW", name: "Tout le Monde Pioche", img: "all_draw.png", qty: 1 },
     ];
+    uno.forEach(c => { for (let i = 0; i < c.qty; i++) deck.push({ id: c.id, type: "uno", name: c.name, img: c.img }); });
 
-    uno.forEach(card => {
-      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "uno", name: card.name, img: card.img });
-    });
-
-    // 💀 CHAOS (5 cartes)
     const chaos = [
       { id: "RUSSIAN_ROULETTE", name: "Roulette Russe", img: "roulette.png", qty: 2 },
       { id: "VIRUS", name: "Virus", img: "virus.png", qty: 1 },
       { id: "CURSE", name: "Malédiction", img: "curse.png", qty: 1 },
-      { id: "POISON_GIFT", name: "Cadeau Empoisonné", img: "poison_gift.png", qty: 1 }
+      { id: "POISON_GIFT", name: "Cadeau Empoisonné", img: "poison_gift.png", qty: 1 },
+      { id: "PANIC", name: "Panique", img: "panic.png", qty: 1 },
     ];
+    chaos.forEach(c => { for (let i = 0; i < c.qty; i++) deck.push({ id: c.id, type: "chaos", name: c.name, img: c.img }); });
 
-    chaos.forEach(card => {
-      for (let i = 0; i < card.qty; i++) deck.push({ id: card.id, type: "chaos", name: card.name, img: card.img });
-    });
-
-    // Mélange
-    return deck.sort(() => Math.random() - 0.5);
+    return shuffle(deck);
   }
 }
 
-// ============================================
-// CLASSE EFFECTS - AVEC PROTECTIONS COMPLÈTES
-// ============================================
 class Effects {
+  static isDrinkEffect(cardType) {
+    return cardType === "bonus" || cardType === "malus_target" || cardType === "malus_global";
+  }
+
   static isProtected(player, cardType) {
-    // Protection Temporaire protège de TOUS les malus
-    if (player.protection) return true;
-    
-    // Alliance protège contre les malus CIBLÉS
+    if (this.isDrinkEffect(cardType) && player.protection) return true;
     if (player.alliance && (cardType === "malus_target" || cardType === "steal")) return true;
-    
     return false;
   }
 
-  static apply(game, playerId, card, targetId, gameState) {
+  static applyDrinks(game, shared, targetId, amount, sourceId, cardType, messages) {
+    if (amount <= 0) return;
+
+    let recipientId = targetId;
+    let drinkAmount = amount;
+
+    if (shared.doubleNextEffect) {
+      drinkAmount *= 2;
+      shared.doubleNextEffect = false;
+      messages.push("⚡ Double Effet actif!");
+    }
+
+    const target = game.players[recipientId];
+    const source = sourceId ? game.players[sourceId] : null;
+
+    if (cardType === "malus_target" && target.enemyOfPublic) {
+      drinkAmount += 1;
+    }
+
+    if (this.isProtected(target, cardType)) {
+      messages.push(`${target.pseudo} est protégé!`);
+      return;
+    }
+
+    if (target.shieldActive && this.isDrinkEffect(cardType)) {
+      target.shieldActive = false;
+      messages.push(`🛡️ ${target.pseudo} annule l'effet avec son Bouclier!`);
+      return;
+    }
+
+    if (target.mirrorActive && sourceId && sourceId !== recipientId && cardType === "malus_target") {
+      target.mirrorActive = false;
+      messages.push(`🪞 ${target.pseudo} renvoie l'effet à ${source.pseudo}!`);
+      recipientId = sourceId;
+    }
+
+    let victim = game.players[recipientId];
+
+    if (victim.backfire && sourceId && sourceId !== recipientId && cardType === "malus_target") {
+      victim.backfire = false;
+      messages.push(`🔥 Retour de Flamme! ${source.pseudo} subit l'effet!`);
+      recipientId = sourceId;
+      victim = game.players[recipientId];
+    }
+    if (this.isProtected(victim, cardType)) {
+      messages.push(`${victim.pseudo} est protégé!`);
+      return;
+    }
+
+    victim.drinks = (victim.drinks || 0) + drinkAmount;
+    messages.push(`${victim.pseudo} boit ${drinkAmount} 🍺`);
+  }
+
+  static drawCard(game, playerId) {
+    if (game.deck.length > 0) {
+      game.players[playerId].hand.push(game.deck.pop());
+    }
+  }
+
+  static swapRandomToRight(game) {
+    const order = game.playerOrder;
+    const picks = [];
+
+    order.forEach(id => {
+      const hand = game.players[id].hand;
+      if (hand.length > 0) {
+        const idx = Math.floor(Math.random() * hand.length);
+        picks.push({ fromId: id, idx, card: hand[idx] });
+      }
+    });
+
+    picks.sort((a, b) => b.idx - a.idx || b.fromId.localeCompare(a.fromId));
+    picks.forEach(({ fromId, idx }) => game.players[fromId].hand.splice(idx, 1));
+
+    picks.forEach(({ fromId, card }) => {
+      const pos = order.indexOf(fromId);
+      const rightId = order[(pos + 1) % order.length];
+      game.players[rightId].hand.push(card);
+    });
+  }
+
+  static apply(game, playerId, card, targetId, shared) {
     const players = game.players;
     const caster = players[playerId];
     const target = targetId ? players[targetId] : null;
-    
-    let message = `${caster.pseudo} joue ${card.name}`;
+    const messages = [`${caster.pseudo} joue ${card.name}`];
 
     switch (card.id) {
-      // 🟢 CARTES BONUS
       case "GIVE_2":
-        if (target && !this.isProtected(target, "bonus")) {
-          target.drinks = (target.drinks || 0) + 2;
-          message += ` → ${target.pseudo} boit 2 🍺`;
-        } else if (target) {
-          message += ` → ${target.pseudo} est protégé!`;
-        }
+        this.applyDrinks(game, shared, targetId, 2, playerId, "bonus", messages);
         break;
-
       case "GIVE_3":
-        if (target && !this.isProtected(target, "bonus")) {
-          target.drinks = (target.drinks || 0) + 3;
-          message += ` → ${target.pseudo} boit 3 🍺`;
-        } else if (target) {
-          message += ` → ${target.pseudo} est prot��gé!`;
-        }
+        this.applyDrinks(game, shared, targetId, 3, playerId, "bonus", messages);
         break;
-
       case "GIVE_5":
-        if (target && !this.isProtected(target, "bonus")) {
-          target.drinks = (target.drinks || 0) + 5;
-          message += ` → ${target.pseudo} boit 5 🍺`;
-        } else if (target) {
-          message += ` → ${target.pseudo} est protégé!`;
-        }
+        this.applyDrinks(game, shared, targetId, 5, playerId, "bonus", messages);
         break;
 
-      case "DOUBLE_DISTRIBUTION": {
-        message += ` → distribue 1 gorgée à deux joueurs`;
-        gameState.waitingForTargets = { card, count: 2, drinkAmount: 1 };
+      case "DOUBLE_DISTRIBUTION":
+        shared.doubleDistribution = { casterId: playerId, targets: [], needed: 2, amount: 1 };
+        messages.push("→ choisis 2 joueurs différents (1 gorgée chacun)");
         break;
-      }
 
       case "DRAW_2":
-        for (let i = 0; i < 2; i++) {
-          if (game.deck.length > 0) {
-            caster.hand.push(game.deck.pop());
-          }
-        }
-        message += ` → pioche 2 cartes`;
+        for (let i = 0; i < 2; i++) this.drawCard(game, playerId);
+        messages.push("→ pioche 2 cartes");
         break;
 
       case "EXTRA_TURN":
-        gameState.extraTurn = true;
-        message += ` → rejoue immédiatement`;
+        shared.extraTurn = true;
+        messages.push("→ rejoue immédiatement");
         break;
 
       case "PROTECTION":
         caster.protection = true;
-        message += ` → 🛡️ est protégé contre TOUS les malus jusqu'à son prochain tour`;
+        messages.push("→ 🛡️ protégé contre le prochain effet de gorgées");
         break;
 
       case "GIFT":
-        if (target) {
-          for (let i = 0; i < 2; i++) {
-            if (game.deck.length > 0) {
-              target.hand.push(game.deck.pop());
-            }
-          }
-          message += ` → ${target.pseudo} pioche 2 cartes`;
-        }
+        for (let i = 0; i < 2; i++) this.drawCard(game, targetId);
+        messages.push(`→ ${target.pseudo} pioche 2 cartes`);
         break;
 
       case "ALLIANCE":
-        if (target) {
-          caster.alliance = targetId;
-          target.alliance = playerId;
-          message += ` → 🤝 alliance entre ${caster.pseudo} et ${target.pseudo} (protection mutuelle)`;
-        }
+        Object.values(players).forEach(p => {
+          if (p.alliance === playerId || p.alliance === targetId) p.alliance = null;
+        });
+        caster.alliance = targetId;
+        target.alliance = playerId;
+        messages.push(`→ 🤝 alliance entre ${caster.pseudo} et ${target.pseudo}`);
         break;
 
-      // 🔴 MALUS CIBLÉS
       case "PLUS2":
-        if (target) {
-          if (this.isProtected(target, "malus_target")) {
-            message += ` → ${target.pseudo} est protégé!`;
-          } else {
-            target.drinks = (target.drinks || 0) + 2;
-            message += ` → ${target.pseudo} boit 2 🍺`;
-          }
-        }
+        this.applyDrinks(game, shared, targetId, 2, playerId, "malus_target", messages);
         break;
-
       case "PLUS3":
-        if (target) {
-          if (this.isProtected(target, "malus_target")) {
-            message += ` → ${target.pseudo} est protégé!`;
-          } else {
-            target.drinks = (target.drinks || 0) + 3;
-            message += ` → ${target.pseudo} boit 3 🍺`;
-          }
-        }
+        this.applyDrinks(game, shared, targetId, 3, playerId, "malus_target", messages);
         break;
-
       case "PLUS5":
-        if (target) {
-          if (this.isProtected(target, "malus_target")) {
-            message += ` → ${target.pseudo} est protégé!`;
-          } else {
-            target.drinks = (target.drinks || 0) + 5;
-            message += ` → ${target.pseudo} boit 5 🍺`;
-          }
-        }
+        this.applyDrinks(game, shared, targetId, 5, playerId, "malus_target", messages);
         break;
 
       case "DOUBLE_PENALTY":
-        if (target) {
-          if (this.isProtected(target, "malus_target")) {
-            message += ` → ${target.pseudo} est protégé!`;
-          } else {
-            target.drinks = (target.drinks || 0) + 2;
-            target.delayedDrinks = (target.delayedDrinks || 0) + 2;
-            message += ` → ${target.pseudo} boit 2 maintenant et 2 à son prochain tour`;
-          }
+        this.applyDrinks(game, shared, targetId, 2, playerId, "malus_target", messages);
+        if (!this.isProtected(target, "malus_target")) {
+          target.delayedDrinks = (target.delayedDrinks || 0) + 2;
+          messages.push(`→ +2 gorgées au prochain tour de ${target.pseudo}`);
         }
         break;
 
       case "RELENTLESS": {
-        if (target && this.isProtected(target, "malus_target")) {
-          message += ` → ${target.pseudo} est protégé!`;
-        } else if (target) {
-          const otherPlayers = Object.values(players).filter(p => p !== target && p.id !== playerId);
-          otherPlayers.forEach(p => {
-            p.drinks = (p.drinks || 0) + 1;
-          });
-          message += ` → tous les autres attaquent ${target.pseudo} (1 gorgée chacun)`;
+        if (this.isProtected(target, "malus_target")) {
+          messages.push(`→ ${target.pseudo} est protégé!`);
+        } else {
+          const attackers = Object.keys(players).filter(id => id !== targetId);
+          let total = attackers.length + (target.enemyOfPublic ? 1 : 0);
+          this.applyDrinks(game, shared, targetId, total, playerId, "malus_target", messages);
+          messages.push(`→ acharnement (${total} gorgées)`);
         }
         break;
       }
 
-      case "TRIBUNAL": {
-        message += ` → tribunal - tous les joueurs votent! Le plus votés boit 4 🍺`;
-        gameState.voting = true;
+      case "TRIBUNAL":
+        shared.tribunal = { casterId: playerId, votes: {} };
+        messages.push("→ ⚖️ tribunal! Chaque joueur vote en cliquant sur un joueur");
         break;
-      }
 
       case "PUBLIC_ENEMY":
-        if (target) {
-          target.enemyOfPublic = true;
-          message += ` → ${target.pseudo} est ennemi public (+1 aux attaques)`;
-        }
+        target.enemyOfPublic = true;
+        messages.push(`→ ${target.pseudo} est Ennemi Public (+1 aux attaques)`);
         break;
 
-      // 🔴 MALUS GÉNÉRAL
       case "DRINK_2":
-        caster.drinks = (caster.drinks || 0) + 2;
-        message += ` → boit 2 🍺`;
+        this.applyDrinks(game, shared, playerId, 2, playerId, "malus_global", messages);
         break;
-
       case "DRINK_3":
-        caster.drinks = (caster.drinks || 0) + 3;
-        message += ` → boit 3 🍺`;
+        this.applyDrinks(game, shared, playerId, 3, playerId, "malus_global", messages);
         break;
-
       case "DRINK_5":
-        caster.drinks = (caster.drinks || 0) + 5;
-        message += ` → boit 5 🍺`;
+        this.applyDrinks(game, shared, playerId, 5, playerId, "malus_global", messages);
         break;
 
-      case "ALL_EXCEPT_YOU": {
-        const otherPlayers = Object.values(players).filter(p => p !== caster);
-        otherPlayers.forEach(p => {
-          p.drinks = (p.drinks || 0) + 1;
+      case "ALL_EXCEPT_YOU":
+        Object.keys(players).filter(id => id !== playerId).forEach(id => {
+          this.applyDrinks(game, shared, id, 1, playerId, "malus_global", messages);
         });
-        message += ` → tous les autres boivent 1 🍺`;
         break;
-      }
 
       case "LEFT": {
-        const playerIds = Object.keys(players);
-        const idx = playerIds.indexOf(playerId);
-        const leftIdx = (idx - 1 + playerIds.length) % playerIds.length;
-        const leftPlayer = players[playerIds[leftIdx]];
-        leftPlayer.drinks = (leftPlayer.drinks || 0) + 3;
-        message += ` → ${leftPlayer.pseudo} (à gauche) boit 3 🍺`;
+        const order = game.playerOrder;
+        const idx = order.indexOf(playerId);
+        const leftId = order[(idx - 1 + order.length) % order.length];
+        this.applyDrinks(game, shared, leftId, 3, playerId, "malus_global", messages);
+        messages.push(`→ joueur à gauche: ${players[leftId].pseudo}`);
         break;
       }
 
       case "DISCARD": {
-        if (caster.hand.length > 0) {
-          const randomIdx = Math.floor(Math.random() * caster.hand.length);
-          caster.hand.splice(randomIdx, 1);
-          message += ` → défausse une carte aléatoire`;
+        const discardable = caster.hand.filter(c => c.id !== "DIABLE_NOIR");
+        if (discardable.length > 0) {
+          const pick = discardable[Math.floor(Math.random() * discardable.length)];
+          const idx = caster.hand.indexOf(pick);
+          caster.hand.splice(idx, 1);
+          messages.push("→ défausse une carte aléatoire");
+        } else {
+          messages.push("→ aucune carte défaussable");
         }
         break;
       }
 
-      // 🟣 CARTES SPÉCIALES - RÉACTIVES
       case "SHIELD":
         caster.shieldActive = true;
-        message += ` → 🛡️ annule le prochain malus reçu`;
+        messages.push("→ 🛡️ annule le prochain effet de gorgées");
         break;
-
       case "MIRROR":
         caster.mirrorActive = true;
-        message += ` → 🪞 renvoie le prochain malus ciblé`;
+        messages.push("→ 🪞 renvoie le prochain malus ciblé");
         break;
-
       case "DOUBLE_EFFECT":
-        gameState.doubleNextEffect = true;
-        message += ` → double les gorgées de la prochaine carte`;
+        shared.doubleNextEffect = true;
+        messages.push("→ double les gorgées de la prochaine carte");
         break;
-
       case "BOMB":
-        gameState.bombActive = true;
-        message += ` → le prochain joueur boit 5 🍺`;
+        shared.bombActive = true;
+        messages.push("→ 💣 le prochain joueur boit 5 🍺");
         break;
-
       case "BACKFIRE":
         caster.backfire = true;
-        message += ` → le prochain malus reçu est renvoyé à l'expéditeur`;
+        messages.push("→ 🔥 renvoie le prochain malus ciblé à l'expéditeur");
         break;
 
-      // 🕵️ CARTES INFORMATION
       case "SPY":
         if (target) {
-          const cardsShown = target.hand.slice(0, 2).map(c => c.name).join(", ");
-          message += ` → 🕵️ regarde 2 cartes de ${target.pseudo}: ${cardsShown}`;
+          const shown = target.hand.slice(0, 2).map(c => c.name).join(", ") || "(main vide)";
+          messages.push(`→ 🕵️ cartes de ${target.pseudo}: ${shown}`);
         }
         break;
-
       case "DETECTIVE":
-        if (target) {
-          const randomCard = target.hand[Math.floor(Math.random() * target.hand.length)];
-          message += ` → 🕵️ voit une carte: ${randomCard.name}`;
+        if (target && target.hand.length > 0) {
+          const c = target.hand[Math.floor(Math.random() * target.hand.length)];
+          messages.push(`→ 🕵️ voit: ${c.name}`);
         }
         break;
-
       case "XRAY":
         if (target) {
-          const specialCount = target.hand.filter(c => c.type === "special").length;
-          message += ` → 📡 ${target.pseudo} a ${specialCount} carte(s) spéciale(s)`;
+          const n = target.hand.filter(c => c.type === "special").length;
+          messages.push(`→ 📡 ${target.pseudo} a ${n} carte(s) spéciale(s)`);
         }
         break;
 
-      // 🥷 CARTES VOL / ÉCHANGE
       case "THIEF":
         if (target && target.hand.length > 0) {
           if (this.isProtected(target, "steal")) {
-            message += ` → ${target.pseudo} est protégé!`;
+            messages.push(`→ ${target.pseudo} est protégé!`);
           } else {
-            const randomIdx = Math.floor(Math.random() * target.hand.length);
-            const stolen = target.hand[randomIdx];
-            target.hand.splice(randomIdx, 1);
-            caster.hand.push(stolen);
-            message += ` → 🥷 vole une carte à ${target.pseudo}`;
+            const idx = Math.floor(Math.random() * target.hand.length);
+            caster.hand.push(...target.hand.splice(idx, 1));
+            messages.push(`→ 🥷 vole une carte à ${target.pseudo}`);
           }
         }
         break;
@@ -721,186 +834,135 @@ class Effects {
       case "PICKPOCKET":
         if (target && target.hand.length > 0) {
           if (this.isProtected(target, "steal")) {
-            message += ` → ${target.pseudo} est protégé!`;
+            messages.push(`→ ${target.pseudo} est protégé!`);
           } else {
-            const randomIdx = Math.floor(Math.random() * target.hand.length);
-            const stolen = target.hand[randomIdx];
-            target.hand.splice(randomIdx, 1);
-            caster.hand.push(stolen);
-            message += ` → 🥷 pickpocket une carte de ${target.pseudo}`;
+            shared.pickpocket = {
+              casterId: playerId,
+              targetId,
+              cards: target.hand.map((c, i) => ({ index: i, id: c.id, name: c.name, img: c.img })),
+            };
+            messages.push(`→ 🥷 ${caster.pseudo} regarde la main de ${target.pseudo} — choisis une carte`);
           }
         }
         break;
 
-      case "MYSTERY_HAND": {
-        const playerIds = Object.keys(players);
-        const cardsToSwap = [];
-        
-        playerIds.forEach((id) => {
-          if (players[id].hand.length > 0) {
-            const randomIdx = Math.floor(Math.random() * players[id].hand.length);
-            cardsToSwap.push({ card: players[id].hand[randomIdx], fromId: id });
-          }
-        });
-
-        playerIds.forEach((id) => {
-          if (players[id].hand.length > 0) {
-            const randomIdx = Math.floor(Math.random() * players[id].hand.length);
-            players[id].hand.splice(randomIdx, 1);
-          }
-        });
-
-        cardsToSwap.forEach((item, idx) => {
-          const rightIdx = (idx + 1) % playerIds.length;
-          players[playerIds[rightIdx]].hand.push(item.card);
-        });
-
-        message += ` → 🥷 tous donnent une carte à leur voisin de droite`;
+      case "MYSTERY_HAND":
+        this.swapRandomToRight(game);
+        messages.push("→ 🥷 chacun donne une carte à son voisin de droite");
         break;
-      }
 
       case "BLACK_MARKET":
         if (target && target.hand.length > 0 && caster.hand.length > 0) {
-          const myCardIdx = Math.floor(Math.random() * caster.hand.length);
-          const theirCardIdx = Math.floor(Math.random() * target.hand.length);
-          
-          const myCard = caster.hand[myCardIdx];
-          const theirCard = target.hand[theirCardIdx];
-          
-          caster.hand[myCardIdx] = theirCard;
-          target.hand[theirCardIdx] = myCard;
-          
-          message += ` → 🥷 échange une carte avec ${target.pseudo}`;
+          const mi = Math.floor(Math.random() * caster.hand.length);
+          const ti = Math.floor(Math.random() * target.hand.length);
+          [caster.hand[mi], target.hand[ti]] = [target.hand[ti], caster.hand[mi]];
+          messages.push(`→ 🥷 échange une carte avec ${target.pseudo}`);
         }
         break;
 
       case "FULL_SWAP":
         if (target) {
-          const temp = [...caster.hand];
-          caster.hand = [...target.hand];
-          target.hand = temp;
-          message += ` → 🥷 échange ENTIÈREMENT sa main avec ${target.pseudo}`;
+          [caster.hand, target.hand] = [[...target.hand], [...caster.hand]];
+          messages.push(`→ 🥷 échange ENTIÈREMENT sa main avec ${target.pseudo}`);
         }
         break;
 
-      // 🔄 CARTES STYLE UNO
       case "REVERSE":
         game.gameDirection = (game.gameDirection || 1) * -1;
-        message += ` → ↩️ inverse le sens du jeu!`;
+        messages.push("→ ↩️ inverse le sens du jeu!");
         break;
 
       case "SKIP":
-        if (target) {
+        if (target.shieldActive) {
+          target.shieldActive = false;
+          messages.push(`→ 🛡️ ${target.pseudo} bloque le skip avec son Bouclier!`);
+        } else {
           target.skip = true;
-          target.skipCanBeBlocked = true;
-          message += ` → ${target.pseudo} passe son prochain tour`;
+          messages.push(`→ ${target.pseudo} passe son prochain tour`);
         }
         break;
 
       case "FREEZE":
-        if (target) {
-          target.frozen = true;
-          message += ` → ❄️ ${target.pseudo} perd son prochain tour (non contrable)`;
-        }
+        target.frozen = true;
+        messages.push(`→ ❄️ ${target.pseudo} perd son prochain tour (non contrable)`);
         break;
 
-      case "ALL_DRAW": {
-        Object.values(players).forEach(p => {
-          if (game.deck.length > 0) {
-            p.hand.push(game.deck.pop());
-          }
-        });
-        message += ` → tous les joueurs piochent 1 carte`;
+      case "ALL_DRAW":
+        game.playerOrder.forEach(id => this.drawCard(game, id));
+        messages.push("→ tous les joueurs piochent 1 carte");
         break;
-      }
 
-      // 💀 CARTES CHAOS
-      case "RUSSIAN_ROULETTE": {
-        const outcome = Math.random() < 0.5;
-        if (outcome) {
-          caster.drinks = (caster.drinks || 0) + 4;
-          message += ` → 🎲 tu bois 4 🍺`;
+      case "RUSSIAN_ROULETTE":
+        if (Math.random() < 0.5) {
+          this.applyDrinks(game, shared, playerId, 4, playerId, "malus_global", messages);
+          messages.push("→ 🎲 malchance!");
         } else {
-          const otherPlayers = Object.values(players).filter(p => p !== caster);
-          otherPlayers.forEach(p => {
-            p.drinks = (p.drinks || 0) + 4;
+          Object.keys(players).filter(id => id !== playerId).forEach(id => {
+            this.applyDrinks(game, shared, id, 4, playerId, "malus_global", messages);
           });
-          message += ` → 🎲 tous les autres boivent 4 🍺`;
+          messages.push("→ 🎲 chance!");
         }
         break;
-      }
 
       case "VIRUS": {
-        if (target) {
-          const playerIds = Object.keys(players);
-          const idx = playerIds.indexOf(targetId);
-          const left = players[playerIds[(idx - 1 + playerIds.length) % playerIds.length]];
-          const right = players[playerIds[(idx + 1) % playerIds.length]];
-          left.drinks = (left.drinks || 0) + 2;
-          right.drinks = (right.drinks || 0) + 2;
-          message += ` → 🦠 virus chez ${target.pseudo}, les adjacents boivent 2 🍺`;
-        }
+        const order = game.playerOrder;
+        const idx = order.indexOf(targetId);
+        const leftId = order[(idx - 1 + order.length) % order.length];
+        const rightId = order[(idx + 1) % order.length];
+        this.applyDrinks(game, shared, leftId, 2, playerId, "malus_target", messages);
+        this.applyDrinks(game, shared, rightId, 2, playerId, "malus_target", messages);
+        messages.push(`→ 🦠 virus autour de ${target.pseudo}`);
         break;
       }
 
       case "CURSE":
         caster.cursed = true;
-        message += ` → est maudit (boit 1 🍺 à chaque début de tour)`;
+        messages.push("→ ☠️ maudit (1 🍺 à chaque début de tour)");
         break;
 
       case "POISON_GIFT":
         if (target && caster.hand.length > 0) {
-          const randomIdx = Math.floor(Math.random() * caster.hand.length);
-          const card = caster.hand[randomIdx];
-          caster.hand.splice(randomIdx, 1);
-          target.hand.push(card);
-          message += ` → ☠️ donne une carte empoisonnée à ${target.pseudo}`;
+          const idx = Math.floor(Math.random() * caster.hand.length);
+          target.hand.push(...caster.hand.splice(idx, 1));
+          messages.push(`→ ☠️ donne une carte à ${target.pseudo}`);
         }
+        break;
+
+      case "PANIC":
+        this.swapRandomToRight(game);
+        messages.push("→ 😱 panique! échange aléatoire avec la droite");
         break;
     }
 
-    return message;
+    return messages.join("\n");
   }
 
   static needsTarget(cardId) {
     return [
-      "GIVE_2", "GIVE_3", "GIVE_5",
-      "DOUBLE_DISTRIBUTION",
-      "GIFT", "ALLIANCE",
-      "PLUS2", "PLUS3", "PLUS5",
-      "DOUBLE_PENALTY", "RELENTLESS", "PUBLIC_ENEMY",
+      "GIVE_2", "GIVE_3", "GIVE_5", "GIFT", "ALLIANCE",
+      "PLUS2", "PLUS3", "PLUS5", "DOUBLE_PENALTY", "RELENTLESS", "PUBLIC_ENEMY",
       "THIEF", "PICKPOCKET", "BLACK_MARKET", "FULL_SWAP",
-      "SPY", "DETECTIVE", "XRAY",
-      "SKIP", "FREEZE", "VIRUS"
+      "SPY", "DETECTIVE", "XRAY", "SKIP", "FREEZE", "VIRUS",
     ].includes(cardId);
   }
 
-  static isReactive(cardId) {
-    return ["SHIELD", "MIRROR"].includes(cardId);
+  static blocksTurnAdvance(cardId, shared) {
+    if (cardId === "DOUBLE_DISTRIBUTION" || cardId === "TRIBUNAL") return true;
+    if (cardId === "PICKPOCKET" && shared.pickpocket) return true;
+    return false;
   }
 }
 
-// ============================================
-// CONTRÔLEUR DE JEU
-// ============================================
 class GameController {
   constructor() {
-    this.playerId = Math.random().toString(36).substring(2);
+    this.playerId = Math.random().toString(36).substring(2, 11);
     this.room = "main";
     this.selectedTarget = null;
-    this.gameState = {
-      extraTurn: false,
-      voting: false,
-      doubleNextEffect: false,
-      bombActive: false,
-      waitingForTargets: null,
-      spyTarget: null,
-      detectiveTarget: null,
-      waitingForReaction: false,
-      reactionData: null
-    };
-
     this.setupListeners();
+  }
+
+  roomRef() {
+    return db.ref(`rooms/${this.room}`);
   }
 
   setupListeners() {
@@ -910,243 +972,466 @@ class GameController {
   }
 
   join() {
-    const pseudo = document.getElementById("pseudo").value;
+    const pseudo = document.getElementById("pseudo").value.trim();
     if (!pseudo) return alert("Entre un pseudo");
 
-    db.ref(`rooms/${this.room}`).once("value").then((snapshot) => {
-      const game = snapshot.val();
+    if (!db) {
+      return alert(FirebaseSetup.errorMessage || "Firebase non initialisé.");
+    }
+    if (!FirebaseSetup.ready) {
+      return alert("Firebase pas encore connecté. Attendez le message vert ou corrigez la configuration.");
+    }
 
-      if (game && game.started) {
-        return alert("❌ Partie déjà en cours");
-      }
+    const joinBtn = document.getElementById("joinBtn");
+    joinBtn.disabled = true;
+    FirebaseSetup.setStatus("loading", "Connexion en cours…");
 
-      db.ref(`rooms/${this.room}/players/${this.playerId}`).set({
-        pseudo,
-        hand: [],
-        drinks: 0,
-        protection: false,
-        alliance: null,
-        shieldActive: false,
-        mirrorActive: false,
-        backfire: false,
-        cursed: false,
-        skip: false,
-        skipCanBeBlocked: false,
-        frozen: false,
-        enemyOfPublic: false,
-        delayedDrinks: 0
+    this.roomRef().once("value")
+      .then((snapshot) => {
+        const game = snapshot.val();
+        if (game?.sharedState?.finished) {
+          throw new Error("FINISHED");
+        }
+        if (game?.started) {
+          throw new Error("STARTED");
+        }
+        return this.roomRef().child(`players/${this.playerId}`).set(defaultPlayer(pseudo));
+      })
+      .then(() => {
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("game").classList.remove("hidden");
+        this.listenGame();
+      })
+      .catch((err) => {
+        joinBtn.disabled = false;
+        if (err.message === "FINISHED") {
+          FirebaseSetup.setStatus("error", "Partie terminée — le premier joueur doit cliquer Recommencer, ou supprimez la salle dans Firebase.");
+          return alert("❌ Partie terminée — demandez un reset ou supprimez rooms/main dans Firebase Console.");
+        }
+        if (err.message === "STARTED") {
+          FirebaseSetup.setStatus("error", "Une partie est déjà en cours dans rooms/main.");
+          return alert("❌ Partie déjà en cours.\n\nUn autre joueur doit cliquer « Recommencer », ou supprimez rooms/main dans Firebase Console → Realtime Database.");
+        }
+        const msg = FirebaseSetup.formatError(err);
+        FirebaseSetup.setStatus("error", msg.replace(/\n/g, "<br>"));
+        alert("Erreur Firebase:\n\n" + msg);
       });
-
-      document.getElementById("login").classList.add("hidden");
-      document.getElementById("game").classList.remove("hidden");
-
-      this.listenGame();
-    });
   }
 
   start() {
-    db.ref(`rooms/${this.room}`).once("value").then((snapshot) => {
-      const game = snapshot.val();
-      const players = Object.keys(game.players);
+    this.roomRef().transaction((game) => {
+      if (!game?.players) return;
+      const playerIds = Object.keys(game.players);
+      if (playerIds[0] !== this.playerId) return;
+
       const deck = Deck.create();
-
-      // Distribuer 5 cartes à chaque joueur
-      players.forEach((id) => {
-        const hand = [];
-        for (let i = 0; i < 5; i++) {
-          hand.push(deck.pop());
-        }
-        db.ref(`rooms/${this.room}/players/${id}/hand`).set(hand);
+      playerIds.forEach((id) => {
+        game.players[id].hand = [];
+        for (let i = 0; i < 5; i++) game.players[id].hand.push(deck.pop());
       });
 
-      db.ref(`rooms/${this.room}`).update({
-        deck: deck,
-        currentPlayerIndex: 0,
-        gameDirection: 1,
-        started: true,
-        message: "🔥 La partie commence!"
-      });
+      game.deck = deck;
+      game.playerOrder = playerIds;
+      game.currentPlayerIndex = 0;
+      game.gameDirection = 1;
+      game.started = true;
+      game.message = "🔥 La partie commence!";
+      game.sharedState = defaultSharedState();
+      return game;
     });
+  }
+
+  onTurnStart(game, playerId, shared, turnMessages) {
+    const player = game.players[playerId];
+
+    if (player.protection) {
+      player.protection = false;
+      turnMessages.push(`🛡️ La protection de ${player.pseudo} expire`);
+    }
+
+    if (player.delayedDrinks > 0) {
+      const d = player.delayedDrinks;
+      player.delayedDrinks = 0;
+      player.drinks = (player.drinks || 0) + d;
+      turnMessages.push(`⏳ ${player.pseudo} boit ${d} 🍺 (Double Peine)`);
+    }
+
+    if (player.cursed) {
+      player.drinks = (player.drinks || 0) + 1;
+      turnMessages.push(`☠️ ${player.pseudo} boit 1 🍺 (Malédiction)`);
+    }
+
+    if (shared.bombActive) {
+      shared.bombActive = false;
+      player.drinks = (player.drinks || 0) + 5;
+      turnMessages.push(`💣 ${player.pseudo} boit 5 🍺 (Bombe)!`);
+    }
+  }
+
+  advanceTurn(game, shared) {
+    const order = game.playerOrder;
+    const direction = game.gameDirection || 1;
+    const turnMessages = [];
+    let idx = game.currentPlayerIndex;
+    let steps = 0;
+
+    if (shared.extraTurn) {
+      shared.extraTurn = false;
+      return { index: idx, messages: turnMessages };
+    }
+
+    do {
+      idx = (idx + direction + order.length) % order.length;
+      steps++;
+      if (steps > order.length * 2) break;
+
+      const player = game.players[order[idx]];
+
+      if (player.frozen) {
+        player.frozen = false;
+        turnMessages.push(`❄️ ${player.pseudo} perd son tour (Gel)`);
+        continue;
+      }
+
+      if (player.skip) {
+        player.skip = false;
+        turnMessages.push(`⏭️ ${player.pseudo} passe son tour`);
+        continue;
+      }
+
+      break;
+    } while (true);
+
+    this.onTurnStart(game, order[idx], shared, turnMessages);
+    return { index: idx, messages: turnMessages };
   }
 
   playCard(index) {
-    db.ref(`rooms/${this.room}`).once("value").then((snapshot) => {
+    const targetId = this.selectedTarget;
+
+    this.roomRef().once("value").then((snapshot) => {
       const game = snapshot.val();
-      const players = Object.keys(game.players);
-      const currentId = players[game.currentPlayerIndex];
+      if (!game?.started) return;
+      if (game.sharedState?.finished) return alert("Partie terminée");
 
-      if (currentId !== this.playerId) return alert("Pas ton tour");
+      const order = game.playerOrder;
+      if (order[game.currentPlayerIndex] !== this.playerId) return alert("Pas ton tour");
 
-      const hand = game.players[this.playerId].hand;
+      const shared = game.sharedState || defaultSharedState();
+      if (shared.doubleDistribution || shared.tribunal || shared.pickpocket) {
+        return alert("Termine l'action en cours d'abord");
+      }
+
+      const hand = game.players[this.playerId]?.hand || [];
       const card = hand[index];
-
-      // Ne pas jouer le Diable Noir
+      if (!card) return;
       if (card.id === "DIABLE_NOIR") return alert("❌ Tu ne peux pas jouer le Diable Noir");
+      if (Effects.needsTarget(card.id) && !targetId) return alert("Choisis une cible");
+      if (Effects.needsTarget(card.id) && targetId === this.playerId) return alert("Tu ne peux pas te cibler toi-même");
 
-      // Vérifier si une cible est nécessaire
-      if (Effects.needsTarget(card.id) && !this.selectedTarget) {
-        return alert("Choisis une cible");
-      }
+      this.roomRef().transaction((g) => {
+        if (!g?.started || g.sharedState?.finished) return;
+        const s = g.sharedState || defaultSharedState();
+        if (s.doubleDistribution || s.tribunal || s.pickpocket) return;
 
-      if (Effects.needsTarget(card.id) && this.selectedTarget === this.playerId) {
-        return alert("Tu ne peux pas te cibler toi-même");
-      }
+        const currentId = g.playerOrder[g.currentPlayerIndex];
+        if (currentId !== this.playerId) return;
 
-      // Retirer la carte de la main
-      hand.splice(index, 1);
+        const playerHand = g.players[this.playerId].hand;
+        const played = playerHand[index];
+        if (!played || played.id === "DIABLE_NOIR") return;
 
-      // Appliquer l'effet
-      const message = Effects.apply(game, this.playerId, card, this.selectedTarget, this.gameState);
+        playerHand.splice(index, 1);
+        const effectMsg = Effects.apply(g, this.playerId, played, targetId, s);
 
-      // Piocher une nouvelle carte
-      if (game.deck.length > 0) {
-        hand.push(game.deck.pop());
-      }
+        const blocksAdvance = Effects.blocksTurnAdvance(played.id, s);
+        if (!blocksAdvance) this.drawCardAfterPlay(g, this.playerId);
 
-      db.ref(`rooms/${this.room}/players/${this.playerId}/hand`).set(hand);
+        let fullMsg = effectMsg;
+        let nextIndex = g.currentPlayerIndex;
 
-      // LOGIQUE DE TOUR AMÉLIORÉE
-      let nextIndex = game.currentPlayerIndex;
-      let skipMessage = "";
-
-      if (!this.gameState.extraTurn) {
-        const direction = game.gameDirection || 1;
-        nextIndex = (game.currentPlayerIndex + direction + players.length) % players.length;
-
-        const nextPlayerId = players[nextIndex];
-        const nextPlayer = game.players[nextPlayerId];
-
-        if (nextPlayer.frozen) {
-          skipMessage = `❄️ ${nextPlayer.pseudo} perd son tour (Gel - non contrable)`;
-          nextPlayer.frozen = false;
-          nextIndex = (nextIndex + direction + players.length) % players.length;
+        if (!blocksAdvance) {
+          const result = this.advanceTurn(g, s);
+          nextIndex = result.index;
+          if (result.messages.length) fullMsg = result.messages.join("\n") + "\n" + fullMsg;
         }
-      }
 
-      // Réinitialiser les protections après le tour
-      Object.values(game.players).forEach(p => {
-        p.protection = false;
-        p.alliance = null;
+        g.currentPlayerIndex = nextIndex;
+        g.message = fullMsg;
+        g.sharedState = s;
+        this.checkWinCondition(g);
+        return g;
+      }).then((result) => {
+        if (result.committed) this.selectedTarget = null;
       });
-
-      this.gameState.extraTurn = false;
-      this.selectedTarget = null;
-
-      db.ref(`rooms/${this.room}`).update({
-        currentPlayerIndex: nextIndex,
-        message: skipMessage ? skipMessage + "\n" + message : message,
-        gameDirection: game.gameDirection || 1
-      });
-
-      this.checkWinCondition(game);
     });
+  }
+
+  drawCardAfterPlay(game, playerId) {
+    if (game.deck.length > 0) {
+      game.players[playerId].hand.push(game.deck.pop());
+    }
   }
 
   selectTarget(targetId) {
-    this.selectedTarget = this.selectedTarget === targetId ? null : targetId;
-    this.renderGame();
-  }
+    this.roomRef().once("value").then((snapshot) => {
+      const game = snapshot.val();
+      if (!game?.started) return;
 
-  listenGame() {
-    db.ref(`rooms/${this.room}`).on("value", (snapshot) => {
-      if (snapshot.exists()) {
-        this.renderGame();
+      const shared = game.sharedState || defaultSharedState();
+
+      if (shared.tribunal) {
+        this.castVote(targetId);
+        return;
       }
+
+      if (shared.doubleDistribution) {
+        this.addDoubleDistributionTarget(targetId);
+        return;
+      }
+
+      this.selectedTarget = this.selectedTarget === targetId ? null : targetId;
+      this.renderFromGame(game);
     });
   }
 
-  renderGame() {
-    db.ref(`rooms/${this.room}`).once("value").then((snapshot) => {
-      const game = snapshot.val();
-      if (!game) return;
+  addDoubleDistributionTarget(targetId) {
+    this.roomRef().transaction((game) => {
+      const shared = game.sharedState;
+      const dd = shared?.doubleDistribution;
+      if (!dd || dd.casterId !== this.playerId) return;
+      if (dd.targets.includes(targetId) || targetId === this.playerId) return;
+      if (dd.targets.length >= dd.needed) return;
 
-      const players = game.players || {};
-      const playerIds = Object.keys(players);
+      dd.targets.push(targetId);
+      const msgs = [];
+      Effects.applyDrinks(game, shared, targetId, dd.amount, this.playerId, "bonus", msgs);
 
-      // Affichage central
-      const center = document.getElementById("center");
-      if (!game.started) {
-        center.textContent = `⏳ En attente... (${playerIds.length} joueur${playerIds.length > 1 ? 's' : ''})`;
-        document.getElementById("startBtn").classList.toggle("hidden", this.playerId !== playerIds[0]);
-      } else {
-        const currentPlayerId = playerIds[game.currentPlayerIndex];
-        const currentPlayer = players[currentPlayerId];
-        center.textContent = currentPlayerId === this.playerId ? "🎮 C'est TON TOUR!" : `🎮 Tour de ${currentPlayer.pseudo}`;
+      if (dd.targets.length < dd.needed) {
+        game.message = `${game.players[this.playerId].pseudo} — choisis encore ${dd.needed - dd.targets.length} joueur(s)`;
+        return game;
       }
 
-      // Message
-      document.getElementById("message").textContent = game.message || "";
+      shared.doubleDistribution = null;
+      this.drawCardAfterPlay(game, this.playerId);
+      const result = this.advanceTurn(game, shared);
+      game.currentPlayerIndex = result.index;
+      const msgs = [`Double Distribution: ${dd.targets.map(id => game.players[id].pseudo).join(", ")} boivent 1 🍺`];
+      if (result.messages.length) msgs.unshift(...result.messages);
+      game.message = msgs.join("\n");
+      this.checkWinCondition(game);
+      return game;
+    });
+  }
 
-      // Cercle de joueurs
-      const circle = document.getElementById("circle");
-      circle.innerHTML = "";
-      playerIds.forEach((id, idx) => {
-        const player = players[id];
-        const angle = (idx / playerIds.length) * 2 * Math.PI - Math.PI / 2;
-        const x = 150 + 100 * Math.cos(angle);
-        const y = 150 + 100 * Math.sin(angle);
+  castVote(targetId) {
+    this.roomRef().transaction((game) => {
+      const shared = game.sharedState;
+      const tribunal = shared?.tribunal;
+      if (!tribunal) return;
+      if (tribunal.votes[this.playerId]) return;
 
-        const el = document.createElement("div");
-        el.className = "player";
-        if (id === this.selectedTarget) el.classList.add("selected");
-        if (player.skip && player.skipCanBeBlocked) el.classList.add("skipped");
-        if (player.frozen) el.classList.add("frozen");
+      tribunal.votes[this.playerId] = targetId;
+      const order = game.playerOrder;
+      const voted = Object.keys(tribunal.votes).length;
 
-        el.style.left = `${x}px`;
-        el.style.top = `${y}px`;
-        el.style.transform = "translate(-50%, -50%)";
+      if (voted < order.length) {
+        game.message = `⚖️ Tribunal: ${voted}/${order.length} votes`;
+        return game;
+      }
 
-        let status = `${player.hand.length} carte${player.hand.length > 1 ? 's' : ''}`;
-        let statusClass = "";
-        if (player.protection) { status += " 🛡️"; statusClass = "protected"; }
-        if (player.frozen) { status += " ❄️"; statusClass = "frozen"; }
+      const counts = {};
+      Object.values(tribunal.votes).forEach(id => { counts[id] = (counts[id] || 0) + 1; });
+      const max = Math.max(...Object.values(counts));
+      const winners = Object.keys(counts).filter(id => counts[id] === max);
+      const loserId = winners[Math.floor(Math.random() * winners.length)];
+      const msgs = [];
+      Effects.applyDrinks(game, shared, loserId, 4, tribunal.casterId, "malus_target", msgs);
 
-        el.innerHTML = `
-          <div class="player-name">${player.pseudo}</div>
-          <div class="player-status ${statusClass}">${status}</div>
-        `;
+      shared.tribunal = null;
+      this.drawCardAfterPlay(game, tribunal.casterId);
+      const result = this.advanceTurn(game, shared);
+      game.currentPlayerIndex = result.index;
+      game.message = `⚖️ ${game.players[loserId].pseudo} est condamné et boit 4 🍺!`;
+      if (result.messages.length) game.message = result.messages.join("\n") + "\n" + game.message;
+      this.checkWinCondition(game);
+      return game;
+    });
+  }
 
-        if (game.started) {
-          el.onclick = () => this.selectTarget(id);
-        }
+  pickpocketSteal(cardIndex) {
+    this.roomRef().transaction((game) => {
+      const shared = game.sharedState;
+      const pp = shared?.pickpocket;
+      if (!pp || pp.casterId !== this.playerId) return;
 
-        circle.appendChild(el);
-      });
+      const caster = game.players[pp.casterId];
+      const target = game.players[pp.targetId];
+      if (cardIndex < 0 || cardIndex >= target.hand.length) return;
 
-      // Main
-      const hand = document.getElementById("hand");
-      hand.innerHTML = "";
-      const myHand = players[this.playerId]?.hand || [];
-      myHand.forEach((card, idx) => {
-        const el = document.createElement("div");
-        el.className = "card";
-        if (card.id === "DIABLE_NOIR") el.classList.add("diable-noir");
-        el.innerHTML = `<img src="assets/${card.img}" alt="${card.name}" title="${card.name}">`;
-        el.onclick = () => this.playCard(idx);
-        hand.appendChild(el);
-      });
+      caster.hand.push(...target.hand.splice(cardIndex, 1));
+      shared.pickpocket = null;
+
+      this.drawCardAfterPlay(game, pp.casterId);
+      const result = this.advanceTurn(game, shared);
+      game.currentPlayerIndex = result.index;
+      game.message = `🥷 ${caster.pseudo} vole une carte à ${target.pseudo}`;
+      if (result.messages.length) game.message = result.messages.join("\n") + "\n" + game.message;
+      this.checkWinCondition(game);
+      return game;
     });
   }
 
   checkWinCondition(game) {
-    const players = game.players || {};
-    Object.values(players).forEach(player => {
-      if (player.hand.some(c => c.id === "DIABLE_NOIR") && game.deck.length === 0) {
-        db.ref(`rooms/${this.room}`).update({
-          message: "💀 " + player.pseudo + " avait le Diable Noir! IL PERD!"
-        });
+    if (game.deck.length > 0) return;
+    Object.entries(game.players).forEach(([id, player]) => {
+      if (player.hand.some(c => c.id === "DIABLE_NOIR")) {
+        game.sharedState.finished = true;
+        game.sharedState.loserId = id;
+        game.message = `💀 ${player.pseudo} avait le Diable Noir! IL PERD!`;
       }
     });
   }
 
+  listenGame() {
+    this.roomRef().on("value", (snapshot) => {
+      if (snapshot.exists()) this.renderFromGame(snapshot.val());
+    });
+  }
+
+  renderFromGame(game) {
+    if (!game) return;
+
+    const players = game.players || {};
+    const order = game.playerOrder || Object.keys(players);
+    const shared = game.sharedState || defaultSharedState();
+
+    const center = document.getElementById("center");
+    if (!game.started) {
+      center.textContent = `⏳ En attente... (${order.length} joueur${order.length > 1 ? "s" : ""})`;
+      document.getElementById("startBtn").classList.toggle("hidden", this.playerId !== order[0]);
+      document.getElementById("resetBtn").classList.add("hidden");
+    } else {
+      const currentId = order[game.currentPlayerIndex];
+      center.textContent = currentId === this.playerId
+        ? "🎮 C'est TON TOUR!"
+        : `🎮 Tour de ${players[currentId]?.pseudo}`;
+      document.getElementById("startBtn").classList.add("hidden");
+      document.getElementById("resetBtn").classList.remove("hidden");
+    }
+
+    document.getElementById("message").textContent = game.message || "";
+
+    const circle = document.getElementById("circle");
+    circle.innerHTML = "";
+    const size = circle.offsetWidth || 400;
+    const cx = size / 2;
+    const cy = size / 2;
+    const radius = size / 2 - 55;
+
+    order.forEach((id, idx) => {
+      const player = players[id];
+      if (!player) return;
+
+      const angle = (idx / order.length) * 2 * Math.PI - Math.PI / 2;
+      const el = document.createElement("div");
+      el.className = "player";
+      if (id === this.selectedTarget) el.classList.add("selected");
+      if (player.skip) el.classList.add("skipped");
+      if (player.frozen) el.classList.add("frozen");
+      if (player.enemyOfPublic) el.classList.add("enemy");
+
+      el.style.left = `${cx + radius * Math.cos(angle)}px`;
+      el.style.top = `${cy + radius * Math.sin(angle)}px`;
+
+      let status = `${player.hand.length} cartes · ${player.drinks || 0} 🍺`;
+      let statusClass = "";
+      if (player.protection) { status += " 🛡️"; statusClass = "protected"; }
+      if (player.frozen) { status += " ❄️"; statusClass = "frozen"; }
+
+      el.innerHTML = `
+        <div class="player-name">${player.pseudo}${id === this.playerId ? " (toi)" : ""}</div>
+        <div class="player-status ${statusClass}">${status}</div>
+      `;
+
+      if (game.started && !shared.finished) {
+        el.onclick = () => this.selectTarget(id);
+      }
+      circle.appendChild(el);
+    });
+
+    const handEl = document.getElementById("hand");
+    handEl.innerHTML = "";
+    const myHand = players[this.playerId]?.hand || [];
+    const isMyTurn = game.started && order[game.currentPlayerIndex] === this.playerId;
+    const pending = shared.doubleDistribution || shared.tribunal || shared.pickpocket;
+
+    myHand.forEach((card, idx) => {
+      const el = document.createElement("div");
+      el.className = "card";
+      if (card.id === "DIABLE_NOIR") el.classList.add("diable-noir");
+      if (!isMyTurn || pending) el.classList.add("disabled");
+      el.innerHTML = `<img src="${assetUrl(card.img)}" alt="${card.name}" title="${card.name}">`;
+      if (isMyTurn && !pending) el.onclick = () => this.playCard(idx);
+      handEl.appendChild(el);
+    });
+
+    this.renderModal(game, shared);
+  }
+
+  renderModal(game, shared) {
+    const overlay = document.getElementById("overlay");
+    const title = document.getElementById("modalTitle");
+    const text = document.getElementById("modalText");
+    const cards = document.getElementById("modalCards");
+    cards.innerHTML = "";
+
+    if (shared.tribunal && !shared.tribunal.votes[this.playerId]) {
+      overlay.classList.remove("hidden");
+      title.textContent = "⚖️ Tribunal";
+      text.textContent = "Clique sur un joueur dans le cercle pour voter.";
+      return;
+    }
+
+    if (shared.doubleDistribution?.casterId === this.playerId) {
+      overlay.classList.remove("hidden");
+      title.textContent = "Double Distribution";
+      const dd = shared.doubleDistribution;
+      text.textContent = `Choisis ${dd.needed - dd.targets.length} joueur(s) restant(s) dans le cercle.`;
+      return;
+    }
+
+    if (shared.pickpocket?.casterId === this.playerId) {
+      overlay.classList.remove("hidden");
+      title.textContent = "🥷 Pickpocket";
+      text.textContent = "Choisis une carte à voler:";
+      const targetHand = game.players[shared.pickpocket.targetId].hand;
+      targetHand.forEach((card, idx) => {
+        const el = document.createElement("div");
+        el.className = "card";
+        el.innerHTML = `<img src="${assetUrl(card.img)}" alt="${card.name}">`;
+        el.onclick = () => {
+          overlay.classList.add("hidden");
+          this.pickpocketSteal(idx);
+        };
+        cards.appendChild(el);
+      });
+      return;
+    }
+
+    overlay.classList.add("hidden");
+  }
+
   reset() {
-    db.ref(`rooms/${this.room}`).remove();
-    location.reload();
+    if (confirm("Recommencer la partie ?")) {
+      this.roomRef().remove().then(() => location.reload());
+    }
   }
 }
 
-const gameController = new GameController();
+const gameController = db
+  ? new GameController()
+  : { join() { alert(FirebaseSetup.errorMessage || "Firebase non configuré."); } };
 </script>
-
 </body>
 </html>
