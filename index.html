@@ -170,6 +170,13 @@
     .player-status.protected { color: #00ff00; }
     .player-status.frozen { color: #00ccff; }
 
+    .player-badges {
+      font-size: 1.1em;
+      margin-top: 6px;
+      letter-spacing: 2px;
+      min-height: 1.4em;
+    }
+
     .hand {
       position: fixed;
       bottom: 0;
@@ -210,7 +217,8 @@
       filter: drop-shadow(0 0 10px rgba(255, 51, 51, 0.7));
     }
 
-    .card.diable-noir img {
+    .card.diable-noir img,
+    .card.curse-card img {
       filter: brightness(0.7) saturate(2);
     }
 
@@ -255,6 +263,23 @@
     }
 
     .modal .card { width: 70px; height: 105px; }
+
+    .card.counter-pick {
+      outline: 3px solid #00ffcc;
+      animation: pulse-counter 1s infinite;
+    }
+
+    @keyframes pulse-counter {
+      0%, 100% { box-shadow: 0 0 8px rgba(0, 255, 204, 0.6); }
+      50% { box-shadow: 0 0 18px rgba(0, 255, 204, 1); }
+    }
+
+    .modal-pass {
+      margin-top: 16px;
+      background: #444;
+    }
+
+    .modal-pass:hover { background: #666; }
 
     .firebase-status {
       margin-top: 12px;
@@ -326,6 +351,7 @@
     <h2 id="modalTitle"></h2>
     <p id="modalText"></p>
     <div id="modalCards" class="modal-cards"></div>
+    <button id="modalPass" class="hidden modal-pass" onclick="gameController.declineReaction()">Passer (subir l'effet)</button>
   </div>
 </div>
 
@@ -450,6 +476,7 @@ function defaultSharedState() {
     doubleDistribution: null,
     tribunal: null,
     pickpocket: null,
+    pendingReaction: null,
     finished: false,
     loserId: null,
   };
@@ -465,7 +492,7 @@ function defaultPlayer(pseudo) {
     shieldActive: false,
     mirrorActive: false,
     backfire: false,
-    cursed: false,
+    doubleEffect: false,
     skip: false,
     frozen: false,
     enemyOfPublic: false,
@@ -559,67 +586,243 @@ class Deck {
 }
 
 class Effects {
+  static COUNTER_IDS = ["MIRROR", "PROTECTION", "BACKFIRE"];
+
   static isDrinkEffect(cardType) {
     return cardType === "bonus" || cardType === "malus_target" || cardType === "malus_global";
   }
 
-  static isProtected(player, cardType) {
+  static isUnplayable(cardId) {
+    return cardId === "DIABLE_NOIR" || cardId === "CURSE";
+  }
+
+  static hasCurseInHand(player) {
+    return player.hand?.some(c => c.id === "CURSE") ?? false;
+  }
+
+  static isShieldBlockable(attack) {
+    if (!attack) return false;
+    if (attack.kind === "drinks") return true;
+    if (attack.kind === "skip") return true;
+    return attack.cardType === "malus_target";
+  }
+
+  static isMalusAttack(attack) {
+    return this.isShieldBlockable(attack);
+  }
+
+  static isPlusXCard(cardId) {
+    return cardId === "PLUS2" || cardId === "PLUS3" || cardId === "PLUS5";
+  }
+
+  static isAllianceBlock(cardId) {
+    return this.needsTarget(cardId);
+  }
+
+  static isProtected(player, cardType, cardId) {
     if (this.isDrinkEffect(cardType) && player.protection) return true;
+    if (player.alliance && cardId && this.isAllianceBlock(cardId)) return true;
     if (player.alliance && (cardType === "malus_target" || cardType === "steal")) return true;
     return false;
   }
 
-  static applyDrinks(game, shared, targetId, amount, sourceId, cardType, messages) {
-    if (amount <= 0) return;
+  static tryAutoShield(game, targetId, attack, messages) {
+    const target = game.players[targetId];
+    if (!target?.shieldActive || !this.isShieldBlockable(attack)) return false;
+    target.shieldActive = false;
+    messages.push(`🛡️ ${target.pseudo} — le Bouclier absorbe ${attack.cardName}!`);
+    return true;
+  }
+
+  static getPlayerBadges(player) {
+    const b = [];
+    if (player.shieldActive) b.push("🛡️");
+    if (player.frozen) b.push("❄️");
+    if (this.hasCurseInHand(player)) b.push("☠️");
+    if (player.protection) b.push("🔰");
+    if (player.skip) b.push("⏭️");
+    if (player.mirrorActive) b.push("🪞");
+    if (player.backfire) b.push("🔥");
+    if (player.doubleEffect) b.push("⚡");
+    if (player.enemyOfPublic) b.push("👿");
+    if (player.alliance) b.push("🤝");
+    return b.join(" ");
+  }
+
+  static getAttackDescriptor(card, targetId, game) {
+    if (!targetId || !game.players[targetId]) return null;
+    const target = game.players[targetId];
+    const base = { cardId: card.id, cardName: card.name, cardType: card.type };
+
+    switch (card.id) {
+      case "GIVE_2": return { ...base, kind: "drinks", amount: 2, cardType: "bonus" };
+      case "GIVE_3": return { ...base, kind: "drinks", amount: 3, cardType: "bonus" };
+      case "GIVE_5": return { ...base, kind: "drinks", amount: 5, cardType: "bonus" };
+      case "PLUS2": return { ...base, kind: "drinks", amount: 2, cardType: "malus_target" };
+      case "PLUS3": return { ...base, kind: "drinks", amount: 3, cardType: "malus_target" };
+      case "PLUS5": return { ...base, kind: "drinks", amount: 5, cardType: "malus_target" };
+      case "DOUBLE_PENALTY":
+        return { ...base, kind: "drinks", amount: 2, cardType: "malus_target", delayedDrinks: 2 };
+      case "RELENTLESS": {
+        const amount = Object.keys(game.players).filter(id => id !== targetId).length;
+        return { ...base, kind: "drinks", amount, cardType: "malus_target" };
+      }
+      case "SKIP": return { ...base, kind: "skip", cardType: "uno" };
+      default: return null;
+    }
+  }
+
+  static getAvailableCounters(hand, attack) {
+    if (!attack) return [];
+    return hand.map((c, i) => ({ card: c, index: i })).filter(({ card }) => {
+      if (card.id === "PROTECTION") return attack.kind === "drinks";
+      if (card.id === "MIRROR") return this.isMalusAttack(attack);
+      if (card.id === "BACKFIRE") return attack.cardType === "malus_target";
+      return false;
+    });
+  }
+
+  static wouldShieldBlock(game, targetId, attack) {
+    const target = game.players[targetId];
+    return !!(target?.shieldActive && this.isShieldBlockable(attack));
+  }
+
+  static shouldOfferReaction(game, card, targetId) {
+    const attack = this.getAttackDescriptor(card, targetId, game);
+    if (!attack) return false;
+    if (attack.kind === "steal") return false;
+    if (this.wouldShieldBlock(game, targetId, attack)) return false;
+    const target = game.players[targetId];
+    if (attack.kind === "drinks" && this.isProtected(target, attack.cardType, attack.cardId)) return false;
+    return this.getAvailableCounters(target.hand, attack).length > 0;
+  }
+
+  static applyDrinks(game, shared, targetId, amount, sourceId, cardType, messages, opts = {}) {
+    if (amount <= 0) return false;
 
     let recipientId = targetId;
     let drinkAmount = amount;
+    const cardId = opts.cardId || null;
 
-    if (shared.doubleNextEffect) {
+    const source = sourceId ? game.players[sourceId] : null;
+    const recipient = game.players[recipientId];
+
+    if (source?.doubleEffect) {
       drinkAmount *= 2;
-      shared.doubleNextEffect = false;
-      messages.push("⚡ Double Effet actif!");
+      source.doubleEffect = false;
+      messages.push("⚡ Double Effet (carte jouée)!");
+    }
+    if (recipient?.doubleEffect && recipientId !== sourceId) {
+      drinkAmount *= 2;
+      recipient.doubleEffect = false;
+      messages.push("⚡ Double Effet (carte reçue)!");
     }
 
     const target = game.players[recipientId];
-    const source = sourceId ? game.players[sourceId] : null;
 
-    if (cardType === "malus_target" && target.enemyOfPublic) {
+    if (cardId && this.isPlusXCard(cardId) && target.enemyOfPublic) {
       drinkAmount += 1;
     }
 
-    if (this.isProtected(target, cardType)) {
-      messages.push(`${target.pseudo} est protégé!`);
-      return;
-    }
-
-    if (target.shieldActive && this.isDrinkEffect(cardType)) {
-      target.shieldActive = false;
-      messages.push(`🛡️ ${target.pseudo} annule l'effet avec son Bouclier!`);
-      return;
-    }
-
-    if (target.mirrorActive && sourceId && sourceId !== recipientId && cardType === "malus_target") {
-      target.mirrorActive = false;
-      messages.push(`🪞 ${target.pseudo} renvoie l'effet à ${source.pseudo}!`);
-      recipientId = sourceId;
+    if (!opts.skipPassiveChecks) {
+      if (this.isProtected(target, cardType, cardId)) {
+        messages.push(`${target.pseudo} est protégé!`);
+        return false;
+      }
+      if (target.mirrorActive && sourceId && sourceId !== recipientId && cardType === "malus_target") {
+        target.mirrorActive = false;
+        messages.push(`🪞 ${target.pseudo} renvoie l'effet à ${source.pseudo}!`);
+        recipientId = sourceId;
+      }
     }
 
     let victim = game.players[recipientId];
 
-    if (victim.backfire && sourceId && sourceId !== recipientId && cardType === "malus_target") {
+    if (!opts.skipPassiveChecks && victim.backfire && sourceId && sourceId !== recipientId && cardType === "malus_target") {
       victim.backfire = false;
-      messages.push(`🔥 Retour de Flamme! ${source.pseudo} subit l'effet!`);
+      messages.push(`🔥 Retour de Flamme actif! ${source.pseudo} subit l'effet!`);
       recipientId = sourceId;
       victim = game.players[recipientId];
     }
-    if (this.isProtected(victim, cardType)) {
+
+    if (this.isProtected(victim, cardType, cardId)) {
       messages.push(`${victim.pseudo} est protégé!`);
-      return;
+      return false;
     }
 
     victim.drinks = (victim.drinks || 0) + drinkAmount;
     messages.push(`${victim.pseudo} boit ${drinkAmount} 🍺`);
+    return true;
+  }
+
+  static applyAttack(game, shared, attack, targetId, casterId, messages) {
+    if (this.tryAutoShield(game, targetId, attack, messages)) return;
+
+    if (attack.kind === "drinks") {
+      const hit = this.applyDrinks(game, shared, targetId, attack.amount, casterId, attack.cardType, messages, { cardId: attack.cardId });
+      if (attack.delayedDrinks && hit) {
+        game.players[targetId].delayedDrinks = (game.players[targetId].delayedDrinks || 0) + attack.delayedDrinks;
+        messages.push(`→ +${attack.delayedDrinks} gorgées au prochain tour de ${game.players[targetId].pseudo}`);
+      }
+    } else if (attack.kind === "skip") {
+      game.players[targetId].skip = true;
+      messages.push(`→ ${game.players[targetId].pseudo} passe son prochain tour`);
+    }
+  }
+
+  static reflectAttack(game, shared, attack, toPlayerId, fromPlayerId, messages) {
+    if (attack.kind === "drinks") {
+      this.applyDrinks(game, shared, toPlayerId, attack.amount, fromPlayerId, attack.cardType, messages, { skipPassiveChecks: true, cardId: attack.cardId });
+      if (attack.delayedDrinks) {
+        game.players[toPlayerId].delayedDrinks = (game.players[toPlayerId].delayedDrinks || 0) + attack.delayedDrinks;
+        messages.push(`→ +${attack.delayedDrinks} gorgées différées pour ${game.players[toPlayerId].pseudo}`);
+      }
+    } else if (attack.kind === "skip") {
+      game.players[toPlayerId].skip = true;
+      messages.push(`→ ${game.players[toPlayerId].pseudo} passe son prochain tour`);
+    }
+  }
+
+  static resolveReaction(game, shared, counterHandIndex) {
+    const pr = shared.pendingReaction;
+    if (!pr) return "";
+
+    const messages = [];
+    const target = game.players[pr.targetId];
+    const caster = game.players[pr.casterId];
+    const attack = pr.attack;
+
+    messages.push(`⚔️ ${caster.pseudo} a visé ${target.pseudo} avec ${attack.cardName}`);
+
+    if (counterHandIndex !== null && counterHandIndex !== undefined) {
+      const counter = target.hand[counterHandIndex];
+      if (!counter || !this.COUNTER_IDS.includes(counter.id)) return "";
+
+      const allowed = this.getAvailableCounters(target.hand, attack);
+      if (!allowed.some(a => a.index === counterHandIndex)) return "";
+
+      target.hand.splice(counterHandIndex, 1);
+
+      switch (counter.id) {
+        case "PROTECTION":
+          messages.push(`🔰 ${target.pseudo} joue Protection — gorgées annulées!`);
+          break;
+        case "MIRROR":
+          messages.push(`🪞 ${target.pseudo} joue Miroir — renvoi à ${caster.pseudo}!`);
+          this.reflectAttack(game, shared, attack, pr.casterId, pr.targetId, messages);
+          break;
+        case "BACKFIRE":
+          messages.push(`🔥 ${target.pseudo} joue Retour de Flamme — renvoi à ${caster.pseudo}!`);
+          this.reflectAttack(game, shared, attack, pr.casterId, pr.targetId, messages);
+          break;
+      }
+    } else {
+      messages.push(`${target.pseudo} ne contre pas.`);
+      this.applyAttack(game, shared, attack, pr.targetId, pr.casterId, messages);
+    }
+
+    shared.pendingReaction = null;
+    return messages.join("\n");
   }
 
   static drawCard(game, playerId) {
@@ -628,8 +831,9 @@ class Effects {
     }
   }
 
-  static swapRandomToRight(game) {
+  static swapRandomWithNeighbor(game, direction) {
     const order = game.playerOrder;
+    const dir = direction ?? game.gameDirection ?? 1;
     const picks = [];
 
     order.forEach(id => {
@@ -645,12 +849,16 @@ class Effects {
 
     picks.forEach(({ fromId, card }) => {
       const pos = order.indexOf(fromId);
-      const rightId = order[(pos + 1) % order.length];
-      game.players[rightId].hand.push(card);
+      const neighborId = order[(pos + dir + order.length) % order.length];
+      game.players[neighborId].hand.push(card);
     });
   }
 
-  static apply(game, playerId, card, targetId, shared) {
+  static swapRandomToRight(game) {
+    this.swapRandomWithNeighbor(game, game.gameDirection || 1);
+  }
+
+  static apply(game, playerId, card, targetId, shared, opts = {}) {
     const players = game.players;
     const caster = players[playerId];
     const target = targetId ? players[targetId] : null;
@@ -658,13 +866,24 @@ class Effects {
 
     switch (card.id) {
       case "GIVE_2":
-        this.applyDrinks(game, shared, targetId, 2, playerId, "bonus", messages);
-        break;
       case "GIVE_3":
-        this.applyDrinks(game, shared, targetId, 3, playerId, "bonus", messages);
-        break;
       case "GIVE_5":
-        this.applyDrinks(game, shared, targetId, 5, playerId, "bonus", messages);
+      case "PLUS2":
+      case "PLUS3":
+      case "PLUS5":
+      case "DOUBLE_PENALTY":
+      case "RELENTLESS":
+        if (!opts?.deferAttack) {
+          const atk = this.getAttackDescriptor(card, targetId, game);
+          if (atk) {
+            if (card.id === "RELENTLESS" && this.isProtected(target, "malus_target", "RELENTLESS")) {
+              messages.push(`→ ${target.pseudo} est protégé!`);
+            } else {
+              this.applyAttack(game, shared, atk, targetId, playerId, messages);
+              if (card.id === "RELENTLESS") messages.push(`→ acharnement (${atk.amount} gorgées)`);
+            }
+          }
+        }
         break;
 
       case "DOUBLE_DISTRIBUTION":
@@ -683,8 +902,10 @@ class Effects {
         break;
 
       case "PROTECTION":
-        caster.protection = true;
-        messages.push("→ 🛡️ protégé contre le prochain effet de gorgées");
+        if (target) {
+          target.protection = true;
+          messages.push(`→ 🔰 ${target.pseudo} protégé(e) contre la prochaine gorgée jusqu'à son prochain tour`);
+        }
         break;
 
       case "GIFT":
@@ -698,38 +919,8 @@ class Effects {
         });
         caster.alliance = targetId;
         target.alliance = playerId;
-        messages.push(`→ 🤝 alliance entre ${caster.pseudo} et ${target.pseudo}`);
+        messages.push(`→ 🤝 alliance entre ${caster.pseudo} et ${target.pseudo} (jusqu'au prochain tour de chacun)`);
         break;
-
-      case "PLUS2":
-        this.applyDrinks(game, shared, targetId, 2, playerId, "malus_target", messages);
-        break;
-      case "PLUS3":
-        this.applyDrinks(game, shared, targetId, 3, playerId, "malus_target", messages);
-        break;
-      case "PLUS5":
-        this.applyDrinks(game, shared, targetId, 5, playerId, "malus_target", messages);
-        break;
-
-      case "DOUBLE_PENALTY":
-        this.applyDrinks(game, shared, targetId, 2, playerId, "malus_target", messages);
-        if (!this.isProtected(target, "malus_target")) {
-          target.delayedDrinks = (target.delayedDrinks || 0) + 2;
-          messages.push(`→ +2 gorgées au prochain tour de ${target.pseudo}`);
-        }
-        break;
-
-      case "RELENTLESS": {
-        if (this.isProtected(target, "malus_target")) {
-          messages.push(`→ ${target.pseudo} est protégé!`);
-        } else {
-          const attackers = Object.keys(players).filter(id => id !== targetId);
-          let total = attackers.length + (target.enemyOfPublic ? 1 : 0);
-          this.applyDrinks(game, shared, targetId, total, playerId, "malus_target", messages);
-          messages.push(`→ acharnement (${total} gorgées)`);
-        }
-        break;
-      }
 
       case "TRIBUNAL":
         shared.tribunal = { casterId: playerId, votes: {} };
@@ -738,36 +929,37 @@ class Effects {
 
       case "PUBLIC_ENEMY":
         target.enemyOfPublic = true;
-        messages.push(`→ ${target.pseudo} est Ennemi Public (+1 aux attaques)`);
+        messages.push(`→ 👿 ${target.pseudo} Ennemi Public (+1 sur Donne +X jusqu'à son prochain tour)`);
         break;
 
       case "DRINK_2":
-        this.applyDrinks(game, shared, playerId, 2, playerId, "malus_global", messages);
+        this.applyDrinks(game, shared, playerId, 2, playerId, "malus_global", messages, { cardId: "DRINK_2" });
         break;
       case "DRINK_3":
-        this.applyDrinks(game, shared, playerId, 3, playerId, "malus_global", messages);
+        this.applyDrinks(game, shared, playerId, 3, playerId, "malus_global", messages, { cardId: "DRINK_3" });
         break;
       case "DRINK_5":
-        this.applyDrinks(game, shared, playerId, 5, playerId, "malus_global", messages);
+        this.applyDrinks(game, shared, playerId, 5, playerId, "malus_global", messages, { cardId: "DRINK_5" });
         break;
 
       case "ALL_EXCEPT_YOU":
         Object.keys(players).filter(id => id !== playerId).forEach(id => {
-          this.applyDrinks(game, shared, id, 1, playerId, "malus_global", messages);
+          this.applyDrinks(game, shared, id, 1, playerId, "malus_global", messages, { cardId: "ALL_EXCEPT_YOU" });
         });
         break;
 
       case "LEFT": {
         const order = game.playerOrder;
+        const dir = game.gameDirection || 1;
         const idx = order.indexOf(playerId);
-        const leftId = order[(idx - 1 + order.length) % order.length];
-        this.applyDrinks(game, shared, leftId, 3, playerId, "malus_global", messages);
+        const leftId = order[(idx - dir + order.length) % order.length];
+        this.applyDrinks(game, shared, leftId, 3, playerId, "malus_global", messages, { cardId: "LEFT" });
         messages.push(`→ joueur à gauche: ${players[leftId].pseudo}`);
         break;
       }
 
       case "DISCARD": {
-        const discardable = caster.hand.filter(c => c.id !== "DIABLE_NOIR");
+        const discardable = caster.hand.filter(c => !this.isUnplayable(c.id));
         if (discardable.length > 0) {
           const pick = discardable[Math.floor(Math.random() * discardable.length)];
           const idx = caster.hand.indexOf(pick);
@@ -781,15 +973,15 @@ class Effects {
 
       case "SHIELD":
         caster.shieldActive = true;
-        messages.push("→ 🛡️ annule le prochain effet de gorgées");
+        messages.push("→ 🛡️ Bouclier actif — absorbe le prochain malus ciblé");
         break;
       case "MIRROR":
         caster.mirrorActive = true;
-        messages.push("→ 🪞 renvoie le prochain malus ciblé");
+        messages.push("→ 🪞 Miroir actif — renvoie le prochain malus ciblé");
         break;
       case "DOUBLE_EFFECT":
-        shared.doubleNextEffect = true;
-        messages.push("→ double les gorgées de la prochaine carte");
+        caster.doubleEffect = true;
+        messages.push("→ ⚡ Double Effet actif sur ta prochaine carte à gorgées (jouée ou reçue)");
         break;
       case "BOMB":
         shared.bombActive = true;
@@ -797,7 +989,7 @@ class Effects {
         break;
       case "BACKFIRE":
         caster.backfire = true;
-        messages.push("→ 🔥 renvoie le prochain malus ciblé à l'expéditeur");
+        messages.push("→ 🔥 Retour de Flamme actif — renvoie le prochain malus ciblé");
         break;
 
       case "SPY":
@@ -821,7 +1013,7 @@ class Effects {
 
       case "THIEF":
         if (target && target.hand.length > 0) {
-          if (this.isProtected(target, "steal")) {
+          if (this.isProtected(target, "steal", "THIEF")) {
             messages.push(`→ ${target.pseudo} est protégé!`);
           } else {
             const idx = Math.floor(Math.random() * target.hand.length);
@@ -833,7 +1025,7 @@ class Effects {
 
       case "PICKPOCKET":
         if (target && target.hand.length > 0) {
-          if (this.isProtected(target, "steal")) {
+          if (this.isProtected(target, "steal", "PICKPOCKET")) {
             messages.push(`→ ${target.pseudo} est protégé!`);
           } else {
             shared.pickpocket = {
@@ -873,18 +1065,15 @@ class Effects {
         break;
 
       case "SKIP":
-        if (target.shieldActive) {
-          target.shieldActive = false;
-          messages.push(`→ 🛡️ ${target.pseudo} bloque le skip avec son Bouclier!`);
-        } else {
-          target.skip = true;
-          messages.push(`→ ${target.pseudo} passe son prochain tour`);
+        if (!opts?.deferAttack) {
+          const skipAtk = this.getAttackDescriptor(card, targetId, game);
+          this.applyAttack(game, shared, skipAtk, targetId, playerId, messages);
         }
         break;
 
       case "FREEZE":
         target.frozen = true;
-        messages.push(`→ ❄️ ${target.pseudo} perd son prochain tour (non contrable)`);
+        messages.push(`→ ❄️ ${target.pseudo} est gelé (perd son prochain tour, non contrable)`);
         break;
 
       case "ALL_DRAW":
@@ -894,31 +1083,27 @@ class Effects {
 
       case "RUSSIAN_ROULETTE":
         if (Math.random() < 0.5) {
-          this.applyDrinks(game, shared, playerId, 4, playerId, "malus_global", messages);
-          messages.push("→ 🎲 malchance!");
+          this.applyDrinks(game, shared, playerId, 4, playerId, "malus_global", messages, { cardId: "RUSSIAN_ROULETTE" });
+          messages.push("→ 🎲 tu bois 4 🍺!");
         } else {
           Object.keys(players).filter(id => id !== playerId).forEach(id => {
-            this.applyDrinks(game, shared, id, 4, playerId, "malus_global", messages);
+            this.applyDrinks(game, shared, id, 4, playerId, "malus_global", messages, { cardId: "RUSSIAN_ROULETTE" });
           });
-          messages.push("→ 🎲 chance!");
+          messages.push("→ 🎲 tu distribues 4 🍺 à chaque autre joueur!");
         }
         break;
 
       case "VIRUS": {
         const order = game.playerOrder;
+        const dir = game.gameDirection || 1;
         const idx = order.indexOf(targetId);
-        const leftId = order[(idx - 1 + order.length) % order.length];
-        const rightId = order[(idx + 1) % order.length];
-        this.applyDrinks(game, shared, leftId, 2, playerId, "malus_target", messages);
-        this.applyDrinks(game, shared, rightId, 2, playerId, "malus_target", messages);
+        const leftId = order[(idx - dir + order.length) % order.length];
+        const rightId = order[(idx + dir) % order.length];
+        this.applyDrinks(game, shared, leftId, 2, playerId, "malus_target", messages, { cardId: "VIRUS" });
+        this.applyDrinks(game, shared, rightId, 2, playerId, "malus_target", messages, { cardId: "VIRUS" });
         messages.push(`→ 🦠 virus autour de ${target.pseudo}`);
         break;
       }
-
-      case "CURSE":
-        caster.cursed = true;
-        messages.push("→ ☠️ maudit (1 🍺 à chaque début de tour)");
-        break;
 
       case "POISON_GIFT":
         if (target && caster.hand.length > 0) {
@@ -929,8 +1114,8 @@ class Effects {
         break;
 
       case "PANIC":
-        this.swapRandomToRight(game);
-        messages.push("→ 😱 panique! échange aléatoire avec la droite");
+        this.swapRandomWithNeighbor(game, game.gameDirection || 1);
+        messages.push("→ 😱 panique! échange aléatoire avec le voisin");
         break;
     }
 
@@ -939,7 +1124,7 @@ class Effects {
 
   static needsTarget(cardId) {
     return [
-      "GIVE_2", "GIVE_3", "GIVE_5", "GIFT", "ALLIANCE",
+      "GIVE_2", "GIVE_3", "GIVE_5", "GIFT", "ALLIANCE", "PROTECTION",
       "PLUS2", "PLUS3", "PLUS5", "DOUBLE_PENALTY", "RELENTLESS", "PUBLIC_ENEMY",
       "THIEF", "PICKPOCKET", "BLACK_MARKET", "FULL_SWAP",
       "SPY", "DETECTIVE", "XRAY", "SKIP", "FREEZE", "VIRUS",
@@ -947,6 +1132,7 @@ class Effects {
   }
 
   static blocksTurnAdvance(cardId, shared) {
+    if (shared.pendingReaction) return true;
     if (cardId === "DOUBLE_DISTRIBUTION" || cardId === "TRIBUNAL") return true;
     if (cardId === "PICKPOCKET" && shared.pickpocket) return true;
     return false;
@@ -1044,9 +1230,21 @@ class GameController {
   onTurnStart(game, playerId, shared, turnMessages) {
     const player = game.players[playerId];
 
+    if (player.enemyOfPublic) {
+      player.enemyOfPublic = false;
+      turnMessages.push(`👿 Ennemi Public de ${player.pseudo} expire`);
+    }
+
+    if (player.alliance) {
+      const partnerId = player.alliance;
+      player.alliance = null;
+      if (game.players[partnerId]) game.players[partnerId].alliance = null;
+      turnMessages.push(`🤝 Alliance de ${player.pseudo} expire`);
+    }
+
     if (player.protection) {
       player.protection = false;
-      turnMessages.push(`🛡️ La protection de ${player.pseudo} expire`);
+      turnMessages.push(`🔰 Protection de ${player.pseudo} expire`);
     }
 
     if (player.delayedDrinks > 0) {
@@ -1056,9 +1254,9 @@ class GameController {
       turnMessages.push(`⏳ ${player.pseudo} boit ${d} 🍺 (Double Peine)`);
     }
 
-    if (player.cursed) {
+    if (Effects.hasCurseInHand(player)) {
       player.drinks = (player.drinks || 0) + 1;
-      turnMessages.push(`☠️ ${player.pseudo} boit 1 🍺 (Malédiction)`);
+      turnMessages.push(`☠️ ${player.pseudo} boit 1 🍺 (Malédiction en main)`);
     }
 
     if (shared.bombActive) {
@@ -1118,30 +1316,71 @@ class GameController {
       if (order[game.currentPlayerIndex] !== this.playerId) return alert("Pas ton tour");
 
       const shared = game.sharedState || defaultSharedState();
-      if (shared.doubleDistribution || shared.tribunal || shared.pickpocket) {
+      if (shared.doubleDistribution || shared.tribunal || shared.pickpocket || shared.pendingReaction) {
         return alert("Termine l'action en cours d'abord");
       }
 
       const hand = game.players[this.playerId]?.hand || [];
       const card = hand[index];
       if (!card) return;
-      if (card.id === "DIABLE_NOIR") return alert("❌ Tu ne peux pas jouer le Diable Noir");
+      if (Effects.isUnplayable(card.id)) return alert(`❌ Tu ne peux pas jouer ${card.name}`);
       if (Effects.needsTarget(card.id) && !targetId) return alert("Choisis une cible");
-      if (Effects.needsTarget(card.id) && targetId === this.playerId) return alert("Tu ne peux pas te cibler toi-même");
+      if (Effects.needsTarget(card.id) && targetId === this.playerId && card.id !== "PROTECTION") {
+        return alert("Tu ne peux pas te cibler toi-même");
+      }
 
       this.roomRef().transaction((g) => {
         if (!g?.started || g.sharedState?.finished) return;
         const s = g.sharedState || defaultSharedState();
-        if (s.doubleDistribution || s.tribunal || s.pickpocket) return;
+        if (s.doubleDistribution || s.tribunal || s.pickpocket || s.pendingReaction) return;
 
         const currentId = g.playerOrder[g.currentPlayerIndex];
         if (currentId !== this.playerId) return;
 
         const playerHand = g.players[this.playerId].hand;
         const played = playerHand[index];
-        if (!played || played.id === "DIABLE_NOIR") return;
+        if (!played || Effects.isUnplayable(played.id)) return;
 
         playerHand.splice(index, 1);
+
+        const attack = targetId && Effects.getAttackDescriptor(played, targetId, g);
+        if (attack) {
+          const shieldMsgs = [];
+          if (Effects.tryAutoShield(g, targetId, attack, shieldMsgs)) {
+            const partialMsg = Effects.apply(g, this.playerId, played, targetId, s, { deferAttack: true });
+            let fullMsg = partialMsg + "\n" + shieldMsgs.join("\n");
+            const blocksAdvance = Effects.blocksTurnAdvance(played.id, s);
+            if (!blocksAdvance) {
+              this.drawCardAfterPlay(g, this.playerId);
+              if (!s.extraTurn) {
+                const result = this.advanceTurn(g, s);
+                g.currentPlayerIndex = result.index;
+                if (result.messages.length) fullMsg = result.messages.join("\n") + "\n" + fullMsg;
+              }
+            }
+            g.message = fullMsg;
+            g.sharedState = s;
+            this.checkWinCondition(g);
+            return g;
+          }
+        }
+
+        const needsReaction = targetId && Effects.shouldOfferReaction(g, played, targetId);
+
+        if (needsReaction) {
+          const atk = Effects.getAttackDescriptor(played, targetId, g);
+          s.pendingReaction = {
+            casterId: this.playerId,
+            targetId,
+            attack: atk,
+            sourceCard: { id: played.id, name: played.name },
+          };
+          const partialMsg = Effects.apply(g, this.playerId, played, targetId, s, { deferAttack: true });
+          g.message = partialMsg + `\n⚔️ ${g.players[targetId].pseudo}, tu es visé! Joue Miroir, Protection ou Retour de Flamme.`;
+          g.sharedState = s;
+          return g;
+        }
+
         const effectMsg = Effects.apply(g, this.playerId, played, targetId, s);
 
         const blocksAdvance = Effects.blocksTurnAdvance(played.id, s);
@@ -1171,6 +1410,75 @@ class GameController {
     if (game.deck.length > 0) {
       game.players[playerId].hand.push(game.deck.pop());
     }
+  }
+
+  finishPlayAfterReaction(game, shared, casterId, reactionMsg, sourceCard) {
+    this.drawCardAfterPlay(game, casterId);
+
+    let fullMsg = reactionMsg;
+    let nextIndex = game.currentPlayerIndex;
+
+    if (!shared.extraTurn) {
+      const result = this.advanceTurn(game, shared);
+      nextIndex = result.index;
+      if (result.messages.length) fullMsg = result.messages.join("\n") + "\n" + fullMsg;
+    }
+
+    game.currentPlayerIndex = nextIndex;
+    game.message = fullMsg;
+    this.checkWinCondition(game);
+  }
+
+  playReaction(handIndex) {
+    this.roomRef().transaction((g) => {
+      if (!g?.started) return;
+      const s = g.sharedState || defaultSharedState();
+      const pr = s.pendingReaction;
+      if (!pr || pr.targetId !== this.playerId) return;
+
+      const resume = pr.resume ? { ...pr.resume } : null;
+      const casterId = pr.casterId;
+      const sourceCard = pr.sourceCard;
+
+      const reactionMsg = Effects.resolveReaction(g, s, handIndex);
+      if (!reactionMsg) return;
+
+      if (resume?.type === "doubleDistribution") {
+        return this.continueDoubleDistributionAfterReaction(g, s, resume, reactionMsg);
+      }
+
+      this.finishPlayAfterReaction(g, s, casterId, reactionMsg, sourceCard);
+      g.sharedState = s;
+      return g;
+    });
+  }
+
+  declineReaction() {
+    this.playReaction(null);
+  }
+
+  continueDoubleDistributionAfterReaction(game, shared, resume, reactionMsg) {
+    const dd = shared.doubleDistribution;
+    if (!dd) return game;
+
+    dd.targets.push(resume.targetId);
+
+    if (dd.targets.length < dd.needed) {
+      game.message = reactionMsg + `\n${game.players[dd.casterId].pseudo} — choisis encore ${dd.needed - dd.targets.length} joueur(s)`;
+      game.sharedState = shared;
+      return game;
+    }
+
+    shared.doubleDistribution = null;
+    this.drawCardAfterPlay(game, dd.casterId);
+    const result = this.advanceTurn(game, shared);
+    game.currentPlayerIndex = result.index;
+    let fullMsg = reactionMsg + `\nDouble Distribution terminée.`;
+    if (result.messages.length) fullMsg = result.messages.join("\n") + "\n" + fullMsg;
+    game.message = fullMsg;
+    game.sharedState = shared;
+    this.checkWinCondition(game);
+    return game;
   }
 
   selectTarget(targetId) {
@@ -1203,6 +1511,46 @@ class GameController {
       if (dd.targets.includes(targetId) || targetId === this.playerId) return;
       if (dd.targets.length >= dd.needed) return;
 
+      const attack = {
+        kind: "drinks",
+        amount: dd.amount,
+        cardType: "bonus",
+        cardId: "DOUBLE_DISTRIBUTION",
+        cardName: "Double Distribution",
+      };
+      const target = game.players[targetId];
+      const shieldMsgs = [];
+      if (Effects.tryAutoShield(game, targetId, attack, shieldMsgs)) {
+        dd.targets.push(targetId);
+        if (dd.targets.length < dd.needed) {
+          game.message = shieldMsgs.join("\n") + `\n${game.players[this.playerId].pseudo} — choisis encore ${dd.needed - dd.targets.length} joueur(s)`;
+          return game;
+        }
+        shared.doubleDistribution = null;
+        this.drawCardAfterPlay(game, this.playerId);
+        const result = this.advanceTurn(game, shared);
+        game.currentPlayerIndex = result.index;
+        game.message = shieldMsgs.join("\n") + "\nDouble Distribution terminée.";
+        this.checkWinCondition(game);
+        return game;
+      }
+
+      const hasCounters = Effects.getAvailableCounters(target.hand, attack).length > 0;
+      const protectedTarget = Effects.isProtected(target, "bonus", "DOUBLE_DISTRIBUTION");
+
+      if (hasCounters && !protectedTarget) {
+        shared.pendingReaction = {
+          casterId: this.playerId,
+          targetId,
+          attack,
+          sourceCard: { id: "DOUBLE_DISTRIBUTION", name: "Double Distribution" },
+          resume: { type: "doubleDistribution", targetId },
+        };
+        game.message = `⚔️ ${target.pseudo}, tu es visé (Double Distribution)! Joue un contre dans ta main.`;
+        game.sharedState = shared;
+        return game;
+      }
+
       dd.targets.push(targetId);
       const msgs = [];
       Effects.applyDrinks(game, shared, targetId, dd.amount, this.playerId, "bonus", msgs);
@@ -1216,9 +1564,9 @@ class GameController {
       this.drawCardAfterPlay(game, this.playerId);
       const result = this.advanceTurn(game, shared);
       game.currentPlayerIndex = result.index;
-      const msgs = [`Double Distribution: ${dd.targets.map(id => game.players[id].pseudo).join(", ")} boivent 1 🍺`];
-      if (result.messages.length) msgs.unshift(...result.messages);
-      game.message = msgs.join("\n");
+      const lines = [`Double Distribution: ${dd.targets.map(id => game.players[id].pseudo).join(", ")}`];
+      if (result.messages.length) lines.unshift(...result.messages);
+      game.message = lines.join("\n");
       this.checkWinCondition(game);
       return game;
     });
@@ -1313,9 +1661,16 @@ class GameController {
       document.getElementById("resetBtn").classList.add("hidden");
     } else {
       const currentId = order[game.currentPlayerIndex];
-      center.textContent = currentId === this.playerId
-        ? "🎮 C'est TON TOUR!"
-        : `🎮 Tour de ${players[currentId]?.pseudo}`;
+      const pr = shared.pendingReaction;
+      if (pr?.targetId === this.playerId) {
+        center.textContent = "⚔️ TU ES VISÉ! Choisis un contre (Miroir / Protection / Retour de Flamme)";
+      } else if (pr) {
+        center.textContent = `⏳ ${players[pr.targetId]?.pseudo} doit choisir un contre…`;
+      } else {
+        center.textContent = currentId === this.playerId
+          ? "🎮 C'est TON TOUR!"
+          : `🎮 Tour de ${players[currentId]?.pseudo}`;
+      }
       document.getElementById("startBtn").classList.add("hidden");
       document.getElementById("resetBtn").classList.remove("hidden");
     }
@@ -1339,22 +1694,22 @@ class GameController {
       if (id === this.selectedTarget) el.classList.add("selected");
       if (player.skip) el.classList.add("skipped");
       if (player.frozen) el.classList.add("frozen");
+      if (player.shieldActive) el.classList.add("protected");
       if (player.enemyOfPublic) el.classList.add("enemy");
 
       el.style.left = `${cx + radius * Math.cos(angle)}px`;
       el.style.top = `${cy + radius * Math.sin(angle)}px`;
 
       let status = `${player.hand.length} cartes · ${player.drinks || 0} 🍺`;
-      let statusClass = "";
-      if (player.protection) { status += " 🛡️"; statusClass = "protected"; }
-      if (player.frozen) { status += " ❄️"; statusClass = "frozen"; }
+      const badges = Effects.getPlayerBadges(player);
 
       el.innerHTML = `
         <div class="player-name">${player.pseudo}${id === this.playerId ? " (toi)" : ""}</div>
-        <div class="player-status ${statusClass}">${status}</div>
+        <div class="player-badges">${badges || "—"}</div>
+        <div class="player-status">${status}</div>
       `;
 
-      if (game.started && !shared.finished) {
+      if (game.started && !shared.finished && !shared.pendingReaction) {
         el.onclick = () => this.selectTarget(id);
       }
       circle.appendChild(el);
@@ -1364,15 +1719,29 @@ class GameController {
     handEl.innerHTML = "";
     const myHand = players[this.playerId]?.hand || [];
     const isMyTurn = game.started && order[game.currentPlayerIndex] === this.playerId;
-    const pending = shared.doubleDistribution || shared.tribunal || shared.pickpocket;
+    const pending = shared.doubleDistribution || shared.tribunal || shared.pickpocket || shared.pendingReaction;
+    const isTargeted = shared.pendingReaction?.targetId === this.playerId;
+    const counterIndices = isTargeted
+      ? Effects.getAvailableCounters(myHand, shared.pendingReaction.attack).map(c => c.index)
+      : [];
 
     myHand.forEach((card, idx) => {
       const el = document.createElement("div");
       el.className = "card";
-      if (card.id === "DIABLE_NOIR") el.classList.add("diable-noir");
-      if (!isMyTurn || pending) el.classList.add("disabled");
+      if (card.id === "DIABLE_NOIR" || card.id === "CURSE") el.classList.add("diable-noir");
+      if (card.id === "CURSE") el.classList.add("curse-card");
+
+      const isCounterPick = isTargeted && counterIndices.includes(idx);
+      if (isCounterPick) {
+        el.classList.add("counter-pick");
+        el.onclick = () => this.playReaction(idx);
+      } else if (isMyTurn && !pending) {
+        el.onclick = () => this.playCard(idx);
+      } else {
+        el.classList.add("disabled");
+      }
+
       el.innerHTML = `<img src="${assetUrl(card.img)}" alt="${card.name}" title="${card.name}">`;
-      if (isMyTurn && !pending) el.onclick = () => this.playCard(idx);
       handEl.appendChild(el);
     });
 
@@ -1384,7 +1753,22 @@ class GameController {
     const title = document.getElementById("modalTitle");
     const text = document.getElementById("modalText");
     const cards = document.getElementById("modalCards");
+    const passBtn = document.getElementById("modalPass");
     cards.innerHTML = "";
+    passBtn.classList.add("hidden");
+
+    if (shared.pendingReaction?.targetId === this.playerId) {
+      const pr = shared.pendingReaction;
+      const attack = pr.attack;
+      overlay.classList.remove("hidden");
+      title.textContent = "⚔️ Tu es visé!";
+      let desc = `${game.players[pr.casterId].pseudo} joue ${attack.cardName} contre toi.`;
+      if (attack.kind === "drinks") desc += ` (${attack.amount} 🍺)`;
+      if (attack.kind === "skip") desc += " (passe ton tour)";
+      text.textContent = desc + " Clique une carte contre surlignée (Miroir, Protection, Retour de Flamme) ou passe.";
+      passBtn.classList.remove("hidden");
+      return;
+    }
 
     if (shared.tribunal && !shared.tribunal.votes[this.playerId]) {
       overlay.classList.remove("hidden");
