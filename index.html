@@ -211,6 +211,18 @@
       box-shadow: 0 0 14px rgba(0, 255, 204, 0.5);
     }
 
+    .player.dd-pending {
+      background: linear-gradient(145deg, #4a3a10, #6a5a10);
+      border-color: #ffcc00;
+      box-shadow: 0 0 14px rgba(255, 204, 0, 0.55);
+      animation: dd-pending-pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes dd-pending-pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.05); }
+    }
+
     .player.clickable { cursor: pointer; }
     .player:not(.clickable) { cursor: default; }
 
@@ -1483,7 +1495,13 @@ class Effects {
         const others = Object.keys(game.players).filter(id => id !== playerId).length;
         const needed = Math.min(2, Math.max(others, 0));
         if (needed > 0) {
-          shared.doubleDistribution = { casterId: playerId, targets: [], needed, amount: 1 };
+          shared.doubleDistribution = {
+            casterId: playerId,
+            targets: [],
+            needed,
+            amount: 1,
+            awaitingTargetId: null,
+          };
           messages.push(`→ choisis ${needed} joueur${needed > 1 ? "s" : ""} différent${needed > 1 ? "s" : ""} (1 gorgée chacun)`);
         } else {
           messages.push("→ personne à cibler");
@@ -2065,11 +2083,13 @@ class GameController {
           const result = this.advanceTurn(g, s);
           nextIndex = result.index;
           if (result.messages.length) fullMsg = result.messages.join("\n") + "\n" + fullMsg;
+        } else if (played.id === "DOUBLE_DISTRIBUTION" && s.doubleDistribution) {
+          fullMsg += `\n👆 Clique ${s.doubleDistribution.needed} joueur(s) dans le cercle.`;
         }
 
         g.currentPlayerIndex = nextIndex;
         g.message = fullMsg;
-        g.sharedState = s;
+        g.sharedState = { ...s, doubleDistribution: s.doubleDistribution ? { ...s.doubleDistribution } : null };
         this.checkWinCondition(g);
         return g;
       }).then((result) => {
@@ -2130,27 +2150,21 @@ class GameController {
   }
 
   continueDoubleDistributionAfterReaction(game, shared, resume, reactionMsg) {
-    const dd = shared.doubleDistribution;
+    const dd = this.normalizeDoubleDistribution(shared);
     if (!dd) return game;
 
-    dd.targets.push(resume.targetId);
+    if (!dd.targets.includes(resume.targetId)) {
+      dd.targets.push(resume.targetId);
+    }
+    dd.awaitingTargetId = null;
 
     if (dd.targets.length < dd.needed) {
-      game.message = reactionMsg + `\n${game.players[dd.casterId].pseudo} — choisis encore ${dd.needed - dd.targets.length} joueur(s)`;
-      game.sharedState = shared;
-      return game;
+      game.message = reactionMsg +
+        `\n✅ (${dd.targets.length}/${dd.needed}) — ${game.players[dd.casterId].pseudo}, choisis encore ${dd.needed - dd.targets.length} joueur(s) dans le cercle.`;
+      return this.commitDoubleDistributionState(game, shared, dd);
     }
 
-    shared.doubleDistribution = null;
-    this.drawCardAfterPlay(game, dd.casterId);
-    const result = this.advanceTurn(game, shared);
-    game.currentPlayerIndex = result.index;
-    let fullMsg = reactionMsg + `\nDouble Distribution terminée.`;
-    if (result.messages.length) fullMsg = result.messages.join("\n") + "\n" + fullMsg;
-    game.message = fullMsg;
-    game.sharedState = shared;
-    this.checkWinCondition(game);
-    return game;
+    return this.finishDoubleDistribution(game, shared, dd, reactionMsg);
   }
 
   toggleTarget(targetId, game) {
@@ -2171,57 +2185,105 @@ class GameController {
     });
   }
 
+  normalizeDoubleDistribution(shared) {
+    const dd = shared?.doubleDistribution;
+    if (!dd) return null;
+    if (!Array.isArray(dd.targets)) dd.targets = [];
+    return dd;
+  }
+
+  finishDoubleDistribution(game, shared, dd, prefixMsg = "") {
+    const picked = dd.targets.map(id => game.players[id]?.pseudo).filter(Boolean);
+    shared.doubleDistribution = null;
+    game.sharedState = { ...shared, doubleDistribution: null };
+    this.drawCardAfterPlay(game, dd.casterId);
+    const result = this.advanceTurn(game, shared);
+    game.currentPlayerIndex = result.index;
+    const lines = [];
+    if (prefixMsg) lines.push(prefixMsg);
+    if (picked.length) lines.push(`Double Distribution → ${picked.join(", ")}`);
+    else lines.push("Double Distribution terminée.");
+    if (result.messages.length) lines.unshift(...result.messages);
+    game.message = lines.join("\n");
+    this.checkWinCondition(game);
+    return game;
+  }
+
+  commitDoubleDistributionState(game, shared, dd) {
+    shared.doubleDistribution = {
+      casterId: dd.casterId,
+      targets: [...dd.targets],
+      needed: dd.needed,
+      amount: dd.amount ?? 1,
+      awaitingTargetId: dd.awaitingTargetId ?? null,
+    };
+    game.sharedState = { ...shared, doubleDistribution: shared.doubleDistribution };
+    return game;
+  }
+
   addDoubleDistributionTarget(targetId) {
     this.roomRef().transaction((game) => {
       if (!game?.started) return;
 
       const shared = game.sharedState || defaultSharedState();
-      game.sharedState = shared;
+      const dd = this.normalizeDoubleDistribution(shared);
 
-      const dd = shared.doubleDistribution;
-      if (!dd || dd.casterId !== this.playerId) return;
+      if (!dd) {
+        game.message = "⏳ Double Distribution — synchronisation en cours, réessaie…";
+        game.sharedState = shared;
+        return game;
+      }
+      if (dd.casterId !== this.playerId) {
+        game.message = `⏳ ${game.players[dd.casterId]?.pseudo || "Un joueur"} choisit pour la Double Distribution.`;
+        game.sharedState = shared;
+        return game;
+      }
       if (shared.pendingReaction) {
-        game.message = "⏳ Attends que le joueur visé réponde avant de choisir le suivant.";
+        game.message = "⏳ Attends que le joueur visé réponde (contre ou passe).";
+        game.sharedState = shared;
         return game;
       }
       if (targetId === this.playerId) {
         game.message = "❌ Tu ne peux pas te cibler toi-même.";
+        game.sharedState = shared;
         return game;
       }
+      if (!game.players[targetId]) return game;
       if (dd.targets.includes(targetId)) {
-        game.message = "❌ Ce joueur est déjà choisi — clique un autre joueur.";
+        game.message = "❌ Ce joueur est déjà choisi.";
+        game.sharedState = shared;
         return game;
       }
-      if (dd.targets.length >= dd.needed) return;
+      if (dd.targets.length >= dd.needed) {
+        return this.finishDoubleDistribution(game, shared, dd);
+      }
 
       const attack = {
         kind: "drinks",
-        amount: dd.amount,
+        amount: dd.amount ?? 1,
         cardType: "bonus",
         cardId: "DOUBLE_DISTRIBUTION",
         cardName: "Double Distribution",
       };
       const target = game.players[targetId];
       const shieldMsgs = [];
+
       if (Effects.tryAutoShield(game, targetId, attack, shieldMsgs)) {
         dd.targets.push(targetId);
+        dd.awaitingTargetId = null;
         if (dd.targets.length < dd.needed) {
-          game.message = shieldMsgs.join("\n") + `\n${game.players[this.playerId].pseudo} — choisis encore ${dd.needed - dd.targets.length} joueur(s)`;
-          return game;
+          game.message = shieldMsgs.join("\n") +
+            `\n✅ ${target.pseudo} choisi (${dd.targets.length}/${dd.needed}) — clique encore ${dd.needed - dd.targets.length} joueur(s).`;
+          return this.commitDoubleDistributionState(game, shared, dd);
         }
-        shared.doubleDistribution = null;
-        this.drawCardAfterPlay(game, this.playerId);
-        const result = this.advanceTurn(game, shared);
-        game.currentPlayerIndex = result.index;
-        game.message = shieldMsgs.join("\n") + "\nDouble Distribution terminée.";
-        this.checkWinCondition(game);
-        return game;
+        return this.finishDoubleDistribution(game, shared, dd, shieldMsgs.join("\n"));
       }
 
       const hasCounters = Effects.getAvailableCounters(target.hand, attack).length > 0;
       const protectedTarget = Effects.isProtected(target, "bonus", "DOUBLE_DISTRIBUTION");
 
       if (hasCounters && !protectedTarget) {
+        dd.awaitingTargetId = targetId;
         shared.pendingReaction = {
           casterId: this.playerId,
           targetId,
@@ -2229,29 +2291,29 @@ class GameController {
           sourceCard: { id: "DOUBLE_DISTRIBUTION", name: "Double Distribution" },
           resume: { type: "doubleDistribution", targetId },
         };
-        game.message = `⚔️ ${target.pseudo}, tu es visé (Double Distribution)! Joue un contre dans ta main.`;
-        game.sharedState = shared;
+        game.message =
+          `✅ ${target.pseudo} visé (${dd.targets.length}/${dd.needed} confirmés) — en attente de sa réponse…`;
+        shared.doubleDistribution = { ...dd };
+        game.sharedState = { ...shared };
         return game;
       }
 
       dd.targets.push(targetId);
-      const msgs = [];
-      Effects.applyDrinks(game, shared, targetId, dd.amount, this.playerId, "bonus", msgs);
+      dd.awaitingTargetId = null;
+      const drinkMsgs = [];
+      Effects.applyDrinks(game, shared, targetId, dd.amount ?? 1, this.playerId, "bonus", drinkMsgs, {
+        cardId: "DOUBLE_DISTRIBUTION",
+      });
 
       if (dd.targets.length < dd.needed) {
-        game.message = `${game.players[this.playerId].pseudo} — choisis encore ${dd.needed - dd.targets.length} joueur(s)`;
-        return game;
+        const drinkLine = drinkMsgs.length ? drinkMsgs.join("\n") + "\n" : "";
+        game.message = drinkLine +
+          `✅ ${target.pseudo} choisi (${dd.targets.length}/${dd.needed}) — clique encore ${dd.needed - dd.targets.length} joueur(s).`;
+        return this.commitDoubleDistributionState(game, shared, dd);
       }
 
-      shared.doubleDistribution = null;
-      this.drawCardAfterPlay(game, this.playerId);
-      const result = this.advanceTurn(game, shared);
-      game.currentPlayerIndex = result.index;
-      const lines = [`Double Distribution: ${dd.targets.map(id => game.players[id].pseudo).join(", ")}`];
-      if (result.messages.length) lines.unshift(...result.messages);
-      game.message = lines.join("\n");
-      this.checkWinCondition(game);
-      return game;
+      const prefix = [...drinkMsgs, ...shieldMsgs].filter(Boolean).join("\n");
+      return this.finishDoubleDistribution(game, shared, dd, prefix || undefined);
     });
   }
 
@@ -2363,9 +2425,14 @@ class GameController {
       } else if (shared.doubleDistribution?.casterId === this.playerId) {
         const dd = shared.doubleDistribution;
         const left = dd.needed - dd.targets.length;
-        center.textContent = left > 0
-          ? `👆 Double Distribution — clique ${left} joueur${left > 1 ? "s" : ""} dans le cercle`
-          : "Double Distribution en cours…";
+        const picked = dd.targets.map(tid => players[tid]?.pseudo).filter(Boolean).join(", ");
+        if (shared.pendingReaction) {
+          center.textContent = `⏳ ${players[shared.pendingReaction.targetId]?.pseudo} doit répondre (${dd.targets.length}/${dd.needed} confirmés)`;
+        } else if (left > 0) {
+          center.textContent = `👆 Double Distribution ${dd.targets.length}/${dd.needed} — clique ${left} joueur${left > 1 ? "s" : ""}${picked ? ` (${picked})` : ""}`;
+        } else {
+          center.textContent = "Double Distribution en cours…";
+        }
       } else if (shared.doubleDistribution) {
         center.textContent = `⏳ ${players[shared.doubleDistribution.casterId]?.pseudo} choisit (Double Distribution)…`;
       } else if (shared.tribunal && !shared.tribunal.votes?.[this.playerId]) {
@@ -2411,6 +2478,7 @@ class GameController {
       el.className = "player";
       if (id === this.selectedTarget) el.classList.add("selected");
       if (dd?.targets.includes(id)) el.classList.add("dd-picked");
+      if (dd?.awaitingTargetId === id) el.classList.add("dd-pending");
       if (player.skip) el.classList.add("skipped");
       if (player.frozen) el.classList.add("frozen");
       if (player.shieldActive) el.classList.add("protected");
@@ -2420,6 +2488,8 @@ class GameController {
       el.style.top = `${cy + radius * Math.sin(angle)}px`;
 
       let status = `${player.hand.length} cartes · ${player.drinks || 0} 🍺`;
+      if (dd?.targets.includes(id)) status += " · ✅ DD";
+      if (dd?.awaitingTargetId === id) status += " · ⏳ contre?";
       const badges = Effects.getPlayerBadges(player);
 
       el.innerHTML = `
@@ -2548,14 +2618,16 @@ class GameController {
       const picked = dd.targets.map(tid => game.players[tid]?.pseudo).filter(Boolean);
       document.getElementById("bannerTitle").textContent = "Double Distribution";
       document.getElementById("bannerText").textContent = left > 0
-        ? `Clique ${left} joueur${left > 1 ? "s" : ""} dans le cercle${picked.length ? ` (déjà : ${picked.join(", ")})` : ""}.`
+        ? `Clique ${left} joueur${left > 1 ? "s" : ""} dans le cercle (${dd.targets.length}/${dd.needed} confirmés${picked.length ? " : " + picked.join(", ") : ""}).`
         : "Finalisation…";
     } else if (shared.doubleDistribution?.casterId === this.playerId && shared.pendingReaction) {
       banner.classList.remove("hidden");
       const target = game.players[shared.pendingReaction.targetId];
+      const dd = shared.doubleDistribution;
       document.getElementById("bannerTitle").textContent = "Double Distribution";
       document.getElementById("bannerText").textContent =
-        `⏳ ${target?.pseudo || "Un joueur"} doit répondre — tu pourras choisir le suivant ensuite.`;
+        `⏳ ${target?.pseudo || "Joueur"} doit répondre (contre ou passer). ` +
+        `Confirmés : ${dd.targets.length}/${dd.needed}. Ensuite tu choisiras le${dd.needed - dd.targets.length > 1 ? "s" : ""} restant${dd.needed - dd.targets.length > 1 ? "s" : ""}.`;
     }
 
     if (shared.pickpocket?.casterId === this.playerId) {
