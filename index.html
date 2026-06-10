@@ -205,6 +205,15 @@
       box-shadow: 0 0 18px var(--accent-glow);
     }
 
+    .player.dd-picked {
+      background: linear-gradient(145deg, #1a4a3a, #0a6a4a);
+      border-color: var(--cyan);
+      box-shadow: 0 0 14px rgba(0, 255, 204, 0.5);
+    }
+
+    .player.clickable { cursor: pointer; }
+    .player:not(.clickable) { cursor: default; }
+
     .player.skipped { opacity: 0.55; border-color: #ffaa00; }
     .player.frozen {
       opacity: 0.85;
@@ -322,26 +331,216 @@
       height: 108px;
       cursor: pointer;
       flex-shrink: 0;
-      transition: transform 0.15s;
+      transition: transform 0.2s ease, filter 0.2s;
+      perspective: 600px;
     }
 
-    .card img {
+    .card-inner {
+      position: relative;
       width: 100%;
       height: 100%;
-      border-radius: 8px;
-      border: 2px solid var(--accent);
-      object-fit: cover;
-      display: block;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+
+    .card:hover:not(.disabled) .card-inner {
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65), 0 0 18px var(--card-glow, rgba(255, 51, 51, 0.35));
+      transform: translateY(-2px) rotateX(4deg);
     }
 
     .card:hover:not(.disabled) { transform: translateY(-10px) scale(1.05); }
 
-    .card.diable-noir img,
-    .card.curse-card img {
-      filter: brightness(0.7) saturate(2);
+    .card-photo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 3;
+      border-radius: 10px;
+    }
+
+    .card-face {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 4px 4px;
+      border-radius: 10px;
+      border: 2px solid var(--card-border, var(--accent));
+      background: var(--card-bg, linear-gradient(145deg, #1a1a1a, #2a2a2a));
+      overflow: hidden;
+      text-align: center;
+      --card-glow: rgba(255, 51, 51, 0.4);
+    }
+
+    .card-face__shine {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(125deg, rgba(255,255,255,0.18) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.06) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .card-face__pattern {
+      position: absolute;
+      inset: 0;
+      opacity: 0.12;
+      background-image: radial-gradient(circle at 20% 80%, white 1px, transparent 1px);
+      background-size: 8px 8px;
+      pointer-events: none;
+    }
+
+    .card-face__icon {
+      font-size: clamp(1.4rem, 5vw, 1.85rem);
+      line-height: 1;
+      z-index: 2;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+
+    .card-face__name {
+      font-size: clamp(0.45rem, 1.8vw, 0.58rem);
+      font-weight: 800;
+      line-height: 1.15;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+      z-index: 2;
+      max-width: 100%;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      letter-spacing: 0.02em;
+    }
+
+    .card-face__badge {
+      font-size: clamp(0.55rem, 2vw, 0.68rem);
+      font-weight: 900;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.45);
+      color: var(--card-accent, #fff);
+      border: 1px solid rgba(255,255,255,0.2);
+      z-index: 2;
+    }
+
+    .card-face__type {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      font-size: 0.45rem;
+      opacity: 0.7;
+      z-index: 2;
+    }
+
+    /* Thèmes par type */
+    .card-type-bonus .card-face {
+      --card-bg: linear-gradient(155deg, #0f3d28 0%, #1a6b45 45%, #0a2818 100%);
+      --card-border: #ffd700;
+      --card-accent: #ffe566;
+      --card-glow: rgba(255, 215, 0, 0.45);
+    }
+
+    .card-type-malus_target .card-face {
+      --card-bg: linear-gradient(155deg, #4a0a0a 0%, #8b1515 45%, #2a0505 100%);
+      --card-border: #ff4444;
+      --card-accent: #ff8888;
+      --card-glow: rgba(255, 68, 68, 0.5);
+    }
+
+    .card-type-malus_global .card-face {
+      --card-bg: linear-gradient(155deg, #4a2808 0%, #8b5010 45%, #281804 100%);
+      --card-border: #ff9922;
+      --card-accent: #ffcc66;
+      --card-glow: rgba(255, 153, 34, 0.45);
+    }
+
+    .card-type-special .card-face {
+      --card-bg: linear-gradient(155deg, #1a2048 0%, #3040a0 45%, #101830 100%);
+      --card-border: #88aaff;
+      --card-accent: #aaccff;
+      --card-glow: rgba(136, 170, 255, 0.45);
+    }
+
+    .card-type-info .card-face {
+      --card-bg: linear-gradient(155deg, #0a2848 0%, #2060a0 45%, #081828 100%);
+      --card-border: #00ccff;
+      --card-accent: #66eeff;
+      --card-glow: rgba(0, 204, 255, 0.4);
+    }
+
+    .card-type-steal .card-face {
+      --card-bg: linear-gradient(155deg, #2a1038 0%, #5a2080 45%, #180820 100%);
+      --card-border: #cc66ff;
+      --card-accent: #ee99ff;
+      --card-glow: rgba(204, 102, 255, 0.45);
+    }
+
+    .card-type-uno .card-face {
+      --card-bg: linear-gradient(155deg, #0a3838 0%, #208080 45%, #082020 100%);
+      --card-border: #00ffcc;
+      --card-accent: #66ffee;
+      --card-glow: rgba(0, 255, 204, 0.4);
+    }
+
+    .card-type-chaos .card-face {
+      --card-bg: linear-gradient(155deg, #380828 0%, #802060 45%, #200418 100%);
+      --card-border: #ff44aa;
+      --card-accent: #ff88cc;
+      --card-glow: rgba(255, 68, 170, 0.45);
+    }
+
+    .card-type-curse .card-face,
+    .card.diable-noir .card-face {
+      --card-bg: linear-gradient(155deg, #0a0008 0%, #300010 40%, #000 100%);
+      --card-border: #ff0000;
+      --card-accent: #ff6666;
+      --card-glow: rgba(255, 0, 0, 0.55);
+      animation: card-curse-pulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes card-curse-pulse {
+      0%, 100% { box-shadow: inset 0 0 20px rgba(255,0,0,0.2); }
+      50% { box-shadow: inset 0 0 30px rgba(255,0,0,0.45); }
+    }
+
+    .card[data-id="DIABLE_NOIR"] .card-face__icon {
+      animation: card-devil 3s ease-in-out infinite;
+    }
+
+    @keyframes card-devil {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.12); }
+    }
+
+    .card[data-id="BOMB"] .card-face__icon {
+      animation: card-bomb 0.8s ease-in-out infinite;
+    }
+
+    @keyframes card-bomb {
+      0%, 100% { transform: rotate(-3deg); }
+      50% { transform: rotate(3deg); }
+    }
+
+    .card.disabled .card-inner { filter: grayscale(0.6) brightness(0.7); }
+
+    .card.diable-noir .card-inner,
+    .card.curse-card .card-inner {
+      filter: saturate(1.3);
     }
 
     .card.disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+
+    .card.needs-target:not(.disabled) {
+      opacity: 0.55;
+      border: 2px dashed #666;
+      border-radius: 8px;
+    }
 
     .card.counter-pick {
       outline: 3px solid var(--cyan);
@@ -565,6 +764,92 @@ function shuffle(array) {
   }
   return arr;
 }
+
+/** Illustrations intégrées + PNG optionnels dans assets/ */
+const CardVisuals = {
+  TYPE_LABELS: {
+    bonus: "★", malus_target: "⚔", malus_global: "☄", special: "◆",
+    info: "?", steal: "♠", uno: "↻", chaos: "✦", curse: "☠",
+  },
+
+  ART: {
+    DIABLE_NOIR: { icon: "😈", badge: "PERDU" },
+    CURSE: { icon: "☠️", badge: "MALÉDICTION" },
+    GIVE_2: { icon: "🍻", badge: "+2 🍺" },
+    GIVE_3: { icon: "🍻", badge: "+3 🍺" },
+    GIVE_5: { icon: "🍻", badge: "+5 🍺" },
+    DOUBLE_DISTRIBUTION: { icon: "👥", badge: "×2 cibles" },
+    DRAW_2: { icon: "🃏", badge: "+2 cartes" },
+    EXTRA_TURN: { icon: "🔁", badge: "Rejoue" },
+    PROTECTION: { icon: "🔰", badge: "Anti-gorgée" },
+    GIFT: { icon: "🎁", badge: "+2 pioche" },
+    ALLIANCE: { icon: "🤝", badge: "Pacte" },
+    PLUS2: { icon: "➕", badge: "+2 malus" },
+    PLUS3: { icon: "➕", badge: "+3 malus" },
+    PLUS5: { icon: "➕", badge: "+5 malus" },
+    DOUBLE_PENALTY: { icon: "⏳", badge: "Différé" },
+    RELENTLESS: { icon: "🎯", badge: "Acharnement" },
+    TRIBUNAL: { icon: "⚖️", badge: "4 🍺" },
+    PUBLIC_ENEMY: { icon: "👿", badge: "Ennemi" },
+    DRINK_2: { icon: "🍺", badge: "Bois 2" },
+    DRINK_3: { icon: "🍺", badge: "Bois 3" },
+    DRINK_5: { icon: "🍺", badge: "Bois 5" },
+    ALL_EXCEPT_YOU: { icon: "👥", badge: "Tous -1" },
+    LEFT: { icon: "⬅️", badge: "Gauche 3" },
+    DISCARD: { icon: "🗑️", badge: "Défausse" },
+    SHIELD: { icon: "🛡️", badge: "Passif" },
+    MIRROR: { icon: "🪞", badge: "Contre" },
+    DOUBLE_EFFECT: { icon: "⚡", badge: "×2 effet" },
+    BOMB: { icon: "💣", badge: "5 🍺" },
+    BACKFIRE: { icon: "🔥", badge: "Contre" },
+    SPY: { icon: "🕵️", badge: "Espion" },
+    DETECTIVE: { icon: "🔍", badge: "Aléatoire" },
+    XRAY: { icon: "📡", badge: "Spéciales" },
+    THIEF: { icon: "🥷", badge: "Vol" },
+    PICKPOCKET: { icon: "🎭", badge: "Au choix" },
+    MYSTERY_HAND: { icon: "🎲", badge: "Mystère" },
+    BLACK_MARKET: { icon: "🏴", badge: "Échange" },
+    FULL_SWAP: { icon: "🔄", badge: "Mains" },
+    REVERSE: { icon: "↩️", badge: "Sens" },
+    SKIP: { icon: "⏭️", badge: "Skip" },
+    FREEZE: { icon: "❄️", badge: "Gel" },
+    ALL_DRAW: { icon: "📥", badge: "Tous +1" },
+    RUSSIAN_ROULETTE: { icon: "🎰", badge: "50/50" },
+    VIRUS: { icon: "🦠", badge: "Voisins" },
+    POISON_GIFT: { icon: "☠️", badge: "Empoisonné" },
+    PANIC: { icon: "😱", badge: "Panique" },
+  },
+
+  meta(card) {
+    return this.ART[card.id] || { icon: "🃏", badge: card.type || "" };
+  },
+
+  faceHtml(card) {
+    const { icon, badge } = this.meta(card);
+    const typeMark = this.TYPE_LABELS[card.type] || "•";
+    const name = card.name.replace(/</g, "&lt;");
+    return `
+      <div class="card-face">
+        <div class="card-face__pattern"></div>
+        <div class="card-face__shine"></div>
+        <span class="card-face__type">${typeMark}</span>
+        <div class="card-face__icon">${icon}</div>
+        <div class="card-face__name">${name}</div>
+        <div class="card-face__badge">${badge}</div>
+      </div>`;
+  },
+
+  fillCardElement(el, card) {
+    const typeClass = `card-type-${(card.type || "bonus").replace(/_/g, "-")}`;
+    el.dataset.id = card.id;
+    el.classList.add(typeClass);
+    el.innerHTML = `
+      <div class="card-inner">
+        <img class="card-photo" src="${assetUrl(card.img)}" alt="${card.name.replace(/"/g, "&quot;")}" loading="lazy" onerror="this.remove()">
+        ${this.faceHtml(card)}
+      </div>`;
+  },
+};
 
 function defaultSharedState() {
   return {
@@ -984,10 +1269,17 @@ class Effects {
         }
         break;
 
-      case "DOUBLE_DISTRIBUTION":
-        shared.doubleDistribution = { casterId: playerId, targets: [], needed: 2, amount: 1 };
-        messages.push("→ choisis 2 joueurs différents (1 gorgée chacun)");
+      case "DOUBLE_DISTRIBUTION": {
+        const others = Object.keys(game.players).filter(id => id !== playerId).length;
+        const needed = Math.min(2, Math.max(others, 0));
+        if (needed > 0) {
+          shared.doubleDistribution = { casterId: playerId, targets: [], needed, amount: 1 };
+          messages.push(`→ choisis ${needed} joueur${needed > 1 ? "s" : ""} différent${needed > 1 ? "s" : ""} (1 gorgée chacun)`);
+        } else {
+          messages.push("→ personne à cibler");
+        }
         break;
+      }
 
       case "DRAW_2":
         for (let i = 0; i < 2; i++) this.drawCard(game, playerId);
@@ -1225,13 +1517,80 @@ class Effects {
       "GIVE_2", "GIVE_3", "GIVE_5", "GIFT", "ALLIANCE", "PROTECTION",
       "PLUS2", "PLUS3", "PLUS5", "DOUBLE_PENALTY", "RELENTLESS", "PUBLIC_ENEMY",
       "THIEF", "PICKPOCKET", "BLACK_MARKET", "FULL_SWAP",
-      "SPY", "DETECTIVE", "XRAY", "SKIP", "FREEZE", "VIRUS",
+      "SPY", "DETECTIVE", "XRAY", "SKIP", "FREEZE", "VIRUS", "POISON_GIFT",
     ].includes(cardId);
+  }
+
+  static canTargetSelf(cardId) {
+    return cardId === "PROTECTION";
+  }
+
+  static hasBlockingAction(shared) {
+    return !!(shared?.doubleDistribution || shared?.tribunal || shared?.pickpocket || shared?.pendingReaction);
+  }
+
+  static handNeedsTargetPick(hand) {
+    return hand.some(c => this.needsTarget(c.id) && !this.isUnplayable(c.id));
+  }
+
+  static validateTarget(card, targetId, game, playerId) {
+    if (!this.needsTarget(card.id)) return { ok: true };
+
+    if (!targetId || !game.players[targetId]) {
+      return { ok: false, msg: "Choisis une cible dans le cercle avant de jouer cette carte" };
+    }
+    if (targetId === playerId && !this.canTargetSelf(card.id)) {
+      return { ok: false, msg: "Tu ne peux pas te cibler toi-même avec cette carte" };
+    }
+
+    const target = game.players[targetId];
+    const myHand = game.players[playerId]?.hand || [];
+
+    switch (card.id) {
+      case "THIEF":
+      case "PICKPOCKET":
+      case "DETECTIVE":
+        if (target.hand.length === 0) {
+          return { ok: false, msg: `${target.pseudo} n'a aucune carte en main` };
+        }
+        break;
+      case "BLACK_MARKET":
+        if (target.hand.length === 0) {
+          return { ok: false, msg: `${target.pseudo} n'a aucune carte à échanger` };
+        }
+        if (myHand.length < 2) {
+          return { ok: false, msg: "Il te faut au moins une autre carte en main pour échanger" };
+        }
+        break;
+      case "POISON_GIFT":
+        if (myHand.length < 2) {
+          return { ok: false, msg: "Il te faut une autre carte en main à donner" };
+        }
+        break;
+    }
+    return { ok: true };
+  }
+
+  static getTargetHint(cardId) {
+    const hints = {
+      GIVE_2: "1 joueur boit 2 🍺", GIVE_3: "1 joueur boit 3 🍺", GIVE_5: "1 joueur boit 5 🍺",
+      PLUS2: "1 joueur boit +2 🍺", PLUS3: "1 joueur boit +3 🍺", PLUS5: "1 joueur boit +5 🍺",
+      GIFT: "1 joueur pioche 2 cartes", ALLIANCE: "1 coéquipier", PROTECTION: "1 joueur (toi inclus)",
+      DOUBLE_PENALTY: "1 joueur — malus différé", RELENTLESS: "1 joueur — acharnement",
+      PUBLIC_ENEMY: "1 joueur — Ennemi Public", THIEF: "1 joueur — vole une carte",
+      PICKPOCKET: "1 joueur — choisis la carte volée", BLACK_MARKET: "1 joueur — échange aléatoire",
+      FULL_SWAP: "1 joueur — échange de mains", SPY: "1 joueur — voir 2 cartes",
+      DETECTIVE: "1 joueur — 1 carte aléatoire", XRAY: "1 joueur — compter spéciales",
+      SKIP: "1 joueur — passe son tour", FREEZE: "1 joueur — gelé (non contrable)",
+      VIRUS: "1 joueur au centre — ses voisins boivent", POISON_GIFT: "1 joueur — lui donner une carte",
+    };
+    return hints[cardId] || "1 joueur dans le cercle";
   }
 
   static blocksTurnAdvance(cardId, shared) {
     if (shared.pendingReaction) return true;
-    if (cardId === "DOUBLE_DISTRIBUTION" || cardId === "TRIBUNAL") return true;
+    if (cardId === "TRIBUNAL" && shared.tribunal) return true;
+    if (cardId === "DOUBLE_DISTRIBUTION" && shared.doubleDistribution) return true;
     if (cardId === "PICKPOCKET" && shared.pickpocket) return true;
     return false;
   }
@@ -1417,7 +1776,7 @@ class GameController {
       if (order[game.currentPlayerIndex] !== this.playerId) return alert("Pas ton tour");
 
       const shared = game.sharedState || defaultSharedState();
-      if (shared.doubleDistribution || shared.tribunal || shared.pickpocket || shared.pendingReaction) {
+      if (Effects.hasBlockingAction(shared)) {
         return alert("Termine l'action en cours d'abord");
       }
 
@@ -1425,10 +1784,9 @@ class GameController {
       const card = hand[index];
       if (!card) return;
       if (Effects.isUnplayable(card.id)) return alert(`❌ Tu ne peux pas jouer ${card.name}`);
-      if (Effects.needsTarget(card.id) && !targetId) return alert("Choisis une cible");
-      if (Effects.needsTarget(card.id) && targetId === this.playerId && card.id !== "PROTECTION") {
-        return alert("Tu ne peux pas te cibler toi-même");
-      }
+
+      const validation = Effects.validateTarget(card, targetId, game, this.playerId);
+      if (!validation.ok) return alert(validation.msg);
 
       this.roomRef().transaction((g) => {
         if (!g?.started || g.sharedState?.finished) return;
@@ -1441,6 +1799,9 @@ class GameController {
         const playerHand = g.players[this.playerId].hand;
         const played = playerHand[index];
         if (!played || Effects.isUnplayable(played.id)) return;
+
+        const playValidation = Effects.validateTarget(played, targetId, g, this.playerId);
+        if (!playValidation.ok) return;
 
         playerHand.splice(index, 1);
 
@@ -1582,34 +1943,45 @@ class GameController {
     return game;
   }
 
+  toggleTarget(targetId, game) {
+    const shared = game.sharedState || defaultSharedState();
+    if (Effects.hasBlockingAction(shared)) return;
+
+    const order = game.playerOrder || Object.keys(game.players || {});
+    if (order[game.currentPlayerIndex] !== this.playerId) return;
+
+    this.selectedTarget = this.selectedTarget === targetId ? null : targetId;
+    this.renderFromGame(game);
+  }
+
   selectTarget(targetId) {
     this.roomRef().once("value").then((snapshot) => {
       const game = snapshot.val();
-      if (!game?.started) return;
-
-      const shared = game.sharedState || defaultSharedState();
-
-      if (shared.tribunal) {
-        this.castVote(targetId);
-        return;
-      }
-
-      if (shared.doubleDistribution) {
-        this.addDoubleDistributionTarget(targetId);
-        return;
-      }
-
-      this.selectedTarget = this.selectedTarget === targetId ? null : targetId;
-      this.renderFromGame(game);
+      if (game) this.toggleTarget(targetId, game);
     });
   }
 
   addDoubleDistributionTarget(targetId) {
     this.roomRef().transaction((game) => {
-      const shared = game.sharedState;
-      const dd = shared?.doubleDistribution;
+      if (!game?.started) return;
+
+      const shared = game.sharedState || defaultSharedState();
+      game.sharedState = shared;
+
+      const dd = shared.doubleDistribution;
       if (!dd || dd.casterId !== this.playerId) return;
-      if (dd.targets.includes(targetId) || targetId === this.playerId) return;
+      if (shared.pendingReaction) {
+        game.message = "⏳ Attends que le joueur visé réponde avant de choisir le suivant.";
+        return game;
+      }
+      if (targetId === this.playerId) {
+        game.message = "❌ Tu ne peux pas te cibler toi-même.";
+        return game;
+      }
+      if (dd.targets.includes(targetId)) {
+        game.message = "❌ Ce joueur est déjà choisi — clique un autre joueur.";
+        return game;
+      }
       if (dd.targets.length >= dd.needed) return;
 
       const attack = {
@@ -1675,10 +2047,17 @@ class GameController {
 
   castVote(targetId) {
     this.roomRef().transaction((game) => {
-      const shared = game.sharedState;
-      const tribunal = shared?.tribunal;
+      if (!game?.started) return;
+
+      const shared = game.sharedState || defaultSharedState();
+      game.sharedState = shared;
+      const tribunal = shared.tribunal;
       if (!tribunal) return;
-      if (tribunal.votes[this.playerId]) return;
+      if (tribunal.votes[this.playerId]) {
+        game.message = "Tu as déjà voté au Tribunal.";
+        return game;
+      }
+      if (!game.players[targetId]) return;
 
       tribunal.votes[this.playerId] = targetId;
       const order = game.playerOrder;
@@ -1754,6 +2133,11 @@ class GameController {
     const players = game.players || {};
     const order = game.playerOrder || Object.keys(players);
     const shared = game.sharedState || defaultSharedState();
+    const myHand = players[this.playerId]?.hand || [];
+    const isMyTurn = game.started && order[game.currentPlayerIndex] === this.playerId;
+    const blocking = Effects.hasBlockingAction(shared);
+
+    if (!isMyTurn || blocking) this.selectedTarget = null;
 
     const center = document.getElementById("center");
     if (!game.started) {
@@ -1766,6 +2150,25 @@ class GameController {
         center.textContent = "⚔️ Choisis ta carte contre ci-dessous";
       } else if (pr) {
         center.textContent = `⏳ ${players[pr.targetId]?.pseudo} choisit un contre…`;
+      } else if (shared.doubleDistribution?.casterId === this.playerId) {
+        const dd = shared.doubleDistribution;
+        const left = dd.needed - dd.targets.length;
+        center.textContent = left > 0
+          ? `👆 Double Distribution — clique ${left} joueur${left > 1 ? "s" : ""} dans le cercle`
+          : "Double Distribution en cours…";
+      } else if (shared.doubleDistribution) {
+        center.textContent = `⏳ ${players[shared.doubleDistribution.casterId]?.pseudo} choisit (Double Distribution)…`;
+      } else if (shared.tribunal && !shared.tribunal.votes?.[this.playerId]) {
+        center.textContent = "⚖️ Tribunal — clique un joueur dans le cercle pour voter";
+      } else if (shared.tribunal) {
+        center.textContent = "⏳ Tribunal — en attente des autres votes…";
+      } else if (shared.pickpocket?.casterId === this.playerId) {
+        center.textContent = "🥷 Pickpocket — choisis une carte à voler ci-dessous";
+      } else if (isMyTurn && this.selectedTarget) {
+        const name = players[this.selectedTarget]?.pseudo || "?";
+        center.textContent = `🎯 Cible : ${name} — clique une carte à jouer`;
+      } else if (isMyTurn && Effects.handNeedsTargetPick(myHand)) {
+        center.textContent = "👆 Choisis un joueur dans le cercle, puis clique ta carte";
       } else {
         center.textContent = currentId === this.playerId
           ? "🎮 C'est TON TOUR !"
@@ -1783,6 +2186,12 @@ class GameController {
     const cy = size / 2;
     const radius = size / 2 - 55;
 
+    const dd = shared.doubleDistribution;
+    const tribunal = shared.tribunal;
+    const isDDCaster = dd?.casterId === this.playerId;
+    const canVoteTribunal = tribunal && !tribunal.votes?.[this.playerId];
+    const canPickTarget = isMyTurn && !shared.finished && !blocking;
+
     order.forEach((id, idx) => {
       const player = players[id];
       if (!player) return;
@@ -1791,6 +2200,7 @@ class GameController {
       const el = document.createElement("div");
       el.className = "player";
       if (id === this.selectedTarget) el.classList.add("selected");
+      if (dd?.targets.includes(id)) el.classList.add("dd-picked");
       if (player.skip) el.classList.add("skipped");
       if (player.frozen) el.classList.add("frozen");
       if (player.shieldActive) el.classList.add("protected");
@@ -1808,17 +2218,21 @@ class GameController {
         <div class="player-status">${status}</div>
       `;
 
-      if (game.started && !shared.finished && !shared.pendingReaction) {
-        el.onclick = () => this.selectTarget(id);
+      if (isDDCaster && !shared.pendingReaction && !shared.finished) {
+        el.classList.add("clickable");
+        el.onclick = () => this.addDoubleDistributionTarget(id);
+      } else if (canVoteTribunal && !shared.finished) {
+        el.classList.add("clickable");
+        el.onclick = () => this.castVote(id);
+      } else if (canPickTarget) {
+        el.classList.add("clickable");
+        el.onclick = () => this.toggleTarget(id, game);
       }
       circle.appendChild(el);
     });
 
     const handEl = document.getElementById("hand");
     handEl.innerHTML = "";
-    const myHand = players[this.playerId]?.hand || [];
-    const isMyTurn = game.started && order[game.currentPlayerIndex] === this.playerId;
-    const pending = shared.doubleDistribution || shared.tribunal || shared.pickpocket || shared.pendingReaction;
     const isTargeted = shared.pendingReaction?.targetId === this.playerId;
     const counterIndices = isTargeted
       ? Effects.getAvailableCounters(myHand, shared.pendingReaction.attack).map(c => c.index)
@@ -1834,20 +2248,35 @@ class GameController {
       if (isCounterPick) {
         el.classList.add("counter-pick");
         el.onclick = () => this.playReaction(idx);
-      } else if (isMyTurn && !pending) {
-        el.onclick = () => this.playCard(idx);
+      } else if (isMyTurn && !blocking) {
+        if (Effects.isUnplayable(card.id)) {
+          el.classList.add("disabled");
+        } else if (Effects.needsTarget(card.id) && !this.selectedTarget) {
+          el.classList.add("disabled", "needs-target");
+          el.title = `${card.name} — choisis d'abord une cible (${Effects.getTargetHint(card.id)})`;
+        } else {
+          const v = Effects.validateTarget(card, this.selectedTarget, game, this.playerId);
+          if (!v.ok) {
+            el.classList.add("disabled");
+            el.title = v.msg;
+          } else {
+            el.onclick = () => this.playCard(idx);
+            el.title = card.name;
+          }
+        }
       } else {
         el.classList.add("disabled");
       }
 
-      el.innerHTML = `<img src="${assetUrl(card.img)}" alt="${card.name}" title="${card.name}">`;
+      el.innerHTML = "";
+      CardVisuals.fillCardElement(el, card);
       handEl.appendChild(el);
     });
 
-    this.renderActionUI(game, shared, myHand, counterIndices, isTargeted);
+    this.renderActionUI(game, shared, myHand, counterIndices, isTargeted, isMyTurn);
   }
 
-  renderActionUI(game, shared, myHand, counterIndices, isTargeted) {
+  renderActionUI(game, shared, myHand, counterIndices, isTargeted, isMyTurn) {
     const banner = document.getElementById("actionBanner");
     const reactionPanel = document.getElementById("reactionPanel");
     const pickpocketPanel = document.getElementById("pickpocketPanel");
@@ -1877,7 +2306,7 @@ class GameController {
         const card = myHand[idx];
         const el = document.createElement("div");
         el.className = "card counter-pick";
-        el.innerHTML = `<img src="${assetUrl(card.img)}" alt="${card.name}">`;
+        CardVisuals.fillCardElement(el, card);
         el.onclick = () => this.playReaction(idx);
         reactionCards.appendChild(el);
       });
@@ -1886,15 +2315,37 @@ class GameController {
     if (shared.tribunal && !shared.tribunal.votes[this.playerId]) {
       banner.classList.remove("hidden");
       document.getElementById("bannerTitle").textContent = "⚖️ Tribunal";
-      document.getElementById("bannerText").textContent = "Clique sur un joueur dans le cercle pour voter.";
+      document.getElementById("bannerText").textContent = "Clique sur un joueur dans le cercle pour voter qui boit 4 🍺.";
     }
 
-    if (shared.doubleDistribution?.casterId === this.playerId) {
+    if (isMyTurn && !Effects.hasBlockingAction(shared) && Effects.handNeedsTargetPick(myHand)) {
+      banner.classList.remove("hidden");
+      if (this.selectedTarget) {
+        const name = game.players[this.selectedTarget]?.pseudo || "?";
+        document.getElementById("bannerTitle").textContent = `🎯 Cible : ${name}`;
+        document.getElementById("bannerText").textContent = "Clique une carte dans ta main pour la jouer sur cette cible.";
+      } else {
+        document.getElementById("bannerTitle").textContent = "Choisis une cible";
+        document.getElementById("bannerText").textContent =
+          "Clique un joueur dans le cercle, puis joue ta carte (Donne, Pickpocket, Gel, Virus…).";
+      }
+    }
+
+    if (shared.doubleDistribution?.casterId === this.playerId && !shared.pendingReaction) {
       banner.classList.remove("hidden");
       const dd = shared.doubleDistribution;
+      const left = dd.needed - dd.targets.length;
+      const picked = dd.targets.map(tid => game.players[tid]?.pseudo).filter(Boolean);
+      document.getElementById("bannerTitle").textContent = "Double Distribution";
+      document.getElementById("bannerText").textContent = left > 0
+        ? `Clique ${left} joueur${left > 1 ? "s" : ""} dans le cercle${picked.length ? ` (déjà : ${picked.join(", ")})` : ""}.`
+        : "Finalisation…";
+    } else if (shared.doubleDistribution?.casterId === this.playerId && shared.pendingReaction) {
+      banner.classList.remove("hidden");
+      const target = game.players[shared.pendingReaction.targetId];
       document.getElementById("bannerTitle").textContent = "Double Distribution";
       document.getElementById("bannerText").textContent =
-        `Choisis ${dd.needed - dd.targets.length} joueur(s) dans le cercle.`;
+        `⏳ ${target?.pseudo || "Un joueur"} doit répondre — tu pourras choisir le suivant ensuite.`;
     }
 
     if (shared.pickpocket?.casterId === this.playerId) {
@@ -1906,7 +2357,7 @@ class GameController {
       target.hand.forEach((card, idx) => {
         const el = document.createElement("div");
         el.className = "card";
-        el.innerHTML = `<img src="${assetUrl(card.img)}" alt="${card.name}">`;
+        CardVisuals.fillCardElement(el, card);
         el.onclick = () => this.pickpocketSteal(idx);
         pickpocketCards.appendChild(el);
       });
