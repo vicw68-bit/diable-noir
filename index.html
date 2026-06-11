@@ -990,6 +990,87 @@
     body:not(.in-game) .hand,
     body:not(.in-game) .hand-hud,
     body:not(.in-game) .floating-panel { display: none !important; }
+
+    .game-end-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(6px);
+      animation: game-end-in 0.45s ease;
+    }
+
+    .game-end-overlay.hidden { display: none; }
+
+    @keyframes game-end-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .game-end-overlay__panel {
+      width: min(420px, 92vw);
+      padding: 28px 22px;
+      border-radius: 18px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
+      animation: game-end-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes game-end-pop {
+      from { transform: scale(0.82) translateY(12px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    .game-end-overlay--lose .game-end-overlay__panel {
+      background: linear-gradient(160deg, #2a0508 0%, #120204 100%);
+      border: 2px solid #ff3333;
+      box-shadow: 0 0 40px rgba(255, 51, 51, 0.35);
+    }
+
+    .game-end-overlay--win .game-end-overlay__panel {
+      background: linear-gradient(160deg, #082818 0%, #041408 100%);
+      border: 2px solid #00cc66;
+      box-shadow: 0 0 40px rgba(0, 204, 102, 0.3);
+    }
+
+    .game-end-overlay__emoji {
+      font-size: 3.2rem;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+
+    .game-end-overlay__title {
+      font-size: clamp(1.5rem, 6vw, 2rem);
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+
+    .game-end-overlay--lose .game-end-overlay__title { color: #ff5555; }
+    .game-end-overlay--win .game-end-overlay__title { color: #66ffaa; }
+
+    .game-end-overlay__text {
+      font-size: 0.95rem;
+      line-height: 1.45;
+      color: #ddd;
+      margin-bottom: 8px;
+    }
+
+    .game-end-overlay__sub {
+      font-size: 0.78rem;
+      color: #999;
+      line-height: 1.4;
+    }
+
+    .player.loser-final {
+      border-color: #ff0000;
+      box-shadow: 0 0 22px rgba(255, 0, 0, 0.55);
+      animation: turn-glow 1.5s ease-in-out infinite;
+    }
   </style>
 </head>
 <body>
@@ -1069,6 +1150,15 @@
     <h3 id="cardInspectTitle" class="card-inspect__title"></h3>
     <p id="cardInspectDesc" class="card-inspect__desc"></p>
     <p class="card-inspect__hint">Relâche pour fermer · clic rapide pour jouer</p>
+  </div>
+</div>
+
+<div id="gameEndOverlay" class="game-end-overlay hidden" aria-live="assertive">
+  <div class="game-end-overlay__panel">
+    <div id="gameEndEmoji" class="game-end-overlay__emoji"></div>
+    <h2 id="gameEndTitle" class="game-end-overlay__title"></h2>
+    <p id="gameEndText" class="game-end-overlay__text"></p>
+    <p id="gameEndSub" class="game-end-overlay__sub"></p>
   </div>
 </div>
 
@@ -1193,7 +1283,7 @@ const CardVisuals = {
   },
 
   ART: {
-    DIABLE_NOIR: { icon: "😈", badge: "PERDU", desc: "Non jouable, non défaussable. Si tu l'as encore en main quand le deck est vide, tu perds la partie." },
+    DIABLE_NOIR: { icon: "😈", badge: "PERDU", desc: "Non jouable, non défaussable. Quand la pioche est vide et que tout le monde a joué ses cartes, celui qui reste avec cette carte boit cul sec." },
     CURSE: { icon: "☠️", badge: "MALÉDICTION", desc: "Non jouable. Tant qu'elle reste dans ta main, tu bois 1 🍺 au début de chaque tour." },
     GIVE_2: { icon: "🍻", badge: "+2 🍺", desc: "Cible 1 joueur : il boit 2 🍺. Contrable avec Protection ou Miroir." },
     GIVE_3: { icon: "🍻", badge: "+3 🍺", desc: "Cible 1 joueur : il boit 3 🍺. Contrable avec Protection ou Miroir." },
@@ -2273,6 +2363,28 @@ class Effects {
     return !!(shared?.pickpocket || shared?.pendingReaction);
   }
 
+  static getEndgameLoser(game) {
+    if (!game?.started || (game.deck?.length ?? 0) > 0) return null;
+
+    const shared = game.sharedState || {};
+    if (Effects.hasBlockingAction(shared)) return null;
+
+    const entries = Object.entries(game.players || {});
+    const withCards = entries.filter(([, p]) => (p.hand?.length || 0) > 0);
+
+    if (withCards.length !== 1) return null;
+
+    const [loserId, loser] = withCards[0];
+    if (loser.hand.length !== 1 || loser.hand[0].id !== "DIABLE_NOIR") return null;
+
+    const othersEmpty = entries.every(([id, p]) =>
+      id === loserId || (p.hand?.length || 0) === 0
+    );
+    if (!othersEmpty) return null;
+
+    return loserId;
+  }
+
   static handNeedsTargetPick(hand) {
     return hand.some(c => this.needsTarget(c.id) && !this.isUnplayable(c.id));
   }
@@ -2777,14 +2889,44 @@ class GameController {
   }
 
   checkWinCondition(game) {
-    if (game.deck.length > 0) return;
-    Object.entries(game.players).forEach(([id, player]) => {
-      if (player.hand.some(c => c.id === "DIABLE_NOIR")) {
-        game.sharedState.finished = true;
-        game.sharedState.loserId = id;
-        game.message = `💀 ${player.pseudo} avait le Diable Noir! IL PERD!`;
-      }
-    });
+    const shared = game.sharedState || defaultSharedState();
+    if (shared.finished) return;
+
+    const loserId = Effects.getEndgameLoser(game);
+    if (!loserId) return;
+
+    const loser = game.players[loserId];
+    shared.finished = true;
+    shared.loserId = loserId;
+    game.message = `🍺 FIN DE PARTIE — CUL SEC pour ${loser.pseudo} ! (Diable Noir 😈)`;
+  }
+
+  renderGameEndOverlay(game, shared, players) {
+    const overlay = document.getElementById("gameEndOverlay");
+    if (!overlay) return;
+
+    if (!shared.finished || !shared.loserId) {
+      overlay.classList.add("hidden");
+      overlay.classList.remove("game-end-overlay--win", "game-end-overlay--lose");
+      return;
+    }
+
+    const loser = players[shared.loserId];
+    const iLost = shared.loserId === this.playerId;
+    const winnerCount = Object.keys(players).length - 1;
+
+    overlay.classList.remove("hidden");
+    overlay.classList.toggle("game-end-overlay--lose", iLost);
+    overlay.classList.toggle("game-end-overlay--win", !iLost);
+
+    document.getElementById("gameEndEmoji").textContent = iLost ? "😈🍺" : "🏆";
+    document.getElementById("gameEndTitle").textContent = iLost ? "CUL SEC !" : "VICTOIRE !";
+    document.getElementById("gameEndText").textContent = iLost
+      ? "Tu es le seul resté avec le Diable Noir…"
+      : `${loser?.pseudo || "?"} boit cul sec avec le Diable Noir !`;
+    document.getElementById("gameEndSub").textContent = iLost
+      ? "Pioche vide · une seule carte en jeu · c'était le Diable Noir."
+      : `Pioche vide · ${winnerCount} gagnant${winnerCount > 1 ? "s" : ""} · fin de partie.`;
   }
 
   listenGame() {
@@ -2814,6 +2956,12 @@ class GameController {
     if (!game.started) {
       center.textContent = `⏳ En attente... (${order.length} joueur${order.length > 1 ? "s" : ""})`;
       document.getElementById("startBtn").classList.toggle("hidden", this.playerId !== order[0]);
+    } else if (shared.finished && shared.loserId) {
+      const loser = players[shared.loserId];
+      center.textContent = shared.loserId === this.playerId
+        ? "😈 CUL SEC — Diable Noir"
+        : `🏆 Victoire — ${loser?.pseudo} cul sec`;
+      document.getElementById("startBtn").classList.add("hidden");
     } else {
       const currentId = order[game.currentPlayerIndex];
       const pr = shared.pendingReaction;
@@ -2830,6 +2978,8 @@ class GameController {
       }
       document.getElementById("startBtn").classList.add("hidden");
     }
+
+    this.renderGameEndOverlay(game, shared, players);
 
     document.getElementById("message").textContent = game.message || "";
     const feedEl = document.getElementById("handFeed");
@@ -2862,6 +3012,7 @@ class GameController {
       el.className = "player";
       el.dataset.playerId = id;
       if (id === currentId) el.classList.add("current-turn");
+      if (shared.finished && id === shared.loserId) el.classList.add("loser-final");
       if (id === this.selectedTarget) el.classList.add("selected");
       if (player.skip) el.classList.add("skipped");
       if (player.frozen) el.classList.add("frozen");
@@ -2904,10 +3055,10 @@ class GameController {
       if (card.id === "CURSE") el.classList.add("curse-card");
 
       const isCounterPick = isTargeted && counterIndices.includes(idx);
-      if (isCounterPick) {
+      if (isCounterPick && !shared.finished) {
         el.classList.add("counter-pick");
         el.onclick = () => this.playReaction(idx);
-      } else if (isMyTurn && !blocking) {
+      } else if (isMyTurn && !blocking && !shared.finished) {
         if (Effects.isUnplayable(card.id)) {
           el.classList.add("disabled");
         } else if (Effects.needsTarget(card.id) && !this.selectedTarget) {
@@ -2954,6 +3105,12 @@ class GameController {
     pickpocketPanel.classList.add("hidden");
     reactionCards.innerHTML = "";
     pickpocketCards.innerHTML = "";
+
+    if (shared.finished) {
+      document.body.classList.toggle("panel-open", false);
+      document.body.classList.toggle("banner-open", false);
+      return;
+    }
 
     let bannerOpen = false;
     let panelOpen = false;
