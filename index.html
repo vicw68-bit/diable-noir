@@ -904,7 +904,7 @@ const CardVisuals = {
     PLUS5: { icon: "➕", badge: "+5 malus", desc: "Cible 1 joueur : il boit 5 🍺. Contrable (Miroir, Protection, Retour de Flamme)." },
     DOUBLE_PENALTY: { icon: "⏳", badge: "Différé", desc: "Cible 1 joueur : boit 2 🍺 maintenant + 2 🍺 supplémentaires au début de son prochain tour." },
     RELENTLESS: { icon: "🎯", badge: "Acharnement", desc: "Cible 1 joueur : boit 1 🍺 × nombre d'adversaires. Contrable." },
-    TRIBUNAL: { icon: "⚖️", badge: "4 🍺", desc: "Chaque joueur vote en cliquant sur le cercle. Le plus voté boit 4 🍺 (égalité = tirage au sort)." },
+    TRIBUNAL: { icon: "⚖️", badge: "4 🍺 oral", desc: "Annonce « Tribunal » : votez à l'oral pour qui boit 4 🍺. Le tour passe au joueur suivant." },
     PUBLIC_ENEMY: { icon: "👿", badge: "Ennemi", desc: "Cible 1 joueur : Ennemi Public jusqu'à son prochain tour (+1 🍺 sur les cartes Donne +2/+3/+5 reçues)." },
     DRINK_2: { icon: "🍺", badge: "Bois 2", desc: "Tu bois 2 🍺 toi-même." },
     DRINK_3: { icon: "🍺", badge: "Bois 3", desc: "Tu bois 3 🍺 toi-même." },
@@ -1549,8 +1549,7 @@ class Effects {
         break;
 
       case "TRIBUNAL":
-        shared.tribunal = { casterId: playerId, votes: {} };
-        messages.push("→ ⚖️ tribunal! Chaque joueur vote en cliquant sur un joueur");
+        messages.push("→ ⚖️ Tribunal ! Votez à l'oral pour qui boit 4 🍺");
         break;
 
       case "PUBLIC_ENEMY":
@@ -1762,7 +1761,7 @@ class Effects {
   }
 
   static hasBlockingAction(shared) {
-    return !!(shared?.tribunal || shared?.pickpocket || shared?.pendingReaction);
+    return !!(shared?.pickpocket || shared?.pendingReaction);
   }
 
   static handNeedsTargetPick(hand) {
@@ -1825,7 +1824,6 @@ class Effects {
 
   static blocksTurnAdvance(cardId, shared) {
     if (shared.pendingReaction) return true;
-    if (cardId === "TRIBUNAL" && shared.tribunal) return true;
     if (cardId === "PICKPOCKET" && shared.pickpocket) return true;
     return false;
   }
@@ -2027,7 +2025,7 @@ class GameController {
       this.roomRef().transaction((g) => {
         if (!g?.started || g.sharedState?.finished) return;
         const s = g.sharedState || defaultSharedState();
-        if (s.tribunal || s.pickpocket || s.pendingReaction) return;
+        if (s.pickpocket || s.pendingReaction) return;
 
         const currentId = g.playerOrder[g.currentPlayerIndex];
         if (currentId !== this.playerId) return;
@@ -2239,48 +2237,6 @@ class GameController {
     });
   }
 
-  castVote(targetId) {
-    this.roomRef().transaction((game) => {
-      if (!game?.started) return;
-
-      const shared = game.sharedState || defaultSharedState();
-      game.sharedState = shared;
-      const tribunal = shared.tribunal;
-      if (!tribunal) return;
-      if (tribunal.votes[this.playerId]) {
-        game.message = "Tu as déjà voté au Tribunal.";
-        return game;
-      }
-      if (!game.players[targetId]) return;
-
-      tribunal.votes[this.playerId] = targetId;
-      const order = game.playerOrder;
-      const voted = Object.keys(tribunal.votes).length;
-
-      if (voted < order.length) {
-        game.message = `⚖️ Tribunal: ${voted}/${order.length} votes`;
-        return game;
-      }
-
-      const counts = {};
-      Object.values(tribunal.votes).forEach(id => { counts[id] = (counts[id] || 0) + 1; });
-      const max = Math.max(...Object.values(counts));
-      const winners = Object.keys(counts).filter(id => counts[id] === max);
-      const loserId = winners[Math.floor(Math.random() * winners.length)];
-      const msgs = [];
-      Effects.applyDrinks(game, shared, loserId, 4, tribunal.casterId, "malus_target", msgs);
-
-      shared.tribunal = null;
-      this.drawCardAfterPlay(game, tribunal.casterId);
-      const result = this.advanceTurn(game, shared);
-      game.currentPlayerIndex = result.index;
-      game.message = `⚖️ ${game.players[loserId].pseudo} est condamné et boit 4 🍺!`;
-      if (result.messages.length) game.message = result.messages.join("\n") + "\n" + game.message;
-      this.checkWinCondition(game);
-      return game;
-    });
-  }
-
   pickpocketSteal(cardIndex) {
     this.roomRef().transaction((game) => {
       const shared = game.sharedState;
@@ -2346,10 +2302,6 @@ class GameController {
         center.textContent = `⏳ ${players[pr.targetId]?.pseudo} choisit un contre…`;
       } else if (isMyTurn && players[this.playerId]?.doubleDistBonus) {
         center.textContent = "👥 Double Distribution active — prochaine carte Donne/+X : +2 🍺";
-      } else if (shared.tribunal && !shared.tribunal.votes?.[this.playerId]) {
-        center.textContent = "⚖️ Tribunal — clique un joueur dans le cercle pour voter";
-      } else if (shared.tribunal) {
-        center.textContent = "⏳ Tribunal — en attente des autres votes…";
       } else if (shared.pickpocket?.casterId === this.playerId) {
         center.textContent = "🥷 Pickpocket — choisis une carte à voler ci-dessous";
       } else if (isMyTurn && this.selectedTarget) {
@@ -2374,8 +2326,6 @@ class GameController {
     const cy = size / 2;
     const radius = size / 2 - 55;
 
-    const tribunal = shared.tribunal;
-    const canVoteTribunal = tribunal && !tribunal.votes?.[this.playerId];
     const canPickTarget = isMyTurn && !shared.finished && !blocking;
 
     order.forEach((id, idx) => {
@@ -2403,10 +2353,7 @@ class GameController {
         <div class="player-status">${status}</div>
       `;
 
-      if (canVoteTribunal && !shared.finished) {
-        el.classList.add("clickable");
-        el.onclick = () => this.castVote(id);
-      } else if (canPickTarget) {
+      if (canPickTarget) {
         el.classList.add("clickable");
         el.onclick = () => this.toggleTarget(id, game);
       }
@@ -2492,12 +2439,6 @@ class GameController {
         el.onclick = () => this.playReaction(idx);
         reactionCards.appendChild(el);
       });
-    }
-
-    if (shared.tribunal && !shared.tribunal.votes[this.playerId]) {
-      banner.classList.remove("hidden");
-      document.getElementById("bannerTitle").textContent = "⚖️ Tribunal";
-      document.getElementById("bannerText").textContent = "Clique sur un joueur dans le cercle pour voter qui boit 4 🍺.";
     }
 
     if (isMyTurn && !Effects.hasBlockingAction(shared) && Effects.handNeedsTargetPick(myHand)) {
