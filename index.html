@@ -104,6 +104,15 @@
       padding-top: 10vh;
     }
 
+    body.in-game #login {
+      padding-top: 16px;
+      gap: 12px;
+    }
+
+    body.game-started #login {
+      display: none;
+    }
+
     .login-container {
       display: flex;
       gap: 10px;
@@ -2309,11 +2318,11 @@ class GameController {
       })
       .then(() => {
         document.body.classList.add("in-game");
-        document.getElementById("login").classList.add("hidden");
         document.getElementById("game").classList.remove("hidden");
         document.getElementById("quitBtn").classList.remove("hidden");
         document.getElementById("forcePassBtn").classList.remove("hidden");
         document.getElementById("handLabel").classList.remove("hidden");
+        FirebaseSetup.setStatus("ok", `✅ Connecté en tant que ${pseudo} — en attente du démarrage`);
         this.listenGame();
       })
       .catch((err) => {
@@ -2729,6 +2738,8 @@ class GameController {
     const blocking = Effects.hasBlockingAction(shared);
 
     if (!isMyTurn || blocking) this.selectedTarget = null;
+
+    document.body.classList.toggle("game-started", !!game.started);
 
     const center = document.getElementById("center");
     if (!game.started) {
