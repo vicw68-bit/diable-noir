@@ -1285,9 +1285,9 @@ const CardVisuals = {
   ART: {
     DIABLE_NOIR: { icon: "😈", badge: "PERDU", desc: "Non jouable, non défaussable. Quand la pioche est vide et que tout le monde a joué ses cartes, celui qui reste avec cette carte boit cul sec." },
     CURSE: { icon: "☠️", badge: "MALÉDICTION", desc: "Non jouable. Tant qu'elle reste dans ta main, tu bois 1 🍺 au début de chaque tour." },
-    GIVE_2: { icon: "🍻", badge: "+2 🍺", desc: "Cible 1 joueur : il boit 2 🍺. Contrable avec Protection ou Miroir." },
-    GIVE_3: { icon: "🍻", badge: "+3 🍺", desc: "Cible 1 joueur : il boit 3 🍺. Contrable avec Protection ou Miroir." },
-    GIVE_5: { icon: "🍻", badge: "+5 🍺", desc: "Cible 1 joueur : il boit 5 🍺. Contrable avec Protection ou Miroir." },
+    GIVE_2: { icon: "🍻", badge: "+2 🍺", desc: "Cible 1 joueur : il boit 2 🍺. Contrable (Miroir, Protection, Retour de Flamme). Bouclier passif possible." },
+    GIVE_3: { icon: "🍻", badge: "+3 🍺", desc: "Cible 1 joueur : il boit 3 🍺. Contrable (Miroir, Protection, Retour de Flamme). Bouclier passif possible." },
+    GIVE_5: { icon: "🍻", badge: "+5 🍺", desc: "Cible 1 joueur : il boit 5 🍺. Contrable (Miroir, Protection, Retour de Flamme). Bouclier passif possible." },
     DOUBLE_DISTRIBUTION: { icon: "👥", badge: "+2 next", desc: "Ta prochaine carte Donne 2/3/5 ou +2/+3/+5 inflige 2 🍺 supplémentaires à la cible, puis l'effet expire." },
     DRAW_2: { icon: "🃏", badge: "+2 cartes", desc: "Pioche 2 cartes immédiatement." },
     EXTRA_TURN: { icon: "🔁", badge: "Rejoue", desc: "Tu rejoues immédiatement après ce tour (sans passer la main)." },
@@ -1300,7 +1300,7 @@ const CardVisuals = {
     DOUBLE_PENALTY: { icon: "⏳", badge: "Différé", desc: "Cible 1 joueur : boit 2 🍺 maintenant + 2 🍺 supplémentaires au début de son prochain tour." },
     RELENTLESS: { icon: "🎯", badge: "Acharnement", desc: "Cible 1 joueur : boit 1 🍺 × nombre d'adversaires. Contrable." },
     TRIBUNAL: { icon: "⚖️", badge: "4 🍺 oral", desc: "Annonce « Tribunal » : votez à l'oral pour qui boit 4 🍺. Le tour passe au joueur suivant." },
-    PUBLIC_ENEMY: { icon: "👿", badge: "Ennemi", desc: "Cible 1 joueur : Ennemi Public jusqu'à son prochain tour (+1 🍺 sur les cartes Donne +2/+3/+5 reçues)." },
+    PUBLIC_ENEMY: { icon: "👿", badge: "Ennemi", desc: "Cible 1 joueur : Ennemi Public jusqu'à son prochain tour (+1 🍺 sur les cartes Donne 2/3/5 et +2/+3/+5 reçues)." },
     DRINK_2: { icon: "🍺", badge: "Bois 2", desc: "Tu bois 2 🍺 toi-même." },
     DRINK_3: { icon: "🍺", badge: "Bois 3", desc: "Tu bois 3 🍺 toi-même." },
     DRINK_5: { icon: "🍺", badge: "Bois 5", desc: "Tu bois 5 🍺 toi-même." },
@@ -1818,7 +1818,7 @@ class Effects {
   }
 
   static isPlusXCard(cardId) {
-    return cardId === "PLUS2" || cardId === "PLUS3" || cardId === "PLUS5";
+    return this.isPlusGiveCard(cardId);
   }
 
   static isAllianceBlock(cardId) {
@@ -1878,9 +1878,9 @@ class Effects {
     const base = { cardId: card.id, cardName: card.name, cardType: card.type };
 
     switch (card.id) {
-      case "GIVE_2": return { ...base, kind: "drinks", amount: 2, cardType: "bonus" };
-      case "GIVE_3": return { ...base, kind: "drinks", amount: 3, cardType: "bonus" };
-      case "GIVE_5": return { ...base, kind: "drinks", amount: 5, cardType: "bonus" };
+      case "GIVE_2": return { ...base, kind: "drinks", amount: 2, cardType: "malus_target" };
+      case "GIVE_3": return { ...base, kind: "drinks", amount: 3, cardType: "malus_target" };
+      case "GIVE_5": return { ...base, kind: "drinks", amount: 5, cardType: "malus_target" };
       case "PLUS2": return { ...base, kind: "drinks", amount: 2, cardType: "malus_target" };
       case "PLUS3": return { ...base, kind: "drinks", amount: 3, cardType: "malus_target" };
       case "PLUS5": return { ...base, kind: "drinks", amount: 5, cardType: "malus_target" };
@@ -1900,7 +1900,7 @@ class Effects {
     return hand.map((c, i) => ({ card: c, index: i })).filter(({ card }) => {
       if (card.id === "PROTECTION") return attack.kind === "drinks";
       if (card.id === "MIRROR") return this.isMalusAttack(attack);
-      if (card.id === "BACKFIRE") return attack.cardType === "malus_target";
+      if (card.id === "BACKFIRE") return this.isPlusGiveCard(attack.cardId) || attack.cardType === "malus_target";
       return false;
     });
   }
