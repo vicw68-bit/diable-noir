@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "_ping": {
+      ".read": false,
+      ".write": "auth != null",
+      ".validate": "newData.hasChildren(['t']) && newData.child('t').isNumber()"
+    },
+    "rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null && $roomId === 'main'",
+        ".validate": "newData.hasChildren(['players'])"
+      }
+    }
+  }
+}
