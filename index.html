@@ -12,7 +12,7 @@
       --bg: #0a0a0a;
       --panel: #141414;
       --hand-h: 150px;
-      --hand-hud-h: 72px;
+      --hand-hud-h: 108px;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -488,7 +488,7 @@
 
     /* HUD compact — juste au-dessus de la main */
     body.banner-open {
-      --hand-hud-h: 92px;
+      --hand-hud-h: 128px;
     }
 
     .hand-hud {
@@ -544,58 +544,62 @@
     .hand-feed {
       background: rgba(5, 8, 7, 0.94);
       border-top: 1px solid rgba(255, 51, 51, 0.18);
-      padding: 4px 10px 5px;
+      padding: 8px 12px 10px;
+      height: var(--hand-hud-h);
       max-height: var(--hand-hud-h);
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      overflow: hidden;
     }
 
     .hand-feed.hidden { display: none; }
 
     body.banner-open .hand-feed {
+      height: calc(var(--hand-hud-h) - 28px);
       max-height: calc(var(--hand-hud-h) - 28px);
     }
 
     .hand-feed .message {
       color: #b8dcc8;
       margin: 0;
-      font-size: 0.8rem;
-      line-height: 1.45;
+      font-size: 0.95rem;
+      line-height: 1.38;
       word-wrap: break-word;
+      overflow: hidden;
     }
 
     .game-log-line {
-      padding: 4px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 3px 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .game-log-line:last-child { border-bottom: none; }
 
     .game-log-line--head {
-      font-size: 0.88rem;
+      font-size: 1.02rem;
       font-weight: 700;
       color: #dff;
     }
 
     .game-log-line--drink {
-      font-size: 0.95rem;
+      font-size: 1.1rem;
       font-weight: 800;
       color: #ffc866;
-      background: rgba(255, 180, 50, 0.08);
-      margin: 2px -4px;
-      padding: 5px 6px;
+      background: rgba(255, 180, 50, 0.1);
+      margin: 1px -6px;
+      padding: 4px 8px;
       border-radius: 6px;
-      border-bottom: none;
     }
 
     .game-log-line--combat {
       color: #ff9999;
       font-weight: 700;
+      font-size: 0.98rem;
     }
 
     .game-log-line--arrow {
-      color: #99a;
-      font-size: 0.78rem;
+      color: #aab;
+      font-size: 0.9rem;
     }
 
     .game-log-name {
@@ -1018,8 +1022,8 @@
     .firebase-status.loading { background: rgba(255,170,0,0.12); border: 1px solid #fa0; color: #fd8; }
 
     @media (max-width: 768px) {
-      :root { --hand-h: 130px; --hand-hud-h: 58px; }
-      body.banner-open { --hand-hud-h: 78px; }
+      :root { --hand-h: 130px; --hand-hud-h: 98px; }
+      body.banner-open { --hand-hud-h: 118px; }
       .player { min-width: 72px; padding: 6px 8px; font-size: 0.75rem; }
       .card { width: 58px; height: 87px; }
       .floating-panel .card { width: 56px; height: 84px; }
@@ -1029,9 +1033,9 @@
       }
       .action-banner__title { font-size: 0.68rem; }
       .action-banner__hint { font-size: 0.58rem; }
-      .hand-feed .message { font-size: 0.74rem; }
-      .game-log-line--head { font-size: 0.82rem; }
-      .game-log-line--drink { font-size: 0.88rem; }
+      .hand-feed .message { font-size: 0.88rem; }
+      .game-log-line--head { font-size: 0.94rem; }
+      .game-log-line--drink { font-size: 1rem; }
     }
 
     @media (min-width: 900px) {
@@ -1060,6 +1064,75 @@
     body:not(.in-game) .hand,
     body:not(.in-game) .hand-hud,
     body:not(.in-game) .floating-panel { display: none !important; }
+
+    .target-flash {
+      position: fixed;
+      inset: 0;
+      z-index: 850;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      pointer-events: none;
+      background: rgba(90, 0, 0, 0.72);
+      backdrop-filter: blur(4px);
+    }
+
+    .target-flash.hidden { display: none; }
+
+    .target-flash--active {
+      animation: target-flash-bg 3.4s ease forwards;
+    }
+
+    .target-flash--active .target-flash__content {
+      animation: target-flash-pop 3.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes target-flash-bg {
+      0% { opacity: 0; background: rgba(90, 0, 0, 0); }
+      10% { opacity: 1; background: rgba(120, 0, 0, 0.82); }
+      72% { opacity: 1; background: rgba(100, 0, 0, 0.78); }
+      100% { opacity: 0; background: rgba(60, 0, 0, 0); }
+    }
+
+    @keyframes target-flash-pop {
+      0% { transform: scale(0.55); opacity: 0; }
+      12% { transform: scale(1.08); opacity: 1; }
+      70% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(0.92); opacity: 0; }
+    }
+
+    .target-flash__content {
+      text-align: center;
+      max-width: min(520px, 94vw);
+    }
+
+    .target-flash__emoji {
+      font-size: clamp(3.5rem, 16vw, 6rem);
+      line-height: 1;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 0 24px rgba(255, 80, 80, 0.65));
+    }
+
+    .target-flash__title {
+      font-size: clamp(2.2rem, 11vw, 4.2rem);
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      color: #ff5555;
+      text-shadow:
+        0 0 30px rgba(255, 0, 0, 0.85),
+        0 4px 0 #660000;
+      line-height: 1.05;
+    }
+
+    .target-flash__sub {
+      margin-top: 14px;
+      font-size: clamp(1.15rem, 5.5vw, 1.75rem);
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.35;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+    }
 
     .game-end-overlay {
       position: fixed;
@@ -1220,6 +1293,14 @@
     <h3 id="cardInspectTitle" class="card-inspect__title"></h3>
     <p id="cardInspectDesc" class="card-inspect__desc"></p>
     <p class="card-inspect__hint">Relâche pour fermer · clic rapide pour jouer</p>
+  </div>
+</div>
+
+<div id="targetFlash" class="target-flash hidden" aria-live="assertive">
+  <div class="target-flash__content">
+    <div id="targetFlashEmoji" class="target-flash__emoji">🎯</div>
+    <div id="targetFlashTitle" class="target-flash__title">TU ES VISÉ !</div>
+    <p id="targetFlashSub" class="target-flash__sub"></p>
   </div>
 </div>
 
@@ -1817,6 +1898,8 @@ function escapeRegex(text) {
 }
 
 const MessageVisuals = {
+  MAX_LINES: 3,
+
   format(text, players) {
     if (!text) return "";
     const names = Object.values(players || {})
@@ -1824,7 +1907,8 @@ const MessageVisuals = {
       .filter(Boolean)
       .sort((a, b) => b.length - a.length);
 
-    return text.split("\n").map((line) => this.formatLine(line.trim(), names)).join("");
+    const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
+    return lines.slice(-this.MAX_LINES).map((line) => this.formatLine(line, names)).join("");
   },
 
   highlightNames(html, names) {
@@ -1850,6 +1934,76 @@ const MessageVisuals = {
     html = this.highlightNames(html, names);
 
     return `<div class="${cls}">${html}</div>`;
+  },
+};
+
+const TargetFlash = {
+  ready: false,
+  lastEventKey: null,
+  _hideTimer: null,
+
+  detectEvent(game, localPlayerId) {
+    if (!game?.started || game.sharedState?.finished) return null;
+
+    const shared = game.sharedState || {};
+    const lp = game.lastPlay;
+    const ts = lp?.ts || 0;
+    const pr = shared.pendingReaction;
+
+    if (pr?.targetId === localPlayerId) {
+      const caster = game.players?.[pr.casterId]?.pseudo || "?";
+      const card = pr.sourceCard?.name || pr.attack?.cardName || "?";
+      let detail = `${caster} — ${card}`;
+      if (pr.attack?.kind === "drinks") detail += ` · ${pr.attack.amount} 🍺`;
+      if (pr.attack?.kind === "skip") detail += " · passe ton tour";
+      return { key: `pr:${ts}:${pr.casterId}`, emoji: "⚔️", title: "TU ES VISÉ !", subtitle: detail };
+    }
+
+    const pp = shared.pickpocket;
+    if (pp?.targetId === localPlayerId && pp.casterId !== localPlayerId) {
+      const caster = game.players?.[pp.casterId]?.pseudo || "?";
+      return { key: `pp:${ts}:${pp.casterId}`, emoji: "🥷", title: "PICKPOCKET !", subtitle: `${caster} fouille ta main` };
+    }
+
+    if (lp?.targetId === localPlayerId && lp.playerId !== localPlayerId && ts) {
+      const caster = game.players?.[lp.playerId]?.pseudo || "?";
+      const card = lp.card?.name || "?";
+      return { key: `lp:${ts}`, emoji: "🎯", title: "TU ES VISÉ !", subtitle: `${caster} joue ${card}` };
+    }
+
+    return null;
+  },
+
+  show(event) {
+    const el = document.getElementById("targetFlash");
+    if (!el || !event) return;
+
+    clearTimeout(this._hideTimer);
+    el.classList.remove("hidden", "target-flash--active");
+
+    document.getElementById("targetFlashEmoji").textContent = event.emoji || "🎯";
+    document.getElementById("targetFlashTitle").textContent = event.title;
+    document.getElementById("targetFlashSub").textContent = event.subtitle;
+
+    void el.offsetWidth;
+    el.classList.add("target-flash--active");
+
+    this._hideTimer = setTimeout(() => {
+      el.classList.remove("target-flash--active");
+      el.classList.add("hidden");
+    }, 3400);
+  },
+
+  handle(game, localPlayerId) {
+    const event = this.detectEvent(game, localPlayerId);
+    if (!this.ready) {
+      this.ready = true;
+      this.lastEventKey = event?.key || null;
+      return;
+    }
+    if (!event || event.key === this.lastEventKey) return;
+    this.lastEventKey = event.key;
+    this.show(event);
   },
 };
 
@@ -3223,9 +3377,9 @@ class GameController {
 
     this.renderGameEndOverlay(game, shared, players);
 
+    TargetFlash.handle(game, this.playerId);
+
     document.getElementById("message").innerHTML = MessageVisuals.format(game.message || "", players);
-    const feedEl = document.getElementById("handFeed");
-    if (feedEl && game.message) feedEl.scrollTop = feedEl.scrollHeight;
 
     const deckSize = game.deck?.length ?? 0;
     let deckInitial = game.deckInitialSize;
