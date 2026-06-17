@@ -36,54 +36,154 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: 12px 16px;
-      background: rgba(10, 10, 10, 0.92);
-      border-bottom: 1px solid #2a2a2a;
-      backdrop-filter: blur(8px);
+      padding: 10px 14px 11px;
+      background:
+        linear-gradient(180deg, rgba(28, 6, 6, 0.97) 0%, rgba(10, 8, 8, 0.96) 100%);
+      border-bottom: 1px solid rgba(255, 40, 40, 0.28);
+      box-shadow:
+        0 1px 0 rgba(255, 80, 80, 0.08),
+        0 8px 32px rgba(120, 0, 0, 0.35);
+      backdrop-filter: blur(10px);
+    }
+
+    .app-header::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 0, 0, 0.55) 50%, transparent 100%);
+      pointer-events: none;
+    }
+
+    .app-brand {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .app-brand__text {
+      min-width: 0;
     }
 
     .app-title {
-      color: var(--accent);
-      font-size: clamp(1.1rem, 4vw, 1.6rem);
-      font-weight: 800;
-      letter-spacing: 0.04em;
-      text-shadow: 0 0 12px var(--accent-glow);
+      color: #ff1a1a;
+      font-size: clamp(0.95rem, 3.8vw, 1.35rem);
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      line-height: 1.15;
+      text-shadow:
+        0 0 14px rgba(255, 0, 0, 0.75),
+        0 0 28px rgba(255, 0, 0, 0.35),
+        0 2px 0 #3a0000;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .app-subtitle {
-      font-size: 0.75rem;
-      color: #666;
-      margin-top: 2px;
+      font-size: clamp(0.58rem, 2vw, 0.68rem);
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: rgba(255, 110, 110, 0.52);
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .header-actions { display: flex; gap: 8px; flex-shrink: 0; }
-
-    .quit-btn {
-      background: #333;
-      padding: 8px 14px;
-      font-size: 0.85rem;
-      border-radius: 8px;
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
     }
 
-    .quit-btn:hover:not(:disabled) { background: #555; transform: none; }
+    .header-actions button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 13px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 10px;
+      line-height: 1;
+      transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, color 0.15s;
+    }
+
+    .header-actions button:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    .header-btn__icon {
+      font-size: 0.95rem;
+      line-height: 1;
+      opacity: 0.95;
+    }
 
     .force-pass-btn {
-      background: #5a4500;
-      border: 1px solid #cc9900;
-      padding: 8px 12px;
-      font-size: 0.82rem;
-      border-radius: 8px;
-      white-space: nowrap;
+      background: linear-gradient(180deg, #2a1800 0%, #1a1000 100%);
+      border: 1px solid rgba(255, 170, 0, 0.45);
+      color: #ffc233;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 200, 80, 0.12),
+        0 0 14px rgba(255, 140, 0, 0.12);
     }
 
     .force-pass-btn:hover:not(:disabled) {
-      background: #7a6000;
-      transform: none;
+      background: linear-gradient(180deg, #3d2400 0%, #261600 100%);
+      border-color: rgba(255, 190, 60, 0.65);
+      color: #ffe08a;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 220, 120, 0.18),
+        0 0 22px rgba(255, 150, 0, 0.28);
     }
 
-    @media (max-width: 480px) {
-      .force-pass-btn .force-pass-label { display: none; }
-      .quit-btn { padding: 8px 10px; }
+    .quit-btn {
+      background: linear-gradient(180deg, #220808 0%, #140404 100%);
+      border: 1px solid rgba(255, 70, 70, 0.4);
+      color: #ff8888;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 120, 120, 0.1),
+        0 0 12px rgba(255, 0, 0, 0.1);
+    }
+
+    .quit-btn:hover:not(:disabled) {
+      background: linear-gradient(180deg, #330c0c 0%, #1c0606 100%);
+      border-color: rgba(255, 100, 100, 0.6);
+      color: #ffaaaa;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 140, 140, 0.15),
+        0 0 20px rgba(255, 40, 40, 0.25);
+    }
+
+    .restart-btn {
+      background: linear-gradient(180deg, #281008 0%, #160804 100%);
+      border: 1px solid rgba(255, 120, 40, 0.45);
+      color: #ffaa66;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 160, 100, 0.1),
+        0 0 12px rgba(255, 80, 0, 0.12);
+    }
+
+    .restart-btn:hover:not(:disabled) {
+      background: linear-gradient(180deg, #3a180c 0%, #220a06 100%);
+      border-color: rgba(255, 150, 70, 0.6);
+      color: #ffcc99;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 180, 120, 0.15),
+        0 0 20px rgba(255, 100, 0, 0.22);
+    }
+
+    @media (max-width: 520px) {
+      .app-header { padding: 8px 10px 9px; gap: 8px; }
+      .header-actions button { padding: 8px 10px; }
+      .force-pass-btn .force-pass-label,
+      .quit-btn .quit-btn__label,
+      .restart-btn .restart-btn__label { display: none; }
     }
 
     .app-main {
@@ -129,7 +229,6 @@
       text-align: center;
       position: relative;
       overflow: hidden;
-      perspective: 900px;
     }
 
     .login-hero::before {
@@ -184,149 +283,102 @@
       aspect-ratio: 1 / 1.05;
       margin: 0 0 16px;
       z-index: 1;
-      transform-style: preserve-3d;
       transform-origin: center 58%;
-      will-change: transform;
+      will-change: auto;
       animation: devil-snarl 4.5s ease-in-out infinite;
     }
 
     .devil--charge {
-      animation: devil-charge 1.05s cubic-bezier(0.76, 0, 0.9, 0.15) forwards;
+      animation: devil-charge 0.95s cubic-bezier(0.76, 0, 0.9, 0.12) forwards;
       z-index: 500;
+      will-change: transform;
+      isolation: isolate;
     }
 
     @keyframes devil-charge {
-      0% {
-        transform: scale(1) translateZ(0) rotate(0deg);
-        filter: drop-shadow(0 20px 50px rgba(255, 0, 0, 0.5));
-      }
-      18% {
-        transform: scale(1.1) translateZ(40px) rotate(-2deg);
-        filter: drop-shadow(0 28px 60px rgba(255, 0, 0, 0.75));
-      }
-      55% {
-        transform: scale(2.8) translateZ(280px) translateY(4%) rotate(1deg);
-        filter: drop-shadow(0 0 100px rgba(255, 0, 0, 0.95)) brightness(1.15);
-      }
-      100% {
-        transform: scale(7) translateZ(600px) translateY(10%) rotate(0deg);
-        filter: drop-shadow(0 0 160px rgba(255, 0, 0, 1)) brightness(1.35);
-      }
+      0% { transform: scale(1) translateY(0); }
+      22% { transform: scale(1.12) translateY(1%); }
+      100% { transform: scale(4.5) translateY(8%); }
     }
 
-    .devil--charge .devil__eye-glow {
-      animation: devil-eye-rage 0.35s ease forwards;
+    .devil--charge * {
+      animation: none !important;
+      transition: none !important;
     }
 
-    @keyframes devil-eye-rage {
-      to {
-        opacity: 1;
-        box-shadow: 0 0 24px #ffee00, 0 0 48px rgba(255, 220, 0, 0.9);
-        transform: scale(1.2);
-      }
+    .devil--charge .devil__figure {
+      filter: none;
     }
 
     @keyframes devil-snarl {
       0%, 100% { transform: scale(1) rotate(0deg); }
-      25% { transform: scale(1.015) rotate(-0.6deg); }
-      75% { transform: scale(1.015) rotate(0.6deg); }
+      50% { transform: scale(1.02) rotate(0.6deg); }
     }
 
     .devil__figure {
       position: relative;
       width: 100%;
       height: 100%;
-      filter: drop-shadow(0 16px 48px rgba(180, 0, 0, 0.55));
+      filter: drop-shadow(0 14px 28px rgba(200, 0, 0, 0.5));
     }
 
-    .devil__backdrop {
-      position: absolute;
-      inset: 4% 6% 10%;
-      background: radial-gradient(ellipse at 50% 42%, #5a1818 0%, #3a0e0e 50%, #280808 100%);
-      border-radius: 46%;
-      z-index: 0;
-    }
-
-    .devil__art {
-      position: relative;
-      z-index: 1;
+    .devil__svg {
       width: 100%;
-      height: 100%;
-      object-fit: contain;
+      height: auto;
       display: block;
-      user-select: none;
-      -webkit-user-drag: none;
-      mix-blend-mode: multiply;
+      overflow: visible;
     }
 
-    .devil__glow {
-      z-index: 1;
-      position: absolute;
-      inset: 5% 10% 25%;
-      background: radial-gradient(ellipse at 50% 40%, rgba(255, 60, 40, 0.22) 0%, transparent 70%);
-      pointer-events: none;
-      animation: devil-glow-pulse 3s ease-in-out infinite;
+    .devil__svg-eye {
+      animation: svg-eye-pulse 2s ease-in-out infinite;
     }
 
-    @keyframes devil-glow-pulse {
-      0%, 100% { opacity: 0.7; }
+    .devil__svg-eye--r { animation-delay: 0.3s; }
+
+    @keyframes svg-eye-pulse {
+      0%, 100% { opacity: 0.92; }
       50% { opacity: 1; }
     }
 
-    .devil__eye-glow {
-      position: absolute;
-      width: 11%;
-      height: 5%;
-      top: 38%;
-      border-radius: 40%;
-      background: rgba(255, 230, 0, 0.35);
-      box-shadow: 0 0 16px rgba(255, 220, 0, 0.55);
-      pointer-events: none;
-      opacity: 0.75;
-      animation: eye-glow-flicker 2.2s ease-in-out infinite;
+    .devil__svg-closed-lips {
+      opacity: 0;
+      transition: opacity 0.2s ease 0.15s;
     }
 
-    .devil__eye-glow--l { left: 28%; transform: rotate(-8deg); }
-    .devil__eye-glow--r { right: 28%; transform: rotate(8deg); animation-delay: 0.3s; }
-
-    @keyframes eye-glow-flicker {
-      0%, 100% { opacity: 0.65; box-shadow: 0 0 12px rgba(255, 220, 0, 0.45); }
-      50% { opacity: 1; box-shadow: 0 0 22px rgba(255, 240, 0, 0.85); }
+    .devil__figure:has(.devil__mouth-wrap--snap) .devil__svg-closed-lips {
+      opacity: 1;
     }
 
     .devil__mouth-wrap {
       position: absolute;
       left: 50%;
-      bottom: 19%;
+      bottom: 7.5%;
       transform: translateX(-50%);
-      width: 48%;
+      width: 50%;
       transform-origin: center top;
       transition: transform 0.38s cubic-bezier(0.55, 0, 1, 0.4), opacity 0.22s ease 0.18s;
       z-index: 2;
     }
 
     .devil__mouth-wrap--snap {
-      transform: translateX(-50%) scaleY(0.04);
       opacity: 0;
+      visibility: hidden;
       pointer-events: none;
-    }
-
-    .devil__mouth-wrap--snap .devil__teeth--lower {
-      transform: rotate(180deg) translateY(-72px);
     }
 
     .devil__mouth {
       position: relative;
       width: 100%;
-      min-height: 88px;
-      padding: 18px 12px 10px;
-      background: linear-gradient(180deg, #1a0000 0%, #5a0000 20%, #8b0000 55%, #3a0000 100%);
-      border-radius: 12% 12% 48% 48% / 14% 14% 86% 86%;
-      border: 3px solid #000;
+      min-height: 96px;
+      padding: 20px 12px 12px;
+      background: linear-gradient(180deg, #0a0000 0%, #4a0000 15%, #9b0000 50%, #2a0000 100%);
+      border-radius: 8% 8% 52% 52% / 10% 10% 90% 90%;
+      border: 4px solid #000;
       box-shadow:
-        inset 0 14px 28px rgba(0, 0, 0, 0.95),
-        0 0 32px rgba(255, 40, 0, 0.55),
-        0 4px 0 rgba(0, 0, 0, 0.8);
+        inset 0 18px 36px rgba(0, 0, 0, 0.98),
+        inset 0 -8px 20px rgba(255, 30, 0, 0.25),
+        0 0 40px rgba(255, 20, 0, 0.65),
+        0 6px 0 rgba(0, 0, 0, 0.9);
       cursor: pointer;
       display: flex;
       flex-direction: column;
@@ -395,17 +447,16 @@
 
     .devil__tooth {
       flex: 1;
-      max-width: 16px;
-      height: 16px;
-      background: linear-gradient(180deg, #fff 0%, #ccc 60%, #888 100%);
+      max-width: 17px;
+      height: 18px;
+      background: linear-gradient(180deg, #fff 0%, #ddd 45%, #999 100%);
       clip-path: polygon(50% 100%, 0 0, 100% 0);
-      opacity: 0.95;
-      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));
+      opacity: 0.98;
     }
 
     .devil__tooth--fang {
-      max-width: 20px;
-      height: 22px;
+      max-width: 24px;
+      height: 28px;
     }
 
     .devil__mouth-input {
@@ -1701,13 +1752,25 @@
 <body>
 
 <header class="app-header">
-  <div>
-    <div class="app-title">😈 DIABLE NOIR</div>
-    <div class="app-subtitle">Multijoueur en ligne</div>
+  <div class="app-brand">
+    <div class="app-brand__text">
+      <div class="app-title">DIABLE NOIR</div>
+      <div class="app-subtitle">Multijoueur en ligne</div>
+    </div>
   </div>
   <div class="header-actions">
-    <button id="forcePassBtn" class="force-pass-btn hidden" onclick="gameController.forcePassTurn()" title="Anti-bug : annule l'action en cours, passe ton tour et pioche 1 carte">⏭️ <span class="force-pass-label">Passer</span></button>
-    <button id="quitBtn" class="quit-btn hidden" onclick="gameController.quitAndReset()" title="Quitter et nouvelle partie">🚪 Quitter</button>
+    <button id="forcePassBtn" class="force-pass-btn hidden" onclick="gameController.forcePassTurn()" title="Anti-bug : annule l'action en cours, passe ton tour et pioche 1 carte">
+      <span class="header-btn__icon" aria-hidden="true">⏭</span>
+      <span class="force-pass-label">Passer ton tour</span>
+    </button>
+    <button id="restartHeaderBtn" class="restart-btn hidden" onclick="gameController.restartAndGoHome()" title="Remettre la salle à zéro et retourner à l'accueil (1er joueur)">
+      <span class="header-btn__icon" aria-hidden="true">↻</span>
+      <span class="restart-btn__label">Recommencer</span>
+    </button>
+    <button id="quitBtn" class="quit-btn hidden" onclick="gameController.leaveGame()" title="Quitter la partie sans supprimer la salle">
+      <span class="header-btn__icon" aria-hidden="true">✕</span>
+      <span class="quit-btn__label">Quitter</span>
+    </button>
   </div>
 </header>
 
@@ -1720,11 +1783,64 @@
 
     <div class="devil" id="devilCharacter" aria-hidden="true">
       <div class="devil__figure">
-        <div class="devil__backdrop" aria-hidden="true"></div>
-        <img class="devil__art" id="devilArt" src="assets/devil-head.png" alt="">
-        <div class="devil__glow" aria-hidden="true"></div>
-        <div class="devil__eye-glow devil__eye-glow--l" aria-hidden="true"></div>
-        <div class="devil__eye-glow devil__eye-glow--r" aria-hidden="true"></div>
+        <svg class="devil__svg" viewBox="0 0 400 440" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="devilSkin" cx="48%" cy="28%" r="72%">
+              <stop offset="0%" stop-color="#ff5538"/>
+              <stop offset="30%" stop-color="#e01810"/>
+              <stop offset="65%" stop-color="#9a0808"/>
+              <stop offset="100%" stop-color="#180202"/>
+            </radialGradient>
+            <linearGradient id="devilHorn" x1="0" y1="0" x2="0.35" y2="1">
+              <stop offset="0%" stop-color="#fff5e0"/>
+              <stop offset="40%" stop-color="#d4b090"/>
+              <stop offset="100%" stop-color="#3a2818"/>
+            </linearGradient>
+            <radialGradient id="devilEyeGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ffff8d"/>
+              <stop offset="40%" stop-color="#ffea00"/>
+              <stop offset="100%" stop-color="#ff5500"/>
+            </radialGradient>
+          </defs>
+
+          <!-- Cornes -->
+          <path d="M72 108 C28 18 45 -8 68 -6 C92 42 108 88 122 125 L108 118 Z" fill="url(#devilHorn)" stroke="#0a0404" stroke-width="3.5" stroke-linejoin="round"/>
+          <path d="M328 108 C372 18 355 -8 332 -6 C308 42 292 88 278 125 L292 118 Z" fill="url(#devilHorn)" stroke="#0a0404" stroke-width="3.5" stroke-linejoin="round"/>
+
+          <!-- Oreilles -->
+          <path d="M48 222 C8 248 18 318 54 298 C68 268 62 232 48 222 Z" fill="#5a0808" stroke="#000" stroke-width="3"/>
+          <path d="M352 222 C392 248 382 318 346 298 C332 268 338 232 352 222 Z" fill="#5a0808" stroke="#000" stroke-width="3"/>
+
+          <!-- Tête -->
+          <ellipse cx="200" cy="238" rx="162" ry="182" fill="url(#devilSkin)"/>
+
+          <!-- Ombre mâchoire -->
+          <ellipse cx="200" cy="302" rx="120" ry="78" fill="#000" opacity="0.3"/>
+
+          <!-- Sourcils -->
+          <path d="M72 168 L148 128 L198 155 L188 172 L118 188 Z" fill="#050000"/>
+          <path d="M328 168 L252 128 L202 155 L212 172 L282 188 Z" fill="#050000"/>
+
+          <!-- Yeux -->
+          <ellipse cx="134" cy="212" rx="56" ry="46" fill="#020000"/>
+          <ellipse cx="266" cy="212" rx="56" ry="46" fill="#020000"/>
+          <ellipse class="devil__svg-eye" cx="136" cy="216" rx="40" ry="10" fill="url(#devilEyeGlow)" transform="rotate(-12 136 216)"/>
+          <ellipse class="devil__svg-eye devil__svg-eye--r" cx="264" cy="216" rx="40" ry="10" fill="url(#devilEyeGlow)" transform="rotate(12 264 216)"/>
+          <ellipse cx="136" cy="216" rx="5" ry="14" fill="#0a0000" transform="rotate(-12 136 216)"/>
+          <ellipse cx="264" cy="216" rx="5" ry="14" fill="#0a0000" transform="rotate(12 264 216)"/>
+
+          <!-- Nez -->
+          <path d="M200 232 L200 290 Q178 292 186 262 Q200 232 214 262 Q222 292 200 290 Z" fill="#120202" opacity="0.9"/>
+          <ellipse cx="178" cy="292" rx="16" ry="11" fill="#000"/>
+          <ellipse cx="222" cy="292" rx="16" ry="11" fill="#000"/>
+
+          <!-- Lèvre supérieure -->
+          <path d="M102 328 Q200 352 298 328" stroke="#3a0606" stroke-width="10" stroke-linecap="round" fill="none"/>
+
+          <!-- Lèvres fermées (animation charge) -->
+          <path class="devil__svg-closed-lips" d="M118 352 Q200 378 282 352" stroke="#0a0000" stroke-width="8" stroke-linecap="round" fill="none"/>
+        </svg>
+
         <div class="devil__mouth-wrap">
           <div id="devilMouth" class="devil__mouth" tabindex="0" aria-label="Entrer ton pseudo">
             <div class="devil__teeth devil__teeth--upper" aria-hidden="true">
@@ -1963,11 +2079,6 @@ const FirebaseSetup = (() => {
 })();
 
 const db = FirebaseSetup.init();
-
-(() => {
-  const devilArt = document.getElementById("devilArt");
-  if (devilArt) devilArt.src = assetUrl("devil-head.png");
-})();
 
 function shuffle(array) {
   const arr = [...array];
@@ -2581,13 +2692,13 @@ const LoginFX = {
       const flash = document.getElementById("devilChargeFlash");
 
       document.body.classList.add("login-charging");
+      devil?.classList.add("devil--charge");
       mouth?.classList.add("devil__mouth--snap");
       mouthWrap?.classList.add("devil__mouth-wrap--snap");
 
       setTimeout(() => {
-        devil?.classList.add("devil--charge");
         hero?.classList.add("login-hero--charge");
-      }, 400);
+      }, 350);
 
       setTimeout(() => {
         if (flash) {
@@ -3445,6 +3556,7 @@ class GameController {
     this.lastGame = null;
     this._turnTick = null;
     this._autoPassPending = false;
+    this._isLeaving = false;
     this.setupListeners();
   }
 
@@ -3743,6 +3855,7 @@ class GameController {
           document.body.classList.add("in-game");
           document.getElementById("game").classList.remove("hidden");
           document.getElementById("quitBtn").classList.remove("hidden");
+          document.getElementById("restartHeaderBtn").classList.remove("hidden");
           document.getElementById("forcePassBtn").classList.remove("hidden");
           document.getElementById("handHud").classList.remove("hidden");
           const statusMsg = rejoinedInStartedGame
@@ -4249,7 +4362,22 @@ class GameController {
 
   listenGame() {
     this.roomRef().on("value", (snapshot) => {
-      if (snapshot.exists()) this.renderFromGame(snapshot.val());
+      if (!snapshot.exists()) {
+        if (document.body.classList.contains("in-game")) {
+          this.stopGameListeners();
+          localStorage.removeItem(this.sessionStorageKey());
+          this.goToHome("La salle a été remise à zéro — entre ton pseudo pour rejouer.");
+        }
+        return;
+      }
+      const game = snapshot.val();
+      if (document.body.classList.contains("in-game") && !game.players?.[this.playerId]) {
+        if (this._isLeaving) return;
+        this.stopGameListeners();
+        this.goToHome("Tu n'es plus dans la partie.");
+        return;
+      }
+      this.renderFromGame(game);
     });
   }
 
@@ -4576,22 +4704,120 @@ class GameController {
     document.body.classList.toggle("banner-open", bannerOpen);
   }
 
-  quitAndReset() {
+  stopGameListeners() {
     if (this._turnTick) {
       clearInterval(this._turnTick);
       this._turnTick = null;
     }
-    if (!confirm("Quitter la partie ?\n\nLa salle Firebase sera supprimée. Tu devras re-entrer ton pseudo.")) return;
-    if (this.roomRef) {
-      this.roomRef().off();
-      this.roomRef().remove().finally(() => location.reload()).catch(() => location.reload());
-    } else {
-      location.reload();
+    this.roomRef().off();
+  }
+
+  goToHome(statusMessage) {
+    this.stopGameListeners();
+    this.selectedTarget = null;
+    this.lastGame = null;
+    this._joinAnimating = false;
+    this.setJoinLoading(false);
+
+    document.body.classList.remove("in-game", "game-started", "login-charging", "panel-open", "banner-open");
+    document.getElementById("game")?.classList.add("hidden");
+    document.getElementById("quitBtn")?.classList.add("hidden");
+    document.getElementById("restartHeaderBtn")?.classList.add("hidden");
+    document.getElementById("forcePassBtn")?.classList.add("hidden");
+    document.getElementById("handHud")?.classList.add("hidden");
+    document.getElementById("gameEndOverlay")?.classList.add("hidden");
+    LoginFX.reset();
+
+    if (statusMessage) FirebaseSetup.setStatus("ok", statusMessage);
+  }
+
+  removePlayerFromGame(game, playerId) {
+    if (!game?.players?.[playerId]) return false;
+
+    const oldOrder = game.playerOrder || Object.keys(game.players);
+    const leaveIdx = oldOrder.indexOf(playerId);
+    delete game.players[playerId];
+
+    const newOrder = oldOrder.filter((id) => id !== playerId);
+    game.playerOrder = newOrder;
+
+    if (!game.started || newOrder.length === 0) {
+      if (newOrder.length === 0) game.started = false;
+      return true;
     }
+
+    const shared = game.sharedState || defaultSharedState();
+    const involvesLeaver = (obj) => obj && (obj.targetId === playerId || obj.casterId === playerId || obj.playerId === playerId);
+    if (involvesLeaver(shared.pendingReaction) || involvesLeaver(shared.pickpocket) || involvesLeaver(shared.tribunal)) {
+      this.clearBlockingActions(shared);
+      this.clearActionDeadline(game);
+      game.message = `👋 Un joueur a quitté — action en cours annulée.`;
+    }
+    game.sharedState = shared;
+
+    let idx = game.currentPlayerIndex;
+    if (leaveIdx !== -1 && leaveIdx < idx) idx--;
+    else if (leaveIdx === idx) idx = idx % newOrder.length;
+    game.currentPlayerIndex = Math.max(0, Math.min(idx, newOrder.length - 1));
+
+    if (newOrder.length < GameController.MIN_PLAYERS) {
+      game.started = false;
+      game.turnDeadlineAt = null;
+      game.actionDeadlineAt = null;
+      game.message = `⚠️ Partie en pause — il faut au moins ${GameController.MIN_PLAYERS} joueurs.`;
+    }
+
+    return true;
+  }
+
+  leaveGame() {
+    if (!confirm("Quitter la partie ?\n\nTu seras retiré de la salle. Les autres joueurs pourront continuer.")) return;
+
+    const playerId = this.playerId;
+    this._isLeaving = true;
+    this.roomRef().transaction((g) => {
+      if (!g?.players?.[playerId]) return;
+      const pseudo = g.players[playerId]?.pseudo || "?";
+      if (!this.removePlayerFromGame(g, playerId)) return;
+      if (!g.message?.includes("quitté") && !g.message?.includes("quitté la partie")) {
+        g.message = `👋 ${pseudo} a quitté la partie.`;
+      }
+      return g;
+    }).then(() => {
+      this._isLeaving = false;
+      this.stopGameListeners();
+      this.goToHome("Tu as quitté la partie — entre ton pseudo pour revenir.");
+    }).catch(() => {
+      this._isLeaving = false;
+      alert("Impossible de quitter pour le moment. Réessaie.");
+    });
+  }
+
+  restartAndGoHome() {
+    this.roomRef().once("value").then((snapshot) => {
+      const game = snapshot.val();
+      const order = game?.playerOrder || Object.keys(game?.players || {});
+      if (order[0] !== this.playerId) {
+        return alert("Seul le 1er joueur (👑 hôte) peut recommencer la partie pour tous.");
+      }
+      if (!confirm(
+        "Recommencer toute la partie ?\n\n" +
+        "• La salle sera supprimée pour tout le monde\n" +
+        "• Tu retourneras à l'accueil\n" +
+        "• Chaque joueur devra se reconnecter"
+      )) return;
+
+      this.stopGameListeners();
+      localStorage.removeItem(this.sessionStorageKey());
+      this.playerId = Math.random().toString(36).substring(2, 11);
+      this.roomRef().remove()
+        .finally(() => this.goToHome("Partie remise à zéro — entre ton pseudo pour une nouvelle partie."))
+        .catch(() => this.goToHome("Partie remise à zéro — entre ton pseudo pour une nouvelle partie."));
+    });
   }
 
   reset() {
-    this.quitAndReset();
+    this.leaveGame();
   }
 }
 
@@ -4599,7 +4825,8 @@ const gameController = db
   ? new GameController()
   : {
       join() { alert(FirebaseSetup.errorMessage || "Firebase non configuré."); },
-      quitAndReset() { location.reload(); },
+      leaveGame() { location.reload(); },
+      restartAndGoHome() { location.reload(); },
       restartGame() { location.reload(); },
       forcePassTurn() {},
       declineReaction() {},
