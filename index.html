@@ -180,15 +180,14 @@
 
     .devil {
       position: relative;
-      width: min(400px, 94vw);
-      aspect-ratio: 1 / 1.08;
-      margin: 4px 0 20px;
+      width: min(440px, 94vw);
+      aspect-ratio: 1 / 1.05;
+      margin: 0 0 16px;
       z-index: 1;
-      filter: drop-shadow(0 24px 60px rgba(255, 0, 0, 0.55));
-      animation: devil-snarl 4s ease-in-out infinite;
       transform-style: preserve-3d;
-      transform-origin: center 62%;
+      transform-origin: center 58%;
       will-change: transform;
+      animation: devil-snarl 4.5s ease-in-out infinite;
     }
 
     .devil--charge {
@@ -199,169 +198,141 @@
     @keyframes devil-charge {
       0% {
         transform: scale(1) translateZ(0) rotate(0deg);
-        filter: drop-shadow(0 24px 60px rgba(255, 0, 0, 0.55));
+        filter: drop-shadow(0 20px 50px rgba(255, 0, 0, 0.5));
       }
       18% {
-        transform: scale(1.12) translateZ(40px) rotate(-3deg);
-        filter: drop-shadow(0 30px 70px rgba(255, 0, 0, 0.75));
+        transform: scale(1.1) translateZ(40px) rotate(-2deg);
+        filter: drop-shadow(0 28px 60px rgba(255, 0, 0, 0.75));
       }
       55% {
-        transform: scale(2.8) translateZ(280px) translateY(6%) rotate(1deg);
-        filter: drop-shadow(0 0 100px rgba(255, 0, 0, 0.95)) brightness(1.2);
+        transform: scale(2.8) translateZ(280px) translateY(4%) rotate(1deg);
+        filter: drop-shadow(0 0 100px rgba(255, 0, 0, 0.95)) brightness(1.15);
       }
       100% {
-        transform: scale(7) translateZ(600px) translateY(12%) rotate(0deg);
-        filter: drop-shadow(0 0 160px rgba(255, 0, 0, 1)) brightness(1.45);
+        transform: scale(7) translateZ(600px) translateY(10%) rotate(0deg);
+        filter: drop-shadow(0 0 160px rgba(255, 0, 0, 1)) brightness(1.35);
       }
     }
 
-    .devil--charge .devil__brow--l { transform: rotate(38deg); }
-    .devil--charge .devil__brow--r { transform: rotate(-38deg); }
-
-    .devil--charge .devil__eye {
+    .devil--charge .devil__eye-glow {
       animation: devil-eye-rage 0.35s ease forwards;
     }
 
     @keyframes devil-eye-rage {
       to {
-        box-shadow: 0 0 50px #ff0000, 0 0 100px rgba(255, 0, 0, 1);
-        transform: scale(1.35);
+        opacity: 1;
+        box-shadow: 0 0 24px #ffee00, 0 0 48px rgba(255, 220, 0, 0.9);
+        transform: scale(1.2);
       }
-    }
-
-    .devil--charge .devil__eye--r {
-      animation: devil-eye-rage 0.35s ease forwards;
     }
 
     @keyframes devil-snarl {
       0%, 100% { transform: scale(1) rotate(0deg); }
-      25% { transform: scale(1.02) rotate(-1deg); }
-      75% { transform: scale(1.02) rotate(1deg); }
+      25% { transform: scale(1.015) rotate(-0.6deg); }
+      75% { transform: scale(1.015) rotate(0.6deg); }
     }
 
-    .devil__horn {
-      position: absolute;
-      width: 30%;
-      height: 42%;
-      top: -6%;
-      background: linear-gradient(160deg, #1a0505 0%, #000 30%, #8a0000 85%, #ff2200 100%);
-      border-radius: 60% 60% 10% 10%;
-      box-shadow: inset -4px -8px 16px rgba(255, 40, 40, 0.4), 0 0 20px rgba(255, 0, 0, 0.3);
-    }
-
-    .devil__horn--l { left: 6%; transform: rotate(-38deg); }
-    .devil__horn--r { right: 6%; transform: rotate(38deg) scaleX(-1); }
-
-    .devil__head {
-      position: absolute;
-      inset: 8% 2% 0;
-      background:
-        radial-gradient(ellipse at 50% 25%, #5a1010 0%, #1a0303 35%, #000 100%);
-      border-radius: 44% 44% 38% 38%;
-      border: 4px solid rgba(255, 30, 30, 0.65);
-      box-shadow:
-        0 0 80px rgba(255, 0, 0, 0.5),
-        inset 0 -40px 60px rgba(255, 0, 0, 0.12);
-    }
-
-    .devil__brow {
-      position: absolute;
-      top: 22%;
-      width: 26%;
-      height: 10%;
-      background: #000;
-      border-radius: 40%;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.9);
-    }
-
-    .devil__brow--l { left: 14%; transform: rotate(28deg); }
-    .devil__brow--r { right: 14%; transform: rotate(-28deg); }
-
-    .devil__eyes {
-      position: absolute;
-      top: 28%;
-      left: 13%;
-      right: 13%;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .devil__eye {
+    .devil__figure {
       position: relative;
-      width: 24%;
-      aspect-ratio: 1.1;
-      background: radial-gradient(circle at 40% 40%, #ff2222 0%, #cc0000 40%, #220000 100%);
-      border-radius: 45% 45% 50% 50%;
-      box-shadow: 0 0 28px #ff0000, 0 0 56px rgba(255, 0, 0, 0.7);
-      animation: devil-eye-pulse 1.6s ease-in-out infinite;
-      transform: rotate(-8deg);
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 16px 48px rgba(180, 0, 0, 0.55));
     }
 
-    .devil__eye--r {
-      animation-delay: 0.2s;
-      transform: rotate(8deg);
-    }
-
-    .devil__eye::after {
-      content: "";
+    .devil__backdrop {
       position: absolute;
-      inset: 18% 22% 28% 22%;
-      background: #000;
-      border-radius: 50%;
+      inset: 4% 6% 10%;
+      background: radial-gradient(ellipse at 50% 42%, #5a1818 0%, #3a0e0e 50%, #280808 100%);
+      border-radius: 46%;
+      z-index: 0;
     }
 
-    .devil__eye::before {
-      content: "";
-      position: absolute;
-      top: 22%;
-      left: 28%;
-      width: 22%;
-      height: 22%;
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 50%;
+    .devil__art {
+      position: relative;
       z-index: 1;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+      mix-blend-mode: multiply;
     }
 
-    @keyframes devil-eye-pulse {
-      0%, 100% { box-shadow: 0 0 22px #ff0000, 0 0 44px rgba(255, 0, 0, 0.55); }
-      50% { box-shadow: 0 0 40px #ff4444, 0 0 80px rgba(255, 0, 0, 0.9); }
+    .devil__glow {
+      z-index: 1;
+      position: absolute;
+      inset: 5% 10% 25%;
+      background: radial-gradient(ellipse at 50% 40%, rgba(255, 60, 40, 0.22) 0%, transparent 70%);
+      pointer-events: none;
+      animation: devil-glow-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes devil-glow-pulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+
+    .devil__eye-glow {
+      position: absolute;
+      width: 11%;
+      height: 5%;
+      top: 38%;
+      border-radius: 40%;
+      background: rgba(255, 230, 0, 0.35);
+      box-shadow: 0 0 16px rgba(255, 220, 0, 0.55);
+      pointer-events: none;
+      opacity: 0.75;
+      animation: eye-glow-flicker 2.2s ease-in-out infinite;
+    }
+
+    .devil__eye-glow--l { left: 28%; transform: rotate(-8deg); }
+    .devil__eye-glow--r { right: 28%; transform: rotate(8deg); animation-delay: 0.3s; }
+
+    @keyframes eye-glow-flicker {
+      0%, 100% { opacity: 0.65; box-shadow: 0 0 12px rgba(255, 220, 0, 0.45); }
+      50% { opacity: 1; box-shadow: 0 0 22px rgba(255, 240, 0, 0.85); }
     }
 
     .devil__mouth-wrap {
       position: absolute;
       left: 50%;
-      bottom: 6%;
+      bottom: 19%;
       transform: translateX(-50%);
-      width: 74%;
+      width: 48%;
       transform-origin: center top;
-      transition: transform 0.38s cubic-bezier(0.55, 0, 1, 0.4);
+      transition: transform 0.38s cubic-bezier(0.55, 0, 1, 0.4), opacity 0.22s ease 0.18s;
+      z-index: 2;
     }
 
     .devil__mouth-wrap--snap {
-      transform: translateX(-50%) scaleY(0.05);
+      transform: translateX(-50%) scaleY(0.04);
+      opacity: 0;
+      pointer-events: none;
     }
 
     .devil__mouth-wrap--snap .devil__teeth--lower {
-      transform: rotate(180deg) translateY(-82px);
+      transform: rotate(180deg) translateY(-72px);
     }
 
     .devil__mouth {
       position: relative;
       width: 100%;
-      min-height: 96px;
-      padding: 20px 14px 12px;
-      background: linear-gradient(180deg, #000 0%, #440000 15%, #cc0000 50%, #660000 100%);
-      border-radius: 8% 8% 50% 50% / 12% 12% 88% 88%;
-      border: 4px solid #1a0000;
+      min-height: 88px;
+      padding: 18px 12px 10px;
+      background: linear-gradient(180deg, #1a0000 0%, #5a0000 20%, #8b0000 55%, #3a0000 100%);
+      border-radius: 12% 12% 48% 48% / 14% 14% 86% 86%;
+      border: 3px solid #000;
       box-shadow:
-        inset 0 16px 32px rgba(0, 0, 0, 0.95),
-        0 0 40px rgba(255, 0, 0, 0.65);
+        inset 0 14px 28px rgba(0, 0, 0, 0.95),
+        0 0 32px rgba(255, 40, 0, 0.55),
+        0 4px 0 rgba(0, 0, 0, 0.8);
       cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 5px;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
       overflow: hidden;
     }
@@ -1748,20 +1719,16 @@
     <p class="login-hero__tagline">Multijoueur en ligne</p>
 
     <div class="devil" id="devilCharacter" aria-hidden="true">
-      <div class="devil__horn devil__horn--l"></div>
-      <div class="devil__horn devil__horn--r"></div>
-      <div class="devil__head">
-        <div class="devil__brow devil__brow--l"></div>
-        <div class="devil__brow devil__brow--r"></div>
-        <div class="devil__eyes">
-          <div class="devil__eye devil__eye--l"></div>
-          <div class="devil__eye devil__eye--r"></div>
-        </div>
+      <div class="devil__figure">
+        <div class="devil__backdrop" aria-hidden="true"></div>
+        <img class="devil__art" id="devilArt" src="assets/devil-head.png" alt="">
+        <div class="devil__glow" aria-hidden="true"></div>
+        <div class="devil__eye-glow devil__eye-glow--l" aria-hidden="true"></div>
+        <div class="devil__eye-glow devil__eye-glow--r" aria-hidden="true"></div>
         <div class="devil__mouth-wrap">
-          <div id="devilMouth" class="devil__mouth" role="button" tabindex="0" aria-label="Entrer dans la partie">
+          <div id="devilMouth" class="devil__mouth" tabindex="0" aria-label="Entrer ton pseudo">
             <div class="devil__teeth devil__teeth--upper" aria-hidden="true">
               <span class="devil__tooth devil__tooth--fang"></span>
-              <span class="devil__tooth"></span>
               <span class="devil__tooth"></span>
               <span class="devil__tooth"></span>
               <span class="devil__tooth"></span>
@@ -1772,7 +1739,6 @@
             <span class="devil__mouth-cta">ENTRER</span>
             <div class="devil__teeth devil__teeth--lower" aria-hidden="true">
               <span class="devil__tooth devil__tooth--fang"></span>
-              <span class="devil__tooth"></span>
               <span class="devil__tooth"></span>
               <span class="devil__tooth"></span>
               <span class="devil__tooth"></span>
@@ -1997,6 +1963,11 @@ const FirebaseSetup = (() => {
 })();
 
 const db = FirebaseSetup.init();
+
+(() => {
+  const devilArt = document.getElementById("devilArt");
+  if (devilArt) devilArt.src = assetUrl("devil-head.png");
+})();
 
 function shuffle(array) {
   const arr = [...array];
