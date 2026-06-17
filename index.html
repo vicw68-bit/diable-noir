@@ -418,6 +418,8 @@
       justify-content: center;
       gap: 2px;
       padding: 0 8%;
+      pointer-events: none;
+      z-index: 1;
     }
 
     .devil__tooth {
@@ -436,6 +438,8 @@
     }
 
     .devil__mouth-input {
+      position: relative;
+      z-index: 2;
       width: 84%;
       padding: 9px 10px;
       border: 2px solid rgba(255, 60, 60, 0.5);
@@ -445,6 +449,7 @@
       font-size: 0.9rem;
       font-weight: 600;
       text-align: center;
+      cursor: text;
     }
 
     .devil__mouth-input:focus {
@@ -456,12 +461,15 @@
     .devil__mouth-input::placeholder { color: rgba(255, 160, 160, 0.4); }
 
     .devil__mouth-cta {
+      position: relative;
+      z-index: 2;
       font-size: 0.72rem;
       font-weight: 900;
       letter-spacing: 0.28em;
       color: #ff4444;
       text-shadow: 0 0 12px rgba(255, 0, 0, 0.9);
-      pointer-events: none;
+      cursor: pointer;
+      padding: 2px 8px;
     }
 
     .login-hero .firebase-status {
@@ -3671,18 +3679,26 @@ class GameController {
   setupListeners() {
     const pseudo = document.getElementById("pseudo");
     const mouth = document.getElementById("devilMouth");
+    const cta = document.querySelector(".devil__mouth-cta");
 
-    pseudo.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") this.join();
-    });
-    pseudo.addEventListener("click", (e) => e.stopPropagation());
-
-    mouth.addEventListener("click", () => this.join());
-    mouth.addEventListener("keypress", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
+    pseudo.addEventListener("keydown", (e) => {
+      e.stopPropagation();
+      if (e.key === "Enter") {
         e.preventDefault();
         this.join();
       }
+    });
+    pseudo.addEventListener("click", (e) => e.stopPropagation());
+    pseudo.addEventListener("mousedown", (e) => e.stopPropagation());
+
+    cta?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.join();
+    });
+
+    mouth.addEventListener("click", (e) => {
+      if (e.target === pseudo || e.target.closest(".devil__mouth-cta")) return;
+      pseudo.focus();
     });
   }
 
