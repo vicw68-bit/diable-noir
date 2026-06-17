@@ -897,12 +897,23 @@
 
     .card.disabled .card-inner { filter: grayscale(0.6) brightness(0.7); }
 
+    .card.disabled.inspect-only {
+      opacity: 0.55;
+      cursor: grab;
+    }
+
+    .card.disabled.inspect-only.hold-hint {
+      opacity: 0.9;
+    }
+
+    .card.disabled.inspect-only:active { cursor: grabbing; }
+
     .card.diable-noir .card-inner,
     .card.curse-card .card-inner {
       filter: saturate(1.3);
     }
 
-    .card.disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+    .card.disabled:not(.counter-pick) { cursor: grab; }
 
     .card.needs-target:not(.disabled) {
       opacity: 0.55;
@@ -1297,7 +1308,7 @@
     <div id="cardInspectPreview" class="card-inspect__preview"></div>
     <h3 id="cardInspectTitle" class="card-inspect__title"></h3>
     <p id="cardInspectDesc" class="card-inspect__desc"></p>
-    <p class="card-inspect__hint">Relâche pour fermer · clic rapide pour jouer</p>
+    <p id="cardInspectHint" class="card-inspect__hint">Relâche pour fermer</p>
   </div>
 </div>
 
@@ -1577,7 +1588,7 @@ const CardInspect = {
       this._timer = setTimeout(() => {
         if (this._activeEl !== el) return;
         this._showing = true;
-        this.show(card);
+        this.show(card, el);
         if (navigator.vibrate) navigator.vibrate(12);
       }, this.HOLD_MS);
     };
@@ -1621,7 +1632,7 @@ const CardInspect = {
     this._showing = false;
   },
 
-  show(card) {
+  show(card, sourceEl) {
     const overlay = document.getElementById("cardInspect");
     const preview = document.getElementById("cardInspectPreview");
     if (!overlay || !preview) return;
@@ -1635,6 +1646,12 @@ const CardInspect = {
 
     document.getElementById("cardInspectTitle").textContent = card.name;
     document.getElementById("cardInspectDesc").textContent = CardVisuals.description(card);
+    const hint = document.getElementById("cardInspectHint");
+    if (hint) {
+      hint.textContent = sourceEl?.dataset?.playable === "1"
+        ? "Relâche pour fermer · clic rapide pour jouer"
+        : "Relâche pour fermer";
+    }
     overlay.classList.remove("hidden");
     overlay.setAttribute("aria-hidden", "false");
   },
@@ -3538,19 +3555,24 @@ class GameController {
       const isCounterPick = isTargeted && counterIndices.includes(idx);
       if (isCounterPick && !shared.finished) {
         el.classList.add("counter-pick");
+        el.dataset.playable = "1";
         el.onclick = () => this.playReaction(idx);
       } else if (isMyTurn && !blocking && !shared.finished) {
         if (Effects.isUnplayable(card.id)) {
-          el.classList.add("disabled");
+          el.classList.add("disabled", "inspect-only");
+          el.dataset.playable = "0";
         } else if (Effects.needsTarget(card.id) && !this.selectedTarget) {
-          el.classList.add("disabled", "needs-target");
+          el.classList.add("disabled", "needs-target", "inspect-only");
+          el.dataset.playable = "0";
           el.title = `${card.name} — choisis d'abord une cible (${Effects.getTargetHint(card.id)})`;
         } else {
           const v = Effects.validateTarget(card, this.selectedTarget, game, this.playerId);
           if (!v.ok) {
-            el.classList.add("disabled");
+            el.classList.add("disabled", "inspect-only");
+            el.dataset.playable = "0";
             el.title = v.msg;
           } else {
+            el.dataset.playable = "1";
             el.onclick = () => {
               const targetName = this.selectedTarget ? players[this.selectedTarget]?.pseudo : null;
               TableFX.animatePlayFromHand(
@@ -3565,7 +3587,8 @@ class GameController {
           }
         }
       } else {
-        el.classList.add("disabled");
+        el.classList.add("disabled", "inspect-only");
+        el.dataset.playable = "0";
       }
 
       el.innerHTML = "";
