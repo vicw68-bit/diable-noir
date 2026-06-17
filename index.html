@@ -101,17 +101,237 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 20px;
-      padding-top: 10vh;
+      justify-content: center;
+      width: 100%;
+      min-height: calc(100dvh - 24px);
     }
 
-    body.in-game #login {
-      padding-top: 16px;
-      gap: 12px;
+    body.in-game #login { display: none; }
+
+    body:not(.in-game) .app-header { display: none; }
+
+    body:not(.in-game) .app-main {
+      max-width: none;
+      padding: 0;
+      flex: 1;
+      display: flex;
+      align-items: stretch;
     }
 
-    body.game-started #login {
-      display: none;
+    .login-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 100dvh;
+      padding: 32px 16px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 35%, rgba(200, 0, 0, 0.28) 0%, transparent 52%),
+        radial-gradient(ellipse at 50% 95%, rgba(120, 0, 0, 0.2) 0%, transparent 45%);
+      pointer-events: none;
+    }
+
+    .login-hero__title {
+      font-size: clamp(2.2rem, 9vw, 3.6rem);
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      color: #ff1a1a;
+      text-shadow:
+        0 0 20px rgba(255, 0, 0, 0.9),
+        0 0 50px rgba(255, 0, 0, 0.45),
+        0 4px 0 #4a0000;
+      margin-bottom: 6px;
+      z-index: 1;
+    }
+
+    .login-hero__tagline {
+      font-size: clamp(0.78rem, 2.5vw, 0.95rem);
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: rgba(255, 120, 120, 0.55);
+      margin-bottom: 8px;
+      z-index: 1;
+    }
+
+    .devil {
+      position: relative;
+      width: min(360px, 90vw);
+      aspect-ratio: 1 / 1.05;
+      margin: 8px 0 24px;
+      z-index: 1;
+      filter: drop-shadow(0 20px 50px rgba(255, 0, 0, 0.35));
+    }
+
+    .devil__horn {
+      position: absolute;
+      width: 26%;
+      height: 36%;
+      top: -2%;
+      background: linear-gradient(160deg, #2a1010 0%, #0a0a0a 35%, #5a0000 100%);
+      border-radius: 55% 55% 15% 15%;
+      box-shadow: inset -3px -6px 14px rgba(255, 60, 60, 0.25);
+    }
+
+    .devil__horn--l { left: 10%; transform: rotate(-32deg); }
+    .devil__horn--r { right: 10%; transform: rotate(32deg) scaleX(-1); }
+
+    .devil__head {
+      position: absolute;
+      inset: 10% 4% 0;
+      background:
+        radial-gradient(ellipse at 50% 28%, #3a1010 0%, #120606 38%, #000 100%);
+      border-radius: 46% 46% 40% 40%;
+      border: 3px solid rgba(255, 50, 50, 0.4);
+      box-shadow:
+        0 0 60px rgba(255, 0, 0, 0.3),
+        inset 0 -30px 50px rgba(255, 0, 0, 0.06);
+    }
+
+    .devil__brow {
+      position: absolute;
+      top: 24%;
+      width: 22%;
+      height: 8%;
+      background: #0a0a0a;
+      border-radius: 50%;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8);
+    }
+
+    .devil__brow--l { left: 18%; transform: rotate(18deg); }
+    .devil__brow--r { right: 18%; transform: rotate(-18deg); }
+
+    .devil__eyes {
+      position: absolute;
+      top: 30%;
+      left: 16%;
+      right: 16%;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .devil__eye {
+      width: 21%;
+      aspect-ratio: 1.15;
+      background: radial-gradient(circle at 38% 38%, #ff5555 0%, #cc0000 45%, #440000 100%);
+      border-radius: 50%;
+      box-shadow: 0 0 22px #ff0000, 0 0 44px rgba(255, 0, 0, 0.55);
+      animation: devil-eye-pulse 2.8s ease-in-out infinite;
+    }
+
+    .devil__eye--r { animation-delay: 0.4s; }
+
+    @keyframes devil-eye-pulse {
+      0%, 100% { box-shadow: 0 0 18px #ff0000, 0 0 36px rgba(255, 0, 0, 0.45); transform: scale(1); }
+      50% { box-shadow: 0 0 32px #ff3333, 0 0 64px rgba(255, 0, 0, 0.75); transform: scale(1.06); }
+    }
+
+    .devil__mouth-wrap {
+      position: absolute;
+      left: 50%;
+      bottom: 10%;
+      transform: translateX(-50%);
+      width: 66%;
+    }
+
+    .devil__mouth {
+      position: relative;
+      width: 100%;
+      min-height: 88px;
+      padding: 18px 14px 14px;
+      background: linear-gradient(180deg, #0d0000 0%, #5a0000 25%, #990000 55%, #3a0000 100%);
+      border-radius: 10% 10% 46% 46% / 18% 18% 82% 82%;
+      border: 3px solid #2a0000;
+      box-shadow:
+        inset 0 12px 28px rgba(0, 0, 0, 0.85),
+        0 0 28px rgba(255, 0, 0, 0.45);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      overflow: hidden;
+    }
+
+    .devil__mouth:hover:not(.devil__mouth--disabled) {
+      transform: scale(1.04);
+      box-shadow:
+        inset 0 12px 28px rgba(0, 0, 0, 0.85),
+        0 0 48px rgba(255, 0, 0, 0.7);
+    }
+
+    .devil__mouth:active:not(.devil__mouth--disabled) {
+      transform: scale(0.98);
+    }
+
+    .devil__mouth--disabled {
+      opacity: 0.65;
+      cursor: wait;
+      pointer-events: none;
+    }
+
+    .devil__teeth {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      padding: 0 12%;
+    }
+
+    .devil__tooth {
+      flex: 1;
+      max-width: 14px;
+      height: 11px;
+      background: linear-gradient(180deg, #eee 0%, #aaa 100%);
+      border-radius: 0 0 4px 4px;
+      opacity: 0.9;
+    }
+
+    .devil__mouth-input {
+      width: 82%;
+      padding: 8px 10px;
+      border: 1px solid rgba(255, 100, 100, 0.35);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #ffcccc;
+      font-size: 0.88rem;
+      text-align: center;
+    }
+
+    .devil__mouth-input:focus {
+      outline: none;
+      border-color: rgba(255, 80, 80, 0.7);
+      box-shadow: 0 0 12px rgba(255, 0, 0, 0.35);
+    }
+
+    .devil__mouth-input::placeholder { color: rgba(255, 160, 160, 0.4); }
+
+    .devil__mouth-cta {
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.22em;
+      color: #ff8888;
+      text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+      pointer-events: none;
+    }
+
+    .login-hero .firebase-status {
+      z-index: 1;
+      max-width: min(420px, 92vw);
     }
 
     .login-container {
@@ -1223,7 +1443,24 @@
       font-size: 0.78rem;
       color: #999;
       line-height: 1.4;
+      margin-bottom: 16px;
     }
+
+    .game-end-overlay__btn {
+      margin-top: 4px;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      background: #0a8a0a;
+      color: #fff;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .game-end-overlay__btn:hover { background: #0bb50b; transform: scale(1.03); }
+    .game-end-overlay__btn.hidden { display: none; }
 
     .player.loser-final {
       border-color: #ff0000;
@@ -1248,11 +1485,41 @@
 <main class="app-main">
 
 <div id="login" class="screen">
-  <div class="login-container">
-    <input id="pseudo" placeholder="Pseudo" autocomplete="off">
-    <button id="joinBtn" onclick="gameController.join()">Entrer</button>
+  <div class="login-hero">
+    <h1 class="login-hero__title">DIABLE NOIR</h1>
+    <p class="login-hero__tagline">Multijoueur en ligne</p>
+
+    <div class="devil" aria-hidden="true">
+      <div class="devil__horn devil__horn--l"></div>
+      <div class="devil__horn devil__horn--r"></div>
+      <div class="devil__head">
+        <div class="devil__brow devil__brow--l"></div>
+        <div class="devil__brow devil__brow--r"></div>
+        <div class="devil__eyes">
+          <div class="devil__eye devil__eye--l"></div>
+          <div class="devil__eye devil__eye--r"></div>
+        </div>
+        <div class="devil__mouth-wrap">
+          <div id="devilMouth" class="devil__mouth" role="button" tabindex="0" aria-label="Entrer dans la partie">
+            <div class="devil__teeth" aria-hidden="true">
+              <span class="devil__tooth"></span>
+              <span class="devil__tooth"></span>
+              <span class="devil__tooth"></span>
+              <span class="devil__tooth"></span>
+              <span class="devil__tooth"></span>
+              <span class="devil__tooth"></span>
+              <span class="devil__tooth"></span>
+            </div>
+            <input id="pseudo" class="devil__mouth-input" placeholder="Nom (optionnel)" autocomplete="off" maxlength="20">
+            <span class="devil__mouth-cta">ENTRER</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button id="joinBtn" class="hidden" type="button">Entrer</button>
+    <div id="firebaseStatus" class="firebase-status loading">Connexion à Firebase…</div>
   </div>
-  <div id="firebaseStatus" class="firebase-status loading">Connexion à Firebase…</div>
 </div>
 
 <div id="game" class="screen hidden">
@@ -1326,6 +1593,7 @@
     <h2 id="gameEndTitle" class="game-end-overlay__title"></h2>
     <p id="gameEndText" class="game-end-overlay__text"></p>
     <p id="gameEndSub" class="game-end-overlay__sub"></p>
+    <button id="restartBtn" class="game-end-overlay__btn hidden" onclick="gameController.restartGame()">🔄 Recommencer</button>
   </div>
 </div>
 
@@ -2816,6 +3084,14 @@ class Effects {
 
 class GameController {
   static TURN_LIMIT_MS = 15000;
+  static ACTION_LIMIT_MS = 15000;
+  static MIN_PLAYERS = 2;
+
+  static randomPseudo() {
+    const names = ["Diablo", "Belze", "Lucif", "Mephi", "Azmo", "Cerber", "Satan", "Hades"];
+    const base = names[Math.floor(Math.random() * names.length)];
+    return base + Math.floor(100 + Math.random() * 900);
+  }
 
   constructor() {
     this.playerId = Math.random().toString(36).substring(2, 11);
@@ -2838,8 +3114,42 @@ class GameController {
     return Math.ceil(left / 1000);
   }
 
+  actionTimeLeft(game) {
+    if (!game?.actionDeadlineAt) return null;
+    return Math.max(0, game.actionDeadlineAt - Date.now());
+  }
+
+  actionSecondsLeft(game) {
+    const left = this.actionTimeLeft(game);
+    if (left === null) return null;
+    return Math.ceil(left / 1000);
+  }
+
   setTurnDeadline(game) {
     game.turnDeadlineAt = Date.now() + GameController.TURN_LIMIT_MS;
+  }
+
+  setActionDeadline(game) {
+    game.actionDeadlineAt = Date.now() + GameController.ACTION_LIMIT_MS;
+  }
+
+  clearActionDeadline(game) {
+    game.actionDeadlineAt = null;
+  }
+
+  syncActionDeadline(game, shared) {
+    if (Effects.hasBlockingAction(shared)) this.setActionDeadline(game);
+    else this.clearActionDeadline(game);
+  }
+
+  ensureActionDeadline() {
+    this.roomRef().transaction((g) => {
+      if (!g?.started || g.sharedState?.finished) return;
+      const shared = g.sharedState || defaultSharedState();
+      if (!Effects.hasBlockingAction(shared) || g.actionDeadlineAt) return;
+      g.actionDeadlineAt = Date.now() + GameController.ACTION_LIMIT_MS;
+      return g;
+    });
   }
 
   advanceToNextTurn(game, shared) {
@@ -2870,10 +3180,76 @@ class GameController {
     if (this.lastGame) this.renderFromGame(this.lastGame);
 
     const shared = game.sharedState || defaultSharedState();
-    if (Effects.hasBlockingAction(shared)) return;
+    if (Effects.hasBlockingAction(shared)) {
+      if (!game.actionDeadlineAt) {
+        this.ensureActionDeadline();
+        return;
+      }
+      if (Date.now() < game.actionDeadlineAt) return;
+      this.autoResolveBlockingAction();
+      return;
+    }
     if (!game.turnDeadlineAt || Date.now() < game.turnDeadlineAt) return;
 
     this.autoPassTurnOnTimeout();
+  }
+
+  autoResolveBlockingAction() {
+    if (this._autoPassPending) return;
+    this._autoPassPending = true;
+
+    this.roomRef().transaction((g) => {
+      if (!g?.started || g.sharedState?.finished) return;
+      const shared = g.sharedState || defaultSharedState();
+      if (!Effects.hasBlockingAction(shared)) return;
+      if (!g.actionDeadlineAt || Date.now() < g.actionDeadlineAt) return;
+
+      if (shared.pendingReaction) {
+        const pr = shared.pendingReaction;
+        const casterId = pr.casterId;
+        const target = g.players[pr.targetId];
+        const reactionMsg = Effects.resolveReaction(g, shared, null);
+        if (!reactionMsg) return;
+
+        let fullMsg = reactionMsg + `\n⏱️ ${target?.pseudo || "?"} n'a pas répondu à temps — effet subi.`;
+        this.finishPlayAfterReaction(g, shared, casterId, fullMsg, pr.sourceCard);
+        this.clearActionDeadline(g);
+        g.sharedState = shared;
+        return g;
+      }
+
+      if (shared.pickpocket) {
+        const pp = shared.pickpocket;
+        const caster = g.players[pp.casterId];
+        const target = g.players[pp.targetId];
+        if (!caster || !target) {
+          shared.pickpocket = null;
+          this.clearActionDeadline(g);
+          g.sharedState = shared;
+          return g;
+        }
+
+        const hadCards = target.hand.length > 0;
+        if (hadCards) {
+          const cardIndex = Math.floor(Math.random() * target.hand.length);
+          caster.hand.push(...target.hand.splice(cardIndex, 1));
+        }
+        shared.pickpocket = null;
+        this.clearActionDeadline(g);
+        this.drawCardAfterPlay(g, pp.casterId);
+        const result = this.advanceToNextTurn(g, shared);
+        let msg = hadCards
+          ? `⏱️ ${caster.pseudo} n'a pas choisi — carte volée au hasard à ${target.pseudo}.`
+          : `⏱️ Pickpocket expiré — aucune carte à voler.`;
+        if (result.messages.length) msg = result.messages.join("\n") + "\n" + msg;
+        g.message = msg;
+        g.sharedState = shared;
+        this.checkWinCondition(g);
+        return g;
+      }
+    }).finally(() => {
+      this._autoPassPending = false;
+    });
   }
 
   autoPassTurnOnTimeout() {
@@ -2927,14 +3303,33 @@ class GameController {
   }
 
   setupListeners() {
-    document.getElementById("pseudo").addEventListener("keypress", (e) => {
+    const pseudo = document.getElementById("pseudo");
+    const mouth = document.getElementById("devilMouth");
+
+    pseudo.addEventListener("keypress", (e) => {
       if (e.key === "Enter") this.join();
+    });
+    pseudo.addEventListener("click", (e) => e.stopPropagation());
+
+    mouth.addEventListener("click", () => this.join());
+    mouth.addEventListener("keypress", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        this.join();
+      }
     });
   }
 
+  setJoinLoading(loading) {
+    const joinBtn = document.getElementById("joinBtn");
+    const mouth = document.getElementById("devilMouth");
+    if (joinBtn) joinBtn.disabled = loading;
+    if (mouth) mouth.classList.toggle("devil__mouth--disabled", loading);
+  }
+
   join() {
-    const pseudo = document.getElementById("pseudo").value.trim();
-    if (!pseudo) return alert("Entre un pseudo");
+    let pseudo = document.getElementById("pseudo").value.trim();
+    if (!pseudo) pseudo = GameController.randomPseudo();
 
     if (!db) {
       return alert(FirebaseSetup.errorMessage || "Firebase non initialisé.");
@@ -2944,7 +3339,7 @@ class GameController {
     }
 
     const joinBtn = document.getElementById("joinBtn");
-    joinBtn.disabled = true;
+    this.setJoinLoading(true);
     FirebaseSetup.setStatus("loading", "Connexion en cours…");
 
     let rejoined = false;
@@ -2953,12 +3348,16 @@ class GameController {
     this.roomRef().once("value")
       .then((snapshot) => {
         const game = snapshot.val();
-        if (game?.sharedState?.finished) {
-          throw new Error("FINISHED");
-        }
-
         const existingId = findPlayerIdByPseudo(game?.players, pseudo);
         const session = this.loadSession(pseudo);
+
+        if (game?.sharedState?.finished) {
+          if (!existingId) throw new Error("FINISHED");
+          this.playerId = existingId;
+          this.saveSession(pseudo);
+          rejoined = true;
+          return;
+        }
 
         if (game?.started) {
           if (!existingId) throw new Error("STARTED");
@@ -2998,10 +3397,10 @@ class GameController {
         this.listenGame();
       })
       .catch((err) => {
-        joinBtn.disabled = false;
+        this.setJoinLoading(false);
         if (err.message === "FINISHED") {
-          FirebaseSetup.setStatus("error", "Partie terminée — le premier joueur doit cliquer Recommencer, ou supprimez la salle dans Firebase.");
-          return alert("❌ Partie terminée — demandez un reset ou supprimez rooms/main dans Firebase Console.");
+          FirebaseSetup.setStatus("error", "Partie terminée — reconnecte-toi avec ton pseudo ou demande au 1er joueur de relancer.");
+          return alert("❌ Partie terminée.\n\nSi tu y étais, entre exactement le même pseudo pour voir le résultat.\nLe 1er joueur peut cliquer « Recommencer ».");
         }
         if (err.message === "STARTED") {
           FirebaseSetup.setStatus("error", "Partie en cours — entrez exactement le même pseudo pour vous reconnecter.");
@@ -3018,28 +3417,67 @@ class GameController {
   }
 
   start() {
-    this.roomRef().transaction((game) => {
+    this.roomRef().once("value").then((snapshot) => {
+      const game = snapshot.val();
       if (!game?.players) return;
       const playerIds = Object.keys(game.players);
-      if (playerIds[0] !== this.playerId) return;
+      if (playerIds[0] !== this.playerId) return alert("Seul le premier joueur peut démarrer.");
+      if (playerIds.length < GameController.MIN_PLAYERS) {
+        return alert(`Il faut au moins ${GameController.MIN_PLAYERS} joueurs pour démarrer (${playerIds.length} connecté${playerIds.length > 1 ? "s" : ""}).`);
+      }
 
-      const deck = Deck.create();
-      playerIds.forEach((id) => {
-        game.players[id].hand = [];
-        for (let i = 0; i < 5; i++) game.players[id].hand.push(deck.pop());
+      this.roomRef().transaction((g) => {
+        if (!g?.players) return;
+        const ids = Object.keys(g.players);
+        if (ids[0] !== this.playerId || ids.length < GameController.MIN_PLAYERS) return;
+        this.initFreshGame(g, ids, "🔥 La partie commence!");
+        return g;
       });
-
-      game.deck = deck;
-      game.deckInitialSize = deck.length;
-      game.playerOrder = playerIds;
-      game.currentPlayerIndex = 0;
-      game.gameDirection = 1;
-      game.started = true;
-      game.turnDeadlineAt = Date.now() + GameController.TURN_LIMIT_MS;
-      game.message = "🔥 La partie commence!";
-      game.sharedState = defaultSharedState();
-      return game;
     });
+  }
+
+  restartGame() {
+    this.roomRef().once("value").then((snapshot) => {
+      const game = snapshot.val();
+      if (!game?.players) return;
+      const playerIds = Object.keys(game.players);
+      if (playerIds[0] !== this.playerId) return alert("Seul le premier joueur peut relancer.");
+      if (playerIds.length < GameController.MIN_PLAYERS) {
+        return alert(`Il faut au moins ${GameController.MIN_PLAYERS} joueurs (${playerIds.length} connecté${playerIds.length > 1 ? "s" : ""}).`);
+      }
+
+      this.roomRef().transaction((g) => {
+        if (!g?.players) return;
+        const ids = Object.keys(g.players);
+        if (ids[0] !== this.playerId || ids.length < GameController.MIN_PLAYERS) return;
+        this.initFreshGame(g, ids, "🔥 Nouvelle partie!");
+        return g;
+      });
+    });
+  }
+
+  initFreshGame(game, playerIds, message) {
+    playerIds.forEach((id) => {
+      Object.assign(game.players[id], defaultPlayer(game.players[id].pseudo));
+    });
+
+    const deck = Deck.create();
+    playerIds.forEach((id) => {
+      game.players[id].hand = [];
+      for (let i = 0; i < 5; i++) game.players[id].hand.push(deck.pop());
+    });
+
+    game.deck = deck;
+    game.deckInitialSize = deck.length;
+    game.playerOrder = playerIds;
+    game.currentPlayerIndex = 0;
+    game.gameDirection = 1;
+    game.started = true;
+    game.turnDeadlineAt = Date.now() + GameController.TURN_LIMIT_MS;
+    game.actionDeadlineAt = null;
+    game.message = message;
+    game.sharedState = defaultSharedState();
+    game.lastPlay = null;
   }
 
   onTurnStart(game, playerId, shared, turnMessages) {
@@ -3183,10 +3621,10 @@ class GameController {
             const blocksAdvance = Effects.blocksTurnAdvance(played.id, s);
             if (!blocksAdvance) {
               this.drawCardAfterPlay(g, this.playerId);
-              if (!s.extraTurn) {
-                const result = this.advanceToNextTurn(g, s);
-                if (result.messages.length) fullMsg = result.messages.join("\n") + "\n" + fullMsg;
-              }
+              const result = this.advanceToNextTurn(g, s);
+              if (result.messages.length) fullMsg = result.messages.join("\n") + "\n" + fullMsg;
+            } else {
+              this.syncActionDeadline(g, s);
             }
             g.message = fullMsg;
             g.sharedState = s;
@@ -3216,6 +3654,7 @@ class GameController {
           fullMsg += `\n⚔️ ${g.players[targetId].pseudo}, tu es visé! Joue Miroir, Protection ou Retour de Flamme.`;
           g.message = fullMsg;
           g.sharedState = s;
+          this.syncActionDeadline(g, s);
           return g;
         }
 
@@ -3228,6 +3667,8 @@ class GameController {
         if (!blocksAdvance) {
           const result = this.advanceToNextTurn(g, s);
           if (result.messages.length) fullMsg = result.messages.join("\n") + "\n" + fullMsg;
+        } else {
+          this.syncActionDeadline(g, s);
         }
 
         g.message = fullMsg;
@@ -3286,6 +3727,7 @@ class GameController {
         if (!passer) return;
 
         this.clearBlockingActions(shared);
+        this.clearActionDeadline(g);
         this.drawCardAfterPlay(g, this.playerId);
 
         const result = this.advanceToNextTurn(g, shared);
@@ -3305,13 +3747,11 @@ class GameController {
     this.drawCardAfterPlay(game, casterId);
 
     let fullMsg = reactionMsg;
-
-    if (!shared.extraTurn) {
-      const result = this.advanceToNextTurn(game, shared);
-      if (result.messages.length) fullMsg = result.messages.join("\n") + "\n" + fullMsg;
-    }
+    const result = this.advanceToNextTurn(game, shared);
+    if (result.messages.length) fullMsg = result.messages.join("\n") + "\n" + fullMsg;
 
     game.message = fullMsg;
+    this.clearActionDeadline(game);
     this.checkWinCondition(game);
   }
 
@@ -3368,6 +3808,7 @@ class GameController {
 
       caster.hand.push(...target.hand.splice(cardIndex, 1));
       shared.pickpocket = null;
+      this.clearActionDeadline(game);
 
       this.drawCardAfterPlay(game, pp.casterId);
       const result = this.advanceToNextTurn(game, shared);
@@ -3417,6 +3858,17 @@ class GameController {
     document.getElementById("gameEndSub").textContent = iLost
       ? "Pioche vide · une seule carte en jeu · c'était le Diable Noir."
       : `Pioche vide · ${winnerCount} gagnant${winnerCount > 1 ? "s" : ""} · fin de partie.`;
+
+    const order = Object.keys(players);
+    const restartBtn = document.getElementById("restartBtn");
+    if (restartBtn) {
+      const isHost = order[0] === this.playerId;
+      restartBtn.classList.toggle("hidden", !isHost);
+      restartBtn.disabled = order.length < GameController.MIN_PLAYERS;
+      restartBtn.title = order.length < GameController.MIN_PLAYERS
+        ? `Il faut ${GameController.MIN_PLAYERS} joueurs minimum`
+        : "";
+    }
   }
 
   listenGame() {
@@ -3435,6 +3887,7 @@ class GameController {
     const isMyTurn = game.started && order[game.currentPlayerIndex] === this.playerId;
     const blocking = Effects.hasBlockingAction(shared);
     const secondsLeft = this.turnSecondsLeft(game);
+    const actionSecondsLeft = this.actionSecondsLeft(game);
 
     if (!isMyTurn || blocking) this.selectedTarget = null;
 
@@ -3445,9 +3898,15 @@ class GameController {
 
     const center = document.getElementById("center");
     const showTurnTimer = !blocking && secondsLeft !== null && !shared.finished;
-    center.classList.toggle("turn-countdown", showTurnTimer && secondsLeft <= 5);
+    const showActionTimer = blocking && actionSecondsLeft !== null && !shared.finished;
+    center.classList.toggle("turn-countdown", (showTurnTimer && secondsLeft <= 5) || (showActionTimer && actionSecondsLeft <= 5));
     if (!game.started) {
-      center.textContent = `⏳ En attente... (${order.length} joueur${order.length > 1 ? "s" : ""})`;
+      const min = GameController.MIN_PLAYERS;
+      if (order.length < min) {
+        center.textContent = `⏳ En attente… ${order.length}/${min} joueurs minimum`;
+      } else {
+        center.textContent = `⏳ Prêt ! (${order.length} joueur${order.length > 1 ? "s" : ""})`;
+      }
       document.getElementById("startBtn").classList.toggle("hidden", this.playerId !== order[0]);
     } else if (shared.finished && shared.loserId) {
       const loser = players[shared.loserId];
@@ -3459,11 +3918,21 @@ class GameController {
       const currentId = order[game.currentPlayerIndex];
       const pr = shared.pendingReaction;
       if (pr?.targetId === this.playerId) {
-        center.textContent = "⚔️ Contre — choisis une carte";
+        center.textContent = showActionTimer
+          ? `⚔️ Contre — choisis une carte (${actionSecondsLeft}s)`
+          : "⚔️ Contre — choisis une carte";
       } else if (pr) {
-        center.textContent = `⏳ ${players[pr.targetId]?.pseudo} répond…`;
+        center.textContent = showActionTimer
+          ? `⏳ ${players[pr.targetId]?.pseudo} répond… (${actionSecondsLeft}s)`
+          : `⏳ ${players[pr.targetId]?.pseudo} répond…`;
       } else if (shared.pickpocket?.casterId === this.playerId) {
-        center.textContent = "🥷 Pickpocket";
+        center.textContent = showActionTimer
+          ? `🥷 Pickpocket — ${actionSecondsLeft}s`
+          : "🥷 Pickpocket";
+      } else if (shared.pickpocket) {
+        center.textContent = showActionTimer
+          ? `⏳ Pickpocket… (${actionSecondsLeft}s)`
+          : "⏳ Pickpocket…";
       } else if (isMyTurn) {
         center.textContent = showTurnTimer
           ? `🎮 Ton tour — ${secondsLeft}s`
@@ -3708,6 +4177,7 @@ const gameController = db
   : {
       join() { alert(FirebaseSetup.errorMessage || "Firebase non configuré."); },
       quitAndReset() { location.reload(); },
+      restartGame() { location.reload(); },
       forcePassTurn() {},
       declineReaction() {},
     };
