@@ -194,6 +194,11 @@
       min-height: 1.2em;
     }
 
+    .center-info.turn-countdown {
+      color: #ff8844;
+      text-shadow: 0 0 14px rgba(255, 120, 50, 0.45);
+    }
+
     body.game-started .status-bar {
       padding: 8px 12px;
       margin-bottom: 8px;
@@ -2793,11 +2798,92 @@ class Effects {
 }
 
 class GameController {
+  static TURN_LIMIT_MS = 15000;
+
   constructor() {
     this.playerId = Math.random().toString(36).substring(2, 11);
     this.room = "main";
     this.selectedTarget = null;
+    this.lastGame = null;
+    this._turnTick = null;
+    this._autoPassPending = false;
     this.setupListeners();
+  }
+
+  turnTimeLeft(game) {
+    if (!game?.turnDeadlineAt) return null;
+    return Math.max(0, game.turnDeadlineAt - Date.now());
+  }
+
+  turnSecondsLeft(game) {
+    const left = this.turnTimeLeft(game);
+    if (left === null) return null;
+    return Math.ceil(left / 1000);
+  }
+
+  setTurnDeadline(game) {
+    game.turnDeadlineAt = Date.now() + GameController.TURN_LIMIT_MS;
+  }
+
+  advanceToNextTurn(game, shared) {
+    const prev = game.currentPlayerIndex;
+    const hadExtraTurn = shared.extraTurn;
+    const result = this.advanceTurn(game, shared);
+    game.currentPlayerIndex = result.index;
+    if (result.index !== prev || hadExtraTurn) this.setTurnDeadline(game);
+    return result;
+  }
+
+  syncTurnTick(game) {
+    const active = game?.started && !game.sharedState?.finished;
+    if (active) {
+      if (!this._turnTick) {
+        this._turnTick = setInterval(() => this.onTurnTimeoutTick(), 1000);
+      }
+    } else if (this._turnTick) {
+      clearInterval(this._turnTick);
+      this._turnTick = null;
+    }
+  }
+
+  onTurnTimeoutTick() {
+    const game = this.lastGame;
+    if (!game?.started || game.sharedState?.finished) return;
+
+    if (this.lastGame) this.renderFromGame(this.lastGame);
+
+    const shared = game.sharedState || defaultSharedState();
+    if (Effects.hasBlockingAction(shared)) return;
+    if (!game.turnDeadlineAt || Date.now() < game.turnDeadlineAt) return;
+
+    this.autoPassTurnOnTimeout();
+  }
+
+  autoPassTurnOnTimeout() {
+    if (this._autoPassPending) return;
+    this._autoPassPending = true;
+
+    this.roomRef().transaction((g) => {
+      if (!g?.started || g.sharedState?.finished) return;
+      const shared = g.sharedState || defaultSharedState();
+      if (Effects.hasBlockingAction(shared)) return;
+      if (!g.turnDeadlineAt || Date.now() < g.turnDeadlineAt) return;
+
+      const order = g.playerOrder || Object.keys(g.players || {});
+      const currentId = order[g.currentPlayerIndex];
+      const player = g.players[currentId];
+      if (!player) return;
+
+      const result = this.advanceToNextTurn(g, shared);
+      let msg = `⏱️ ${player.pseudo} n'a pas joué à temps — tour suivant.`;
+      if (result.messages.length) msg = result.messages.join("\n") + "\n" + msg;
+      g.message = msg;
+      g.sharedState = shared;
+      this.checkWinCondition(g);
+      return g;
+    }).finally(() => {
+      this._autoPassPending = false;
+    });
   }
 
   roomRef() {
@@ -2932,6 +3018,7 @@ class GameController {
       game.currentPlayerIndex = 0;
       game.gameDirection = 1;
       game.started = true;
+      game.turnDeadlineAt = Date.now() + GameController.TURN_LIMIT_MS;
       game.message = "🔥 La partie commence!";
       game.sharedState = defaultSharedState();
       return game;
@@ -3080,8 +3167,7 @@ class GameController {
             if (!blocksAdvance) {
               this.drawCardAfterPlay(g, this.playerId);
               if (!s.extraTurn) {
-                const result = this.advanceTurn(g, s);
-                g.currentPlayerIndex = result.index;
+                const result = this.advanceToNextTurn(g, s);
                 if (result.messages.length) fullMsg = result.messages.join("\n") + "\n" + fullMsg;
               }
             }
@@ -3122,15 +3208,11 @@ class GameController {
         const blocksAdvance = Effects.blocksTurnAdvance(played.id, s);
         if (!blocksAdvance) this.drawCardAfterPlay(g, this.playerId);
 
-        let nextIndex = g.currentPlayerIndex;
-
         if (!blocksAdvance) {
-          const result = this.advanceTurn(g, s);
-          nextIndex = result.index;
+          const result = this.advanceToNextTurn(g, s);
           if (result.messages.length) fullMsg = result.messages.join("\n") + "\n" + fullMsg;
         }
 
-        g.currentPlayerIndex = nextIndex;
         g.message = fullMsg;
         g.sharedState = s;
         this.checkWinCondition(g);
@@ -3189,8 +3271,7 @@ class GameController {
         this.clearBlockingActions(shared);
         this.drawCardAfterPlay(g, this.playerId);
 
-        const result = this.advanceTurn(g, shared);
-        g.currentPlayerIndex = result.index;
+        const result = this.advanceToNextTurn(g, shared);
 
         let msg = `⏭️ ${passer.pseudo} passe son tour (anti-bug) — action annulée, +1 carte bonus.`;
         if (result.messages.length) msg = result.messages.join("\n") + "\n" + msg;
@@ -3207,15 +3288,12 @@ class GameController {
     this.drawCardAfterPlay(game, casterId);
 
     let fullMsg = reactionMsg;
-    let nextIndex = game.currentPlayerIndex;
 
     if (!shared.extraTurn) {
-      const result = this.advanceTurn(game, shared);
-      nextIndex = result.index;
+      const result = this.advanceToNextTurn(game, shared);
       if (result.messages.length) fullMsg = result.messages.join("\n") + "\n" + fullMsg;
     }
 
-    game.currentPlayerIndex = nextIndex;
     game.message = fullMsg;
     this.checkWinCondition(game);
   }
@@ -3275,8 +3353,7 @@ class GameController {
       shared.pickpocket = null;
 
       this.drawCardAfterPlay(game, pp.casterId);
-      const result = this.advanceTurn(game, shared);
-      game.currentPlayerIndex = result.index;
+      const result = this.advanceToNextTurn(game, shared);
       game.message = `🥷 ${caster.pseudo} vole une carte à ${target.pseudo}`;
       if (result.messages.length) game.message = result.messages.join("\n") + "\n" + game.message;
       this.checkWinCondition(game);
@@ -3340,6 +3417,7 @@ class GameController {
     const myHand = players[this.playerId]?.hand || [];
     const isMyTurn = game.started && order[game.currentPlayerIndex] === this.playerId;
     const blocking = Effects.hasBlockingAction(shared);
+    const secondsLeft = this.turnSecondsLeft(game);
 
     if (!isMyTurn || blocking) this.selectedTarget = null;
 
@@ -3349,6 +3427,8 @@ class GameController {
     if (handFeed) handFeed.classList.toggle("hidden", !game.started);
 
     const center = document.getElementById("center");
+    const showTurnTimer = !blocking && secondsLeft !== null && !shared.finished;
+    center.classList.toggle("turn-countdown", showTurnTimer && secondsLeft <= 5);
     if (!game.started) {
       center.textContent = `⏳ En attente... (${order.length} joueur${order.length > 1 ? "s" : ""})`;
       document.getElementById("startBtn").classList.toggle("hidden", this.playerId !== order[0]);
@@ -3368,9 +3448,13 @@ class GameController {
       } else if (shared.pickpocket?.casterId === this.playerId) {
         center.textContent = "🥷 Pickpocket";
       } else if (isMyTurn) {
-        center.textContent = "🎮 Ton tour";
+        center.textContent = showTurnTimer
+          ? `🎮 Ton tour — ${secondsLeft}s`
+          : "🎮 Ton tour";
       } else {
-        center.textContent = `🎮 ${players[currentId]?.pseudo}`;
+        center.textContent = showTurnTimer
+          ? `🎮 ${players[currentId]?.pseudo} — ${secondsLeft}s`
+          : `🎮 ${players[currentId]?.pseudo}`;
       }
       document.getElementById("startBtn").classList.add("hidden");
     }
@@ -3490,6 +3574,9 @@ class GameController {
     });
 
     this.renderActionUI(game, shared, myHand, counterIndices, isTargeted, isMyTurn);
+
+    this.lastGame = game;
+    this.syncTurnTick(game);
   }
 
   renderActionUI(game, shared, myHand, counterIndices, isTargeted, isMyTurn) {
@@ -3575,6 +3662,10 @@ class GameController {
   }
 
   quitAndReset() {
+    if (this._turnTick) {
+      clearInterval(this._turnTick);
+      this._turnTick = null;
+    }
     if (!confirm("Quitter la partie ?\n\nLa salle Firebase sera supprimée. Tu devras re-entrer ton pseudo.")) return;
     if (this.roomRef) {
       this.roomRef().off();
