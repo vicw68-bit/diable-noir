@@ -129,6 +129,7 @@
       text-align: center;
       position: relative;
       overflow: hidden;
+      perspective: 900px;
     }
 
     .login-hero::before {
@@ -185,6 +186,51 @@
       z-index: 1;
       filter: drop-shadow(0 24px 60px rgba(255, 0, 0, 0.55));
       animation: devil-snarl 4s ease-in-out infinite;
+      transform-style: preserve-3d;
+      transform-origin: center 62%;
+      will-change: transform;
+    }
+
+    .devil--charge {
+      animation: devil-charge 1.05s cubic-bezier(0.76, 0, 0.9, 0.15) forwards;
+      z-index: 500;
+    }
+
+    @keyframes devil-charge {
+      0% {
+        transform: scale(1) translateZ(0) rotate(0deg);
+        filter: drop-shadow(0 24px 60px rgba(255, 0, 0, 0.55));
+      }
+      18% {
+        transform: scale(1.12) translateZ(40px) rotate(-3deg);
+        filter: drop-shadow(0 30px 70px rgba(255, 0, 0, 0.75));
+      }
+      55% {
+        transform: scale(2.8) translateZ(280px) translateY(6%) rotate(1deg);
+        filter: drop-shadow(0 0 100px rgba(255, 0, 0, 0.95)) brightness(1.2);
+      }
+      100% {
+        transform: scale(7) translateZ(600px) translateY(12%) rotate(0deg);
+        filter: drop-shadow(0 0 160px rgba(255, 0, 0, 1)) brightness(1.45);
+      }
+    }
+
+    .devil--charge .devil__brow--l { transform: rotate(38deg); }
+    .devil--charge .devil__brow--r { transform: rotate(-38deg); }
+
+    .devil--charge .devil__eye {
+      animation: devil-eye-rage 0.35s ease forwards;
+    }
+
+    @keyframes devil-eye-rage {
+      to {
+        box-shadow: 0 0 50px #ff0000, 0 0 100px rgba(255, 0, 0, 1);
+        transform: scale(1.35);
+      }
+    }
+
+    .devil--charge .devil__eye--r {
+      animation: devil-eye-rage 0.35s ease forwards;
     }
 
     @keyframes devil-snarl {
@@ -287,6 +333,16 @@
       bottom: 6%;
       transform: translateX(-50%);
       width: 74%;
+      transform-origin: center top;
+      transition: transform 0.38s cubic-bezier(0.55, 0, 1, 0.4);
+    }
+
+    .devil__mouth-wrap--snap {
+      transform: translateX(-50%) scaleY(0.05);
+    }
+
+    .devil__mouth-wrap--snap .devil__teeth--lower {
+      transform: rotate(180deg) translateY(-82px);
     }
 
     .devil__mouth {
@@ -325,6 +381,32 @@
       opacity: 0.65;
       cursor: wait;
       pointer-events: none;
+    }
+
+    .devil__mouth--snap {
+      pointer-events: none;
+    }
+
+    .devil__mouth--snap .devil__mouth-input,
+    .devil__mouth--snap .devil__mouth-cta {
+      opacity: 0;
+      transform: scale(0.3);
+      transition: opacity 0.15s, transform 0.2s;
+    }
+
+    .devil__mouth--snap .devil__teeth--upper .devil__tooth {
+      transform: translateY(6px);
+    }
+
+    .devil__teeth--lower {
+      top: auto;
+      bottom: 0;
+      transform: rotate(180deg);
+      transition: transform 0.38s cubic-bezier(0.55, 0, 1, 0.4);
+    }
+
+    .devil__teeth--upper .devil__tooth {
+      transition: transform 0.38s cubic-bezier(0.55, 0, 1, 0.4);
     }
 
     .devil__teeth {
@@ -385,6 +467,66 @@
     .login-hero .firebase-status {
       z-index: 1;
       max-width: min(420px, 92vw);
+      transition: opacity 0.25s;
+    }
+
+    .login-hero--charge .login-hero__title,
+    .login-hero--charge .login-hero__tagline,
+    .login-hero--charge .firebase-status {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .login-hero--shake {
+      animation: login-hero-shake 0.45s ease-out;
+    }
+
+    @keyframes login-hero-shake {
+      0%, 100% { transform: translate(0, 0); }
+      15% { transform: translate(-8px, 4px); }
+      30% { transform: translate(10px, -6px); }
+      45% { transform: translate(-12px, -4px); }
+      60% { transform: translate(8px, 8px); }
+      75% { transform: translate(-6px, 2px); }
+    }
+
+    .devil-charge-flash {
+      position: fixed;
+      inset: 0;
+      z-index: 800;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 55%, rgba(255, 20, 20, 0.95) 0%, rgba(80, 0, 0, 0.85) 35%, #000 75%);
+      opacity: 0;
+    }
+
+    .devil-charge-flash.hidden { display: none; }
+
+    .devil-charge-flash--active {
+      display: block;
+      animation: devil-charge-flash 0.55s ease-out forwards;
+    }
+
+    @keyframes devil-charge-flash {
+      0% { opacity: 0; }
+      25% { opacity: 1; }
+      100% { opacity: 1; }
+    }
+
+    .devil-charge-flash--exit {
+      animation: devil-charge-flash-out 0.45s ease forwards;
+    }
+
+    @keyframes devil-charge-flash-out {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    body.login-charging {
+      overflow: hidden;
+    }
+
+    body.login-charging .app-main {
+      overflow: hidden;
     }
 
     .login-container {
@@ -1597,7 +1739,7 @@
     <h1 class="login-hero__title">DIABLE NOIR</h1>
     <p class="login-hero__tagline">Multijoueur en ligne</p>
 
-    <div class="devil" aria-hidden="true">
+    <div class="devil" id="devilCharacter" aria-hidden="true">
       <div class="devil__horn devil__horn--l"></div>
       <div class="devil__horn devil__horn--r"></div>
       <div class="devil__head">
@@ -1609,7 +1751,7 @@
         </div>
         <div class="devil__mouth-wrap">
           <div id="devilMouth" class="devil__mouth" role="button" tabindex="0" aria-label="Entrer dans la partie">
-            <div class="devil__teeth" aria-hidden="true">
+            <div class="devil__teeth devil__teeth--upper" aria-hidden="true">
               <span class="devil__tooth devil__tooth--fang"></span>
               <span class="devil__tooth"></span>
               <span class="devil__tooth"></span>
@@ -1620,6 +1762,15 @@
             </div>
             <input id="pseudo" class="devil__mouth-input" placeholder="Ton pseudo" autocomplete="off" maxlength="20" required>
             <span class="devil__mouth-cta">ENTRER</span>
+            <div class="devil__teeth devil__teeth--lower" aria-hidden="true">
+              <span class="devil__tooth devil__tooth--fang"></span>
+              <span class="devil__tooth"></span>
+              <span class="devil__tooth"></span>
+              <span class="devil__tooth"></span>
+              <span class="devil__tooth"></span>
+              <span class="devil__tooth"></span>
+              <span class="devil__tooth devil__tooth--fang"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -1629,6 +1780,8 @@
     <div id="firebaseStatus" class="firebase-status loading">Connexion à Firebase…</div>
   </div>
 </div>
+
+<div id="devilChargeFlash" class="devil-charge-flash hidden" aria-hidden="true"></div>
 
 <div id="game" class="screen hidden">
   <div class="game-container">
@@ -2434,6 +2587,68 @@ const TargetFlash = {
     if (!event || event.key === this.lastEventKey) return;
     this.lastEventKey = event.key;
     this.show(event);
+  },
+};
+
+const LoginFX = {
+  CHARGE_MS: 1500,
+
+  playCharge() {
+    return new Promise((resolve) => {
+      const devil = document.getElementById("devilCharacter");
+      const mouth = document.getElementById("devilMouth");
+      const mouthWrap = document.querySelector(".devil__mouth-wrap");
+      const hero = document.querySelector(".login-hero");
+      const flash = document.getElementById("devilChargeFlash");
+
+      document.body.classList.add("login-charging");
+      mouth?.classList.add("devil__mouth--snap");
+      mouthWrap?.classList.add("devil__mouth-wrap--snap");
+
+      setTimeout(() => {
+        devil?.classList.add("devil--charge");
+        hero?.classList.add("login-hero--charge");
+      }, 400);
+
+      setTimeout(() => {
+        if (flash) {
+          flash.classList.remove("hidden");
+          void flash.offsetWidth;
+          flash.classList.add("devil-charge-flash--active");
+        }
+        hero?.classList.add("login-hero--shake");
+        try { navigator.vibrate?.([120, 60, 220]); } catch { /* ignore */ }
+      }, 1000);
+
+      setTimeout(() => {
+        document.body.classList.remove("login-charging");
+        resolve();
+      }, this.CHARGE_MS);
+    });
+  },
+
+  reset() {
+    document.body.classList.remove("login-charging");
+    document.getElementById("devilCharacter")?.classList.remove("devil--charge");
+    const hero = document.querySelector(".login-hero");
+    hero?.classList.remove("login-hero--charge", "login-hero--shake");
+    document.querySelector(".devil__mouth-wrap")?.classList.remove("devil__mouth-wrap--snap");
+    document.getElementById("devilMouth")?.classList.remove("devil__mouth--snap");
+    const flash = document.getElementById("devilChargeFlash");
+    flash?.classList.remove("devil-charge-flash--active", "devil-charge-flash--exit");
+    flash?.classList.add("hidden");
+  },
+
+  finish() {
+    document.body.classList.remove("login-charging");
+    const flash = document.getElementById("devilChargeFlash");
+    if (!flash) return;
+    flash.classList.remove("devil-charge-flash--active");
+    flash.classList.add("devil-charge-flash--exit");
+    setTimeout(() => {
+      flash.classList.remove("devil-charge-flash--exit");
+      flash.classList.add("hidden");
+    }, 450);
   },
 };
 
@@ -3488,83 +3703,92 @@ class GameController {
     if (!FirebaseSetup.ready) {
       return alert("Firebase pas encore connecté. Attendez le message vert ou corrigez la configuration.");
     }
+    if (this._joinAnimating) return;
 
-    const joinBtn = document.getElementById("joinBtn");
+    this._joinAnimating = true;
     this.setJoinLoading(true);
-    FirebaseSetup.setStatus("loading", "Connexion en cours…");
 
-    let rejoined = false;
-    let rejoinedInStartedGame = false;
+    LoginFX.playCharge().then(() => {
+      FirebaseSetup.setStatus("loading", "Connexion en cours…");
 
-    this.roomRef().once("value")
-      .then((snapshot) => {
-        const game = snapshot.val();
-        const existingId = findPlayerIdByPseudo(game?.players, pseudo);
-        const session = this.loadSession(pseudo);
+      let rejoined = false;
+      let rejoinedInStartedGame = false;
 
-        if (game?.sharedState?.finished) {
-          if (!existingId) throw new Error("FINISHED");
-          this.playerId = existingId;
-          this.saveSession(pseudo);
-          rejoined = true;
-          return;
-        }
+      return this.roomRef().once("value")
+        .then((snapshot) => {
+          const game = snapshot.val();
+          const existingId = findPlayerIdByPseudo(game?.players, pseudo);
+          const session = this.loadSession(pseudo);
 
-        if (game?.started) {
-          if (!existingId) throw new Error("STARTED");
-          this.playerId = existingId;
-          this.saveSession(pseudo);
-          rejoined = true;
-          rejoinedInStartedGame = true;
-          return;
-        }
-
-        if (existingId) {
-          if (session?.playerId === existingId) {
+          if (game?.sharedState?.finished) {
+            if (!existingId) throw new Error("FINISHED");
             this.playerId = existingId;
             this.saveSession(pseudo);
             rejoined = true;
             return;
           }
-          throw new Error("PSEUDO_TAKEN");
-        }
 
-        if (session?.playerId) this.playerId = session.playerId;
-        this.saveSession(pseudo);
-        return this.roomRef().child(`players/${this.playerId}`).set(defaultPlayer(pseudo));
-      })
-      .then(() => {
-        document.body.classList.add("in-game");
-        document.getElementById("game").classList.remove("hidden");
-        document.getElementById("quitBtn").classList.remove("hidden");
-        document.getElementById("forcePassBtn").classList.remove("hidden");
-        document.getElementById("handHud").classList.remove("hidden");
-        const statusMsg = rejoinedInStartedGame
-          ? `✅ Reconnecté en tant que ${pseudo} — partie en cours`
-          : rejoined
-            ? `✅ Reconnecté en tant que ${pseudo}`
-            : `✅ Connecté en tant que ${pseudo} — en attente du démarrage`;
-        FirebaseSetup.setStatus("ok", statusMsg);
-        this.listenGame();
-      })
-      .catch((err) => {
-        this.setJoinLoading(false);
-        if (err.message === "FINISHED") {
-          FirebaseSetup.setStatus("error", "Partie terminée — reconnecte-toi avec ton pseudo ou demande au 1er joueur de relancer.");
-          return alert("❌ Partie terminée.\n\nSi tu y étais, entre exactement le même pseudo pour voir le résultat.\nLe 1er joueur peut cliquer « Recommencer ».");
-        }
-        if (err.message === "STARTED") {
-          FirebaseSetup.setStatus("error", "Partie en cours — entrez exactement le même pseudo pour vous reconnecter.");
-          return alert("❌ Partie déjà en cours.\n\nSi vous étiez déjà dans la partie, entrez exactement le même pseudo pour vous reconnecter.");
-        }
-        if (err.message === "PSEUDO_TAKEN") {
-          FirebaseSetup.setStatus("error", "Ce pseudo est déjà pris par un autre joueur.");
-          return alert("❌ Ce pseudo est déjà utilisé — choisissez-en un autre.");
-        }
-        const msg = FirebaseSetup.formatError(err);
-        FirebaseSetup.setStatus("error", msg.replace(/\n/g, "<br>"));
-        alert("Erreur Firebase:\n\n" + msg);
-      });
+          if (game?.started) {
+            if (!existingId) throw new Error("STARTED");
+            this.playerId = existingId;
+            this.saveSession(pseudo);
+            rejoined = true;
+            rejoinedInStartedGame = true;
+            return;
+          }
+
+          if (existingId) {
+            if (session?.playerId === existingId) {
+              this.playerId = existingId;
+              this.saveSession(pseudo);
+              rejoined = true;
+              return;
+            }
+            throw new Error("PSEUDO_TAKEN");
+          }
+
+          if (session?.playerId) this.playerId = session.playerId;
+          this.saveSession(pseudo);
+          return this.roomRef().child(`players/${this.playerId}`).set(defaultPlayer(pseudo));
+        })
+        .then(() => {
+          LoginFX.finish();
+          document.body.classList.add("in-game");
+          document.getElementById("game").classList.remove("hidden");
+          document.getElementById("quitBtn").classList.remove("hidden");
+          document.getElementById("forcePassBtn").classList.remove("hidden");
+          document.getElementById("handHud").classList.remove("hidden");
+          const statusMsg = rejoinedInStartedGame
+            ? `✅ Reconnecté en tant que ${pseudo} — partie en cours`
+            : rejoined
+              ? `✅ Reconnecté en tant que ${pseudo}`
+              : `✅ Connecté en tant que ${pseudo} — en attente du démarrage`;
+          FirebaseSetup.setStatus("ok", statusMsg);
+          this.listenGame();
+        })
+        .then(() => {
+          this._joinAnimating = false;
+        });
+    }).catch((err) => {
+      this._joinAnimating = false;
+      LoginFX.reset();
+      this.setJoinLoading(false);
+      if (err?.message === "FINISHED") {
+        FirebaseSetup.setStatus("error", "Partie terminée — reconnecte-toi avec ton pseudo ou demande au 1er joueur de relancer.");
+        return alert("❌ Partie terminée.\n\nSi tu y étais, entre exactement le même pseudo pour voir le résultat.\nLe 1er joueur peut cliquer « Recommencer ».");
+      }
+      if (err?.message === "STARTED") {
+        FirebaseSetup.setStatus("error", "Partie en cours — entrez exactement le même pseudo pour vous reconnecter.");
+        return alert("❌ Partie déjà en cours.\n\nSi vous étiez déjà dans la partie, entrez exactement le même pseudo pour vous reconnecter.");
+      }
+      if (err?.message === "PSEUDO_TAKEN") {
+        FirebaseSetup.setStatus("error", "Ce pseudo est déjà pris par un autre joueur.");
+        return alert("❌ Ce pseudo est déjà utilisé — choisissez-en un autre.");
+      }
+      const msg = FirebaseSetup.formatError(err);
+      FirebaseSetup.setStatus("error", msg.replace(/\n/g, "<br>"));
+      alert("Erreur Firebase:\n\n" + msg);
+    });
   }
 
   start() {
