@@ -445,6 +445,61 @@
     #startBtn { background: #0a8a0a; }
     #startBtn:hover { background: #0bb50b; }
 
+    .lobby-panel {
+      margin-bottom: 14px;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, rgba(18, 18, 18, 0.95), rgba(32, 10, 10, 0.9));
+      border: 1px solid rgba(255, 51, 51, 0.35);
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .lobby-panel.hidden { display: none; }
+
+    .lobby-panel__title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255, 120, 120, 0.75);
+      margin-bottom: 10px;
+    }
+
+    .lobby-list {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .lobby-list__item {
+      padding: 8px 14px;
+      background: rgba(255, 51, 51, 0.12);
+      border: 1px solid rgba(255, 51, 51, 0.35);
+      border-radius: 999px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #fff;
+      animation: lobby-pop 0.35s ease;
+    }
+
+    @keyframes lobby-pop {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .lobby-list__item--host {
+      border-color: rgba(0, 255, 204, 0.55);
+      background: rgba(0, 255, 204, 0.08);
+      color: #aaffee;
+    }
+
+    .lobby-list__item--me {
+      box-shadow: 0 0 12px rgba(255, 51, 51, 0.35);
+    }
+
     .status-bar {
       background: linear-gradient(135deg, rgba(20, 20, 20, 0.92), rgba(28, 12, 12, 0.88));
       border: 1px solid rgba(255, 51, 51, 0.25);
@@ -1579,6 +1634,10 @@
   <div class="game-container">
     <div class="top-section">
       <button id="startBtn" class="hidden" onclick="gameController.start()">▶ Démarrer la partie</button>
+    </div>
+    <div id="lobbyPanel" class="lobby-panel hidden">
+      <div class="lobby-panel__title">Joueurs connectés</div>
+      <ul id="lobbyList" class="lobby-list"></ul>
     </div>
     <div class="status-bar">
       <div id="center" class="center-info">En attente...</div>
@@ -3983,6 +4042,36 @@ class GameController {
     });
   }
 
+  renderLobbyPlayers(game, order, players) {
+    const panel = document.getElementById("lobbyPanel");
+    const list = document.getElementById("lobbyList");
+    if (!panel || !list) return;
+
+    const show = !game.started;
+    panel.classList.toggle("hidden", !show);
+    if (!show) {
+      list.innerHTML = "";
+      return;
+    }
+
+    list.innerHTML = "";
+    order.forEach((id, idx) => {
+      const player = players[id];
+      if (!player?.pseudo) return;
+
+      const li = document.createElement("li");
+      li.className = "lobby-list__item";
+      if (idx === 0) li.classList.add("lobby-list__item--host");
+      if (id === this.playerId) li.classList.add("lobby-list__item--me");
+
+      let label = player.pseudo;
+      if (idx === 0) label = `👑 ${label}`;
+      if (id === this.playerId) label += " (toi)";
+      li.textContent = label;
+      list.appendChild(li);
+    });
+  }
+
   renderFromGame(game) {
     if (!game) return;
 
@@ -4058,6 +4147,8 @@ class GameController {
       document.getElementById("startBtn").classList.add("hidden");
     }
 
+    this.renderLobbyPlayers(game, order, players);
+
     this.renderGameEndOverlay(game, shared, players);
 
     TargetFlash.handle(game, this.playerId);
@@ -4101,8 +4192,13 @@ class GameController {
       el.style.left = `${cx + radius * Math.cos(angle)}px`;
       el.style.top = `${cy + radius * Math.sin(angle)}px`;
 
-      let status = `${player.hand.length} cartes · ${player.drinks || 0} 🍺`;
-      const badges = Effects.getPlayerBadges(player);
+      let status;
+      if (!game.started) {
+        status = idx === 0 ? "Hôte · en attente" : "En attente";
+      } else {
+        status = `${player.hand.length} cartes · ${player.drinks || 0} 🍺`;
+      }
+      const badges = game.started ? Effects.getPlayerBadges(player) : (idx === 0 ? "👑" : "—");
 
       el.innerHTML = `
         <div class="player-name">${player.pseudo}${id === this.playerId ? " (toi)" : ""}</div>
