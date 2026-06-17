@@ -2292,8 +2292,12 @@ const TargetFlash = {
     const lp = game.lastPlay;
     const ts = lp?.ts || 0;
     const pr = shared.pendingReaction;
+    const prSilent = pr?.silentOnly ?? (pr
+      ? Effects.isSilentReactionOnly(game, pr.targetId, pr.attack)
+      : false);
 
     if (pr?.targetId === localPlayerId) {
+      if (prSilent) return null;
       const caster = game.players?.[pr.casterId]?.pseudo || "?";
       const card = pr.sourceCard?.name || pr.attack?.cardName || "?";
       let detail = `${caster} — ${card}`;
@@ -2302,13 +2306,37 @@ const TargetFlash = {
       return { key: `pr:${ts}:${pr.casterId}`, emoji: "⚔️", title: "TU ES VISÉ !", subtitle: detail };
     }
 
+    if (pr?.casterId === localPlayerId && prSilent) {
+      const target = game.players?.[pr.targetId]?.pseudo || "?";
+      const card = pr.sourceCard?.name || pr.attack?.cardName || "?";
+      return {
+        key: `pr-c:${ts}:${pr.targetId}`,
+        emoji: "🛡️",
+        title: "CONTRE POSSIBLE !",
+        subtitle: `${target} peut contrer ton ${card}`,
+      };
+    }
+
     const pp = shared.pickpocket;
     if (pp?.targetId === localPlayerId && pp.casterId !== localPlayerId) {
       const caster = game.players?.[pp.casterId]?.pseudo || "?";
       return { key: `pp:${ts}:${pp.casterId}`, emoji: "🥷", title: "PICKPOCKET !", subtitle: `${caster} fouille ta main` };
     }
 
+    if (lp?.shieldBlocked && lp.playerId === localPlayerId) {
+      const target = game.players?.[lp.targetId]?.pseudo || "?";
+      const card = lp.card?.name || "?";
+      return { key: `shield:${ts}`, emoji: "🛡️", title: "BOUCLIER !", subtitle: `${target} a absorbé ton ${card}` };
+    }
+
+    if (lp?.attackNeutralized === "protection" && lp.playerId === localPlayerId) {
+      const target = game.players?.[lp.targetId]?.pseudo || "?";
+      const card = lp.card?.name || "?";
+      return { key: `prot:${ts}`, emoji: "🔰", title: "PROTECTION !", subtitle: `${target} est protégé(e) — ${card} annulé` };
+    }
+
     if (lp?.targetId === localPlayerId && lp.playerId !== localPlayerId && ts) {
+      if (lp.shieldBlocked || lp.attackNeutralized) return null;
       const caster = game.players?.[lp.playerId]?.pseudo || "?";
       const card = lp.card?.name || "?";
       return { key: `lp:${ts}`, emoji: "🎯", title: "TU ES VISÉ !", subtitle: `${caster} joue ${card}` };
@@ -2477,6 +2505,23 @@ class Deck {
 
 class Effects {
   static COUNTER_IDS = ["MIRROR", "PROTECTION", "BACKFIRE"];
+  static SILENT_COUNTER_IDS = ["PROTECTION", "BACKFIRE"];
+
+  static hasMirrorCounter(hand, attack) {
+    return this.getAvailableCounters(hand, attack).some(({ card }) => card.id === "MIRROR");
+  }
+
+  static isSilentReactionOnly(game, targetId, attack) {
+    const target = game.players[targetId];
+    if (!target || !attack) return false;
+    const counters = this.getAvailableCounters(target.hand, attack);
+    if (!counters.length) return false;
+    return !this.hasMirrorCounter(target.hand, attack);
+  }
+
+  static formatAvailableCounters(hand, attack) {
+    return this.getAvailableCounters(hand, attack).map(({ card }) => card.name).join(", ");
+  }
 
   static isDrinkEffect(cardType) {
     return cardType === "bonus" || cardType === "malus_target" || cardType === "malus_global";
@@ -3658,6 +3703,7 @@ class GameController {
         if (attack) {
           const shieldMsgs = [];
           if (Effects.tryAutoShield(g, targetId, attack, shieldMsgs)) {
+            g.lastPlay.shieldBlocked = true;
             if (Effects.isPlusGiveCard(played.id)) {
               Effects.prepareDrinkAttack(played, targetId, g, this.playerId, bonusMsgs);
             }
@@ -3689,24 +3735,37 @@ class GameController {
           const reactionAttack = Effects.isPlusGiveCard(played.id)
             ? Effects.prepareDrinkAttack(played, targetId, g, this.playerId, bonusMsgs)
             : attack;
+          const silentOnly = Effects.isSilentReactionOnly(g, targetId, reactionAttack);
           s.pendingReaction = {
             casterId: this.playerId,
             targetId,
             attack: reactionAttack,
             sourceCard: { id: played.id, name: played.name },
+            silentOnly,
           };
           const partialMsg = Effects.apply(g, this.playerId, played, targetId, s, { deferAttack: true });
           let fullMsg = partialMsg;
           if (bonusMsgs.length) fullMsg += "\n" + bonusMsgs.join("\n");
-          fullMsg += `\n⚔️ ${g.players[targetId].pseudo}, tu es visé! Joue Miroir, Protection ou Retour de Flamme.`;
+          const targetName = g.players[targetId].pseudo;
+          const counterNames = Effects.formatAvailableCounters(g.players[targetId].hand, reactionAttack);
+          if (silentOnly) {
+            fullMsg += `\n🛡️ ${targetName} peut contrer (${counterNames}) — en attente.`;
+          } else {
+            fullMsg += `\n⚔️ ${targetName}, tu es visé! Joue Miroir, Protection ou Retour de Flamme.`;
+          }
           g.message = fullMsg;
           g.sharedState = s;
           this.syncActionDeadline(g, s);
           return g;
         }
 
+        const protBlocks = attack?.kind === "drinks" && targetId &&
+          Effects.isProtected(g.players[targetId], attack.cardType, attack.cardId);
+
         const effectMsg = Effects.apply(g, this.playerId, played, targetId, s);
         let fullMsg = effectMsg;
+
+        if (protBlocks) g.lastPlay.attackNeutralized = "protection";
 
         const blocksAdvance = Effects.blocksTurnAdvance(played.id, s);
         if (!blocksAdvance) this.drawCardAfterPlay(g, this.playerId);
@@ -3964,10 +4023,17 @@ class GameController {
     } else {
       const currentId = order[game.currentPlayerIndex];
       const pr = shared.pendingReaction;
+      const prSilent = pr?.silentOnly ?? (pr
+        ? Effects.isSilentReactionOnly(game, pr.targetId, pr.attack)
+        : false);
       if (pr?.targetId === this.playerId) {
         center.textContent = showActionTimer
-          ? `⚔️ Contre — choisis une carte (${actionSecondsLeft}s)`
-          : "⚔️ Contre — choisis une carte";
+          ? `${prSilent ? "🛡️" : "⚔️"} Contre — choisis une carte (${actionSecondsLeft}s)`
+          : `${prSilent ? "🛡️" : "⚔️"} Contre — choisis une carte`;
+      } else if (pr?.casterId === this.playerId && prSilent) {
+        center.textContent = showActionTimer
+          ? `🛡️ ${players[pr.targetId]?.pseudo} peut contrer… (${actionSecondsLeft}s)`
+          : `🛡️ ${players[pr.targetId]?.pseudo} peut contrer…`;
       } else if (pr) {
         center.textContent = showActionTimer
           ? `⏳ ${players[pr.targetId]?.pseudo} répond… (${actionSecondsLeft}s)`
@@ -4143,12 +4209,15 @@ class GameController {
     if (isTargeted && shared.pendingReaction) {
       panelOpen = true;
       const pr = shared.pendingReaction;
-      const attack = pr.attack;
+      const prSilent = pr.silentOnly ?? Effects.isSilentReactionOnly(game, pr.targetId, pr.attack);
       reactionPanel.classList.remove("hidden");
+      document.getElementById("reactionTitle").textContent = prSilent
+        ? "🛡️ Contre cette attaque !"
+        : "⚔️ Tu es visé !";
       document.getElementById("reactionText").textContent =
-        `${game.players[pr.casterId].pseudo} joue ${attack.cardName} contre toi` +
-        (attack.kind === "drinks" ? ` (${attack.amount} 🍺)` : "") +
-        (attack.kind === "skip" ? " — passe ton tour" : "") +
+        `${game.players[pr.casterId].pseudo} joue ${pr.attack.cardName} contre toi` +
+        (pr.attack.kind === "drinks" ? ` (${pr.attack.amount} 🍺)` : "") +
+        (pr.attack.kind === "skip" ? " — passe ton tour" : "") +
         ". Clique une carte :";
 
       counterIndices.forEach((idx) => {
