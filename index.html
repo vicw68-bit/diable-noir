@@ -560,13 +560,44 @@
       transform: translateY(0) scale(1);
     }
 
-    .door-transition--exit {
-      animation: door-zoom-through 0.42s ease-in forwards;
+    .door-transition--hold .door-transition__frame {
+      opacity: 0;
+      transform: scale(2.2);
+      transition: opacity 0.4s ease, transform 0.55s ease;
+      pointer-events: none;
     }
 
-    @keyframes door-zoom-through {
-      from { opacity: 1; transform: scale(1); }
-      to { opacity: 0; transform: scale(2.2); }
+    .door-transition--hold .door-transition__doors {
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .door-transition--hold .door-transition__light {
+      position: fixed;
+      inset: -10%;
+      opacity: 1;
+      transform: scale(1.1);
+      background: radial-gradient(ellipse at center, #3a0c00 0%, #120202 45%, #050000 100%);
+      transition: inset 0.5s ease, transform 0.5s ease, background 0.5s ease;
+    }
+
+    .door-transition--hold .door-transition__room {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .door-transition--exit {
+      animation: door-fade-out 0.48s ease-out forwards;
+    }
+
+    @keyframes door-fade-out {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    body.room-joining #roomSelect {
+      visibility: hidden;
+      pointer-events: none;
     }
 
     body.door-entering #roomSelect .room-select {
@@ -3478,43 +3509,75 @@ const LoginFX = {
 };
 
 const RoomJoinFX = {
-  DURATION_MS: 1550,
+  OPEN_MS: 1300,
+  DISMISS_MS: 480,
+  _openPromise: null,
+  _resolveOpen: null,
 
-  playEnter(roomMeta) {
+  start(roomMeta) {
+    const overlay = document.getElementById("doorTransition");
+    const label = document.getElementById("doorTransitionRoom");
+    if (!overlay) return;
+
+    if (label) {
+      label.textContent = roomMeta ? `${roomMeta.icon} ${roomMeta.name}` : "Entrée…";
+    }
+
+    document.getElementById("roomSelect")?.classList.add("hidden");
+    document.body.classList.remove("room-select");
+    document.body.classList.add("door-entering", "room-joining");
+
+    overlay.classList.remove("hidden", "door-transition--exit", "door-transition--hold", "door-transition--active");
+    void overlay.offsetWidth;
+
+    this._openPromise = new Promise((resolve) => {
+      this._resolveOpen = resolve;
+    });
+
+    requestAnimationFrame(() => {
+      overlay.classList.add("door-transition--active");
+    });
+
+    try { navigator.vibrate?.([35, 25, 90]); } catch { /* ignore */ }
+
+    setTimeout(() => {
+      overlay.classList.add("door-transition--hold");
+      this._resolveOpen?.();
+      this._resolveOpen = null;
+    }, this.OPEN_MS);
+  },
+
+  whenOpen() {
+    return this._openPromise || Promise.resolve();
+  },
+
+  dismiss() {
     return new Promise((resolve) => {
       const overlay = document.getElementById("doorTransition");
-      const label = document.getElementById("doorTransitionRoom");
       if (!overlay) {
+        document.body.classList.remove("door-entering", "room-joining");
         resolve();
         return;
       }
-      if (label) {
-        label.textContent = roomMeta ? `${roomMeta.icon} ${roomMeta.name}` : "Entrée…";
-      }
-      overlay.classList.remove("hidden", "door-transition--exit");
-      void overlay.offsetWidth;
-      document.body.classList.add("door-entering", "room-joining");
-      overlay.classList.add("door-transition--active");
-      try { navigator.vibrate?.([35, 25, 90]); } catch { /* ignore */ }
-
+      overlay.classList.remove("door-transition--active", "door-transition--hold");
+      overlay.classList.add("door-transition--exit");
       setTimeout(() => {
-        overlay.classList.remove("door-transition--active");
-        overlay.classList.add("door-transition--exit");
-        setTimeout(() => {
-          overlay.classList.add("hidden");
-          overlay.classList.remove("door-transition--exit");
-          document.body.classList.remove("door-entering", "room-joining");
-          resolve();
-        }, 420);
-      }, this.DURATION_MS);
+        overlay.classList.add("hidden");
+        overlay.classList.remove("door-transition--exit");
+        document.body.classList.remove("door-entering", "room-joining");
+        this._openPromise = null;
+        resolve();
+      }, this.DISMISS_MS);
     });
   },
 
   reset() {
     const overlay = document.getElementById("doorTransition");
     overlay?.classList.add("hidden");
-    overlay?.classList.remove("door-transition--active", "door-transition--exit");
+    overlay?.classList.remove("door-transition--active", "door-transition--hold", "door-transition--exit");
     document.body.classList.remove("door-entering", "room-joining");
+    this._resolveOpen = null;
+    this._openPromise = null;
   },
 };
 
@@ -4858,79 +4921,76 @@ class GameController {
     this.setJoinLoading(true);
 
     const roomMeta = GameController.ROOMS.find((r) => r.id === this.room);
+    RoomJoinFX.start(roomMeta);
 
-    RoomJoinFX.playEnter(roomMeta).then(() => {
-      FirebaseSetup.setStatus("loading", "Connexion en cours…");
+    const joinFirebase = this.roomRef().once("value")
+      .then((snapshot) => {
+        const game = snapshot.val();
+        const existingId = findPlayerIdByPseudo(game?.players, pseudo);
+        const session = this.loadSession(pseudo);
 
-      let rejoined = false;
-      let rejoinedInStartedGame = false;
-
-      return this.roomRef().once("value")
-        .then((snapshot) => {
-          const game = snapshot.val();
-          const existingId = findPlayerIdByPseudo(game?.players, pseudo);
-          const session = this.loadSession(pseudo);
-
-          if (game?.sharedState?.finished) {
-            if (!existingId) throw new Error("FINISHED");
-            this.playerId = existingId;
-            this.saveSession(pseudo);
-            rejoined = true;
-            return;
-          }
-
-          if (game?.started) {
-            if (!existingId) throw new Error("STARTED");
-            this.playerId = existingId;
-            this.saveSession(pseudo);
-            rejoined = true;
-            rejoinedInStartedGame = true;
-            return;
-          }
-
-          if (existingId) {
-            if (session?.playerId === existingId) {
-              this.playerId = existingId;
-              this.saveSession(pseudo);
-              rejoined = true;
-              return;
-            }
-            throw new Error("PSEUDO_TAKEN");
-          }
-
-          if (session?.playerId) this.playerId = session.playerId;
+        if (game?.sharedState?.finished) {
+          if (!existingId) throw new Error("FINISHED");
+          this.playerId = existingId;
           this.saveSession(pseudo);
-          return this.roomRef().child(`players/${this.playerId}`).set(defaultPlayer(pseudo));
-        })
-        .then(() => {
-          this.stopRoomsListener();
-          document.body.classList.remove("room-select");
-          document.getElementById("roomSelect")?.classList.add("hidden");
-          document.body.classList.add("in-game");
-          document.getElementById("game").classList.remove("hidden");
-          document.getElementById("quitBtn").classList.remove("hidden");
-          document.getElementById("restartHeaderBtn").classList.remove("hidden");
-          document.getElementById("forcePassBtn").classList.remove("hidden");
-          document.getElementById("handHud").classList.remove("hidden");
-          const statusMsg = rejoinedInStartedGame
-            ? `✅ Reconnecté en tant que ${pseudo} — partie en cours`
-            : rejoined
-              ? `✅ Reconnecté en tant que ${pseudo}`
-              : `✅ Connecté en tant que ${pseudo} — en attente du démarrage`;
-          FirebaseSetup.setStatus("ok", statusMsg);
-          this.updateRoomHeader();
-          TurnNotify.requestPermission();
-          this.listenGame();
-        })
-        .then(() => {
-          this._joinAnimating = false;
-        });
-    }).catch((err) => {
+          return { rejoined: true, rejoinedInStartedGame: false };
+        }
+
+        if (game?.started) {
+          if (!existingId) throw new Error("STARTED");
+          this.playerId = existingId;
+          this.saveSession(pseudo);
+          return { rejoined: true, rejoinedInStartedGame: true };
+        }
+
+        if (existingId) {
+          if (session?.playerId === existingId) {
+            this.playerId = existingId;
+            this.saveSession(pseudo);
+            return { rejoined: true, rejoinedInStartedGame: false };
+          }
+          throw new Error("PSEUDO_TAKEN");
+        }
+
+        if (session?.playerId) this.playerId = session.playerId;
+        this.saveSession(pseudo);
+        return this.roomRef().child(`players/${this.playerId}`).set(defaultPlayer(pseudo))
+          .then(() => ({ rejoined: false, rejoinedInStartedGame: false }));
+      });
+
+    Promise.all([joinFirebase, RoomJoinFX.whenOpen()])
+      .then(([result]) => {
+        this.stopRoomsListener();
+        document.body.classList.add("in-game");
+        document.getElementById("game").classList.remove("hidden");
+        document.getElementById("quitBtn").classList.remove("hidden");
+        document.getElementById("restartHeaderBtn").classList.remove("hidden");
+        document.getElementById("forcePassBtn").classList.remove("hidden");
+        document.getElementById("handHud").classList.remove("hidden");
+        const statusMsg = result.rejoinedInStartedGame
+          ? `✅ Reconnecté en tant que ${pseudo} — partie en cours`
+          : result.rejoined
+            ? `✅ Reconnecté en tant que ${pseudo}`
+            : `✅ Connecté en tant que ${pseudo} — en attente du démarrage`;
+        FirebaseSetup.setStatus("ok", statusMsg);
+        this.updateRoomHeader();
+        TurnNotify.requestPermission();
+        this.listenGame();
+        return RoomJoinFX.dismiss();
+      })
+      .then(() => {
+        this._joinAnimating = false;
+        this.setJoinLoading(false);
+      })
+      .catch((err) => {
       this._joinAnimating = false;
       this.room = null;
       RoomJoinFX.reset();
       LoginFX.reset();
       this.setJoinLoading(false);
+      document.body.classList.add("room-select");
+      document.getElementById("roomSelect")?.classList.remove("hidden");
+      this.startRoomsListener();
       if (err?.message === "FINISHED") {
         FirebaseSetup.setStatus("error", "Partie terminée — reconnecte-toi avec ton pseudo ou demande au 1er joueur de relancer.");
         return alert("❌ Partie terminée.\n\nSi tu y étais, entre exactement le même pseudo pour voir le résultat.\nLe 1er joueur peut cliquer « Recommencer ».");
