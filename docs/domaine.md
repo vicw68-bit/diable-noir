@@ -73,3 +73,38 @@ Google Cloud Console → **APIs & Services** → **Credentials** → votre clé 
 |-------|-----|
 | Principal | https://diable-noir.fr |
 | Secours | https://vicw68-bit.github.io/diable-noir/ |
+
+## Dépannage : « Site en construction » (OVH)
+
+Si la zone DNS est correcte mais vous voyez encore la page OVH :
+
+1. **Vérifiez** avec Google DNS : `nslookup diable-noir.fr 8.8.8.8` → doit afficher `185.199.108–111.153`
+2. Si votre box renvoie `51.91.236.255`, c’est le **cache DNS de la Livebox** (ancienne IP OVH)
+3. **Redémarrez la box** ou exécutez en administrateur : `.\fix-dns-local.ps1` (à la racine du dépôt)
+4. OVH Manager → désactivez toute **Redirection** / **Hébergement** active sur le domaine
+5. Navigateur : **Ctrl+F5** ou navigation privée
+
+## Dépannage : « Connexion non sécurisée » (HTTPS)
+
+Le navigateur affiche un avertissement si GitHub sert encore le certificat `*.github.io` au lieu de `diable-noir.fr`.
+
+1. Repo → **Settings** → **Pages**
+2. **Custom domain** : saisir `diable-noir.fr` → **Save**
+3. Attendre la **coche verte** (DNS vérifié)
+4. Cocher **Enforce HTTPS** (disponible après émission du certificat, parfois 10 min à 24 h)
+5. Recharger https://diable-noir.fr (Ctrl+F5)
+
+Sans l’étape GitHub Pages, le jeu s’affiche mais le cadenas reste rouge.
+
+## Dépannage : cadenas « Non sécurisé » alors que HTTPS est activé
+
+Le certificat est valide si `nslookup` pointe vers GitHub et que le cadenas manque encore :
+
+1. **URL** : utilisez **`https://diable-noir.fr`** (pas `http://`) — Chrome affiche « Non sécurisé » sur HTTP
+2. **Cache navigateur** : Ctrl+Shift+Suppr → effacer images/cache + cookies pour `diable-noir.fr`
+3. **PWA** : si l’app est installée sur l’écran d’accueil, **désinstallez-la** puis réinstallez depuis https://diable-noir.fr
+4. **Contournement DNS local** : exécutez `.\fix-dns-cleanup.ps1` en administrateur (retire le fichier `hosts`)
+5. **Navigation privée** : testez en fenêtre privée pour isoler le cache
+6. **Antivirus** : désactivez temporairement l’inspection HTTPS (Avast, Kaspersky, etc.)
+
+Après mise à jour du site, faites **Ctrl+F5** pour charger le nouveau service worker.

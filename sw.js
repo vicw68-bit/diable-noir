@@ -1,6 +1,7 @@
-const CACHE = "diable-noir-v2";
+const CACHE = "diable-noir-v3";
 
 self.addEventListener("install", (event) => {
+  if (self.location.protocol !== "https:") return;
   event.waitUntil(
     caches.open(CACHE).then((cache) =>
       cache.addAll(["./", "./index.html", "./manifest.webmanifest"])
@@ -19,7 +20,7 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
+  if (event.request.method !== "GET" || self.location.protocol !== "https:") return;
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request))
   );

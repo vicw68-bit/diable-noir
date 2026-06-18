@@ -1,8 +1,18 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+  <script>
+    (function () {
+      var h = location.hostname;
+      if (location.protocol === "http:" && (h === "diable-noir.fr" || h === "www.diable-noir.fr")) {
+        location.replace("https://" + h + location.pathname + location.search + location.hash);
+      }
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <link rel="canonical" href="https://diable-noir.fr/">
   <meta name="theme-color" content="#ff3333">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -227,7 +237,13 @@
       min-height: calc(100dvh - 24px);
     }
 
-    body.in-game #login { display: none; }
+    body.in-game #login,
+    body.in-game #roomSelect,
+    body.room-select #login { display: none; }
+
+    body.room-select #roomSelect {
+      display: flex;
+    }
 
     body:not(.in-game) .app-header { display: none; }
 
@@ -296,6 +312,139 @@
       color: rgba(255, 120, 120, 0.55);
       margin-bottom: 8px;
       z-index: 1;
+    }
+
+    #roomSelect {
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      width: 100%;
+      min-height: calc(100dvh - 24px);
+      padding: 28px 16px 40px;
+    }
+
+    .room-select {
+      width: min(520px, 100%);
+      text-align: center;
+    }
+
+    .room-select__title {
+      font-size: clamp(1.4rem, 5vw, 2rem);
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      color: #ff3333;
+      text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+      margin-bottom: 8px;
+    }
+
+    .room-select__pseudo {
+      color: rgba(255, 200, 200, 0.85);
+      margin-bottom: 4px;
+      font-size: 0.95rem;
+    }
+
+    .room-select__pseudo strong {
+      color: #fff;
+    }
+
+    .room-select__hint {
+      color: rgba(255, 120, 120, 0.45);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .room-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .room-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid rgba(255, 60, 60, 0.35);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(40, 8, 8, 0.95), rgba(18, 4, 4, 0.98));
+      color: #fff;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+
+    .room-card:hover:not(:disabled) {
+      border-color: rgba(255, 80, 80, 0.7);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(255, 0, 0, 0.2);
+    }
+
+    .room-card:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .room-card__icon {
+      font-size: 1.8rem;
+      flex-shrink: 0;
+      width: 2.4rem;
+      text-align: center;
+    }
+
+    .room-card__body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .room-card__name {
+      font-weight: 800;
+      font-size: 1.05rem;
+      letter-spacing: 0.04em;
+    }
+
+    .room-card__desc {
+      font-size: 0.78rem;
+      color: rgba(255, 180, 180, 0.55);
+      margin-top: 2px;
+    }
+
+    .room-card__meta {
+      flex-shrink: 0;
+      text-align: right;
+      font-size: 0.75rem;
+      color: rgba(255, 150, 150, 0.7);
+      line-height: 1.35;
+    }
+
+    .room-card__status--play {
+      color: #ffaa44;
+      font-weight: 700;
+    }
+
+    .room-card__status--wait {
+      color: #66dd88;
+    }
+
+    .room-select__back {
+      background: transparent;
+      border: 1px solid rgba(255, 80, 80, 0.35);
+      color: rgba(255, 180, 180, 0.8);
+      padding: 10px 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+    }
+
+    .room-select__back:hover {
+      border-color: rgba(255, 100, 100, 0.6);
+      color: #fff;
     }
 
     .devil {
@@ -1989,11 +2138,11 @@
       <span class="header-btn__icon" aria-hidden="true">⏭</span>
       <span class="force-pass-label">Passer ton tour</span>
     </button>
-    <button id="restartHeaderBtn" class="restart-btn hidden" onclick="gameController.restartAndGoHome()" title="Remettre la salle à zéro et retourner à l'accueil (1er joueur)">
+    <button id="restartHeaderBtn" class="restart-btn hidden" onclick="gameController.restartAndGoHome()" title="Remettre la salle à zéro (1er joueur) — retour accueil">
       <span class="header-btn__icon" aria-hidden="true">↻</span>
       <span class="restart-btn__label">Recommencer</span>
     </button>
-    <button id="quitBtn" class="quit-btn hidden" onclick="gameController.leaveGame()" title="Quitter la partie sans supprimer la salle">
+    <button id="quitBtn" class="quit-btn hidden" onclick="gameController.leaveGame()" title="Quitter la salle — choisir une autre room">
       <span class="header-btn__icon" aria-hidden="true">✕</span>
       <span class="quit-btn__label">Quitter</span>
     </button>
@@ -2094,6 +2243,17 @@
 
     <button id="joinBtn" class="hidden" type="button">Entrer</button>
     <div id="firebaseStatus" class="firebase-status loading">Connexion à Firebase…</div>
+  </div>
+</div>
+
+<div id="roomSelect" class="screen hidden">
+  <div class="room-select">
+    <h2 class="room-select__title">CHOISIS TA SALLE</h2>
+    <p class="room-select__pseudo">Pseudo : <strong id="roomSelectPseudo">—</strong></p>
+    <p class="room-select__hint">5 salles publiques — libre accès</p>
+    <div id="roomList" class="room-list" role="list"></div>
+    <button type="button" class="room-select__back" onclick="gameController.goToLogin()">← Changer de pseudo</button>
+    <div id="roomSelectStatus" class="firebase-status loading" style="margin-top:16px">Chargement des salles…</div>
   </div>
 </div>
 
@@ -2242,7 +2402,7 @@ const FirebaseSetup = (() => {
     const code = err?.code || "";
     const msg = err?.message || String(err);
     if (code === "PERMISSION_DENIED") {
-      return "Accès refusé par Firebase.\n\n→ Activez Authentication → Anonymous\n→ Publiez database.rules.json (auth requis, accès limité à rooms/main)";
+      return "Accès refusé par Firebase.\n\n→ Activez Authentication → Anonymous\n→ Publiez database.rules.json (auth requis, salles : enfer, taverne, purgatoire, cave, abysses)";
     }
     if (code === "auth/operation-not-allowed") {
       return "Authentification anonyme désactivée.\n\n→ Firebase Console → Authentication → Sign-in method → Anonymous → Activer";
@@ -4088,10 +4248,20 @@ class GameController {
   static TURN_LIMIT_MS = 25000;
   static ACTION_LIMIT_MS = 25000;
   static MIN_PLAYERS = 2;
+  static PSEUDO_KEY = "diable-noir-pseudo";
+  static ROOMS = [
+    { id: "enfer", icon: "🔥", name: "L'Enfer", desc: "La fournaise — ambiance brûlante" },
+    { id: "taverne", icon: "🍺", name: "La Taverne", desc: "Entre potes, sans filtre" },
+    { id: "purgatoire", icon: "⚖️", name: "Le Purgatoire", desc: "On tranche, on vote, on boit" },
+    { id: "cave", icon: "🍷", name: "La Cave Secrète", desc: "Sombre, vicieuse, intime" },
+    { id: "abysses", icon: "🌑", name: "Les Abysses", desc: "Là où tout bascule" },
+  ];
 
   constructor() {
     this.playerId = Math.random().toString(36).substring(2, 11);
-    this.room = "main";
+    this.room = null;
+    this._pendingPseudo = null;
+    this._onRoomsOverview = null;
     this.selectedTarget = null;
     this.highlightedCardIndex = null;
     this.lastGame = null;
@@ -4104,6 +4274,7 @@ class GameController {
     this._wasFinished = false;
     this.setupListeners();
     GameSounds.syncBtn();
+    this.restorePseudoField();
   }
 
   turnTimeLeft(game) {
@@ -4311,8 +4482,93 @@ class GameController {
     return db.ref(`rooms/${this.room}`);
   }
 
+  roomsOverviewRef() {
+    return db.ref("rooms");
+  }
+
   sessionStorageKey() {
     return `diable-noir-${this.room}`;
+  }
+
+  getPseudo() {
+    return (this._pendingPseudo || document.getElementById("pseudo")?.value || "").trim();
+  }
+
+  restorePseudoField() {
+    const saved = localStorage.getItem(GameController.PSEUDO_KEY);
+    if (saved) document.getElementById("pseudo").value = saved;
+  }
+
+  startRoomsListener() {
+    this.stopRoomsListener();
+    if (!db) return;
+    this._onRoomsOverview = (snapshot) => {
+      const statusEl = document.getElementById("roomSelectStatus");
+      if (statusEl && document.body.classList.contains("room-select")) {
+        statusEl.className = "firebase-status ok";
+        statusEl.textContent = "Salles à jour — clique pour rejoindre";
+      }
+      this.renderRoomList(snapshot.val());
+    };
+    this.roomsOverviewRef().on("value", this._onRoomsOverview);
+  }
+
+  stopRoomsListener() {
+    if (this._onRoomsOverview && db) {
+      this.roomsOverviewRef().off("value", this._onRoomsOverview);
+      this._onRoomsOverview = null;
+    }
+  }
+
+  renderRoomList(roomsData) {
+    const list = document.getElementById("roomList");
+    if (!list) return;
+    list.innerHTML = GameController.ROOMS.map((room) => {
+      const game = roomsData?.[room.id];
+      const count = game?.players ? Object.keys(game.players).length : 0;
+      const started = !!game?.started;
+      const finished = !!game?.sharedState?.finished;
+      let statusClass = "room-card__status--wait";
+      let statusText = "Libre";
+      if (started && !finished) {
+        statusClass = "room-card__status--play";
+        statusText = `En jeu · ${count}`;
+      } else if (finished) {
+        statusText = `Terminée · ${count}`;
+      } else if (count) {
+        statusText = `${count} en attente`;
+      }
+      return `<button type="button" class="room-card" onclick="gameController.selectRoom('${room.id}')">
+        <span class="room-card__icon" aria-hidden="true">${room.icon}</span>
+        <span class="room-card__body">
+          <div class="room-card__name">${room.name}</div>
+          <div class="room-card__desc">${room.desc}</div>
+        </span>
+        <span class="room-card__meta"><span class="${statusClass}">${statusText}</span></span>
+      </button>`;
+    }).join("");
+  }
+
+  continueToRooms() {
+    const pseudo = document.getElementById("pseudo").value.trim();
+    if (!pseudo) return alert("Entre ton pseudo pour jouer");
+    if (!db) {
+      return alert(FirebaseSetup.errorMessage || "Firebase non initialisé.");
+    }
+    if (!FirebaseSetup.ready) {
+      return alert("Firebase pas encore connecté. Attendez le message vert ou corrigez la configuration.");
+    }
+    this._pendingPseudo = pseudo;
+    localStorage.setItem(GameController.PSEUDO_KEY, pseudo);
+    document.getElementById("roomSelectPseudo").textContent = pseudo;
+    this.goToRoomSelect("Choisis une salle pour rejoindre la partie.");
+  }
+
+  selectRoom(roomId) {
+    if (!GameController.ROOMS.some((r) => r.id === roomId)) return;
+    if (this._joinAnimating) return;
+    this.room = roomId;
+    this.join();
   }
 
   loadSession(pseudo) {
@@ -4339,7 +4595,7 @@ class GameController {
       e.stopPropagation();
       if (e.key === "Enter") {
         e.preventDefault();
-        this.join();
+        this.continueToRooms();
       }
     });
     pseudo.addEventListener("click", (e) => e.stopPropagation());
@@ -4347,13 +4603,19 @@ class GameController {
 
     cta?.addEventListener("click", (e) => {
       e.stopPropagation();
-      this.join();
+      this.continueToRooms();
     });
 
     mouth.addEventListener("click", (e) => {
       if (e.target === pseudo || e.target.closest(".devil__mouth-cta")) return;
       pseudo.focus();
     });
+  }
+
+  updateRoomHeader() {
+    const meta = GameController.ROOMS.find((r) => r.id === this.room);
+    const sub = document.querySelector(".app-subtitle");
+    if (sub) sub.textContent = meta ? `${meta.icon} ${meta.name}` : "Multijoueur en ligne";
   }
 
   setJoinLoading(loading) {
@@ -4364,8 +4626,9 @@ class GameController {
   }
 
   join() {
-    const pseudo = document.getElementById("pseudo").value.trim();
+    const pseudo = this.getPseudo();
     if (!pseudo) return alert("Entre ton pseudo pour jouer");
+    if (!this.room) return alert("Choisis une salle d'abord.");
 
     if (!db) {
       return alert(FirebaseSetup.errorMessage || "Firebase non initialisé.");
@@ -4423,6 +4686,9 @@ class GameController {
         })
         .then(() => {
           LoginFX.finish();
+          this.stopRoomsListener();
+          document.body.classList.remove("room-select");
+          document.getElementById("roomSelect")?.classList.add("hidden");
           document.body.classList.add("in-game");
           document.getElementById("game").classList.remove("hidden");
           document.getElementById("quitBtn").classList.remove("hidden");
@@ -4435,6 +4701,7 @@ class GameController {
               ? `✅ Reconnecté en tant que ${pseudo}`
               : `✅ Connecté en tant que ${pseudo} — en attente du démarrage`;
           FirebaseSetup.setStatus("ok", statusMsg);
+          this.updateRoomHeader();
           TurnNotify.requestPermission();
           this.listenGame();
         })
@@ -4443,6 +4710,7 @@ class GameController {
         });
     }).catch((err) => {
       this._joinAnimating = false;
+      this.room = null;
       LoginFX.reset();
       this.setJoinLoading(false);
       if (err?.message === "FINISHED") {
@@ -5003,7 +5271,7 @@ class GameController {
         if (document.body.classList.contains("in-game")) {
           this.stopGameListeners();
           localStorage.removeItem(this.sessionStorageKey());
-          this.goToHome("La salle a été remise à zéro — entre ton pseudo pour rejouer.");
+          this.goToLogin("La salle a été remise à zéro — entre ton pseudo et choisis une salle.");
         }
         return;
       }
@@ -5011,7 +5279,7 @@ class GameController {
       if (document.body.classList.contains("in-game") && !game.players?.[this.playerId]) {
         if (this._isLeaving) return;
         this.stopGameListeners();
-        this.goToHome("Tu n'es plus dans la partie.");
+        this.goToRoomSelect("Tu n'es plus dans cette salle.");
         return;
       }
       if (game && Effects.gameHasPlusCards(game) && !this._plusMigrating) {
@@ -5459,15 +5727,55 @@ class GameController {
     this.roomRef().off();
   }
 
-  goToHome(statusMessage) {
+  goToLogin(statusMessage) {
     this.stopGameListeners();
+    this.stopRoomsListener();
+    this.room = null;
+    this._pendingPseudo = null;
     this.selectedTarget = null;
     this.lastGame = null;
     this._joinAnimating = false;
     this.setJoinLoading(false);
 
-    document.body.classList.remove("in-game", "game-started", "login-charging", "panel-open", "banner-open");
+    document.body.classList.remove("in-game", "room-select", "game-started", "login-charging", "panel-open", "banner-open");
     document.getElementById("game")?.classList.add("hidden");
+    document.getElementById("roomSelect")?.classList.add("hidden");
+    document.getElementById("quitBtn")?.classList.add("hidden");
+    document.getElementById("restartHeaderBtn")?.classList.add("hidden");
+    document.getElementById("forcePassBtn")?.classList.add("hidden");
+    document.getElementById("handHud")?.classList.add("hidden");
+    document.getElementById("gameEndOverlay")?.classList.add("hidden");
+    const pseudoEl = document.getElementById("pseudo");
+    if (pseudoEl) pseudoEl.value = "";
+    localStorage.removeItem(GameController.PSEUDO_KEY);
+    const sub = document.querySelector(".app-subtitle");
+    if (sub) sub.textContent = "Multijoueur en ligne";
+    LoginFX.reset();
+
+    if (statusMessage) FirebaseSetup.setStatus("ok", statusMessage);
+  }
+
+  goToRoomSelect(statusMessage) {
+    this.stopGameListeners();
+    this.room = null;
+    this.selectedTarget = null;
+    this.lastGame = null;
+    this._joinAnimating = false;
+    this.setJoinLoading(false);
+
+    const pseudo = this.getPseudo();
+    this._pendingPseudo = pseudo;
+    if (pseudo) {
+      document.getElementById("pseudo").value = pseudo;
+      const label = document.getElementById("roomSelectPseudo");
+      if (label) label.textContent = pseudo;
+      localStorage.setItem(GameController.PSEUDO_KEY, pseudo);
+    }
+
+    document.body.classList.remove("in-game", "game-started", "login-charging", "panel-open", "banner-open");
+    document.body.classList.add("room-select");
+    document.getElementById("game")?.classList.add("hidden");
+    document.getElementById("roomSelect")?.classList.remove("hidden");
     document.getElementById("quitBtn")?.classList.add("hidden");
     document.getElementById("restartHeaderBtn")?.classList.add("hidden");
     document.getElementById("forcePassBtn")?.classList.add("hidden");
@@ -5475,7 +5783,16 @@ class GameController {
     document.getElementById("gameEndOverlay")?.classList.add("hidden");
     LoginFX.reset();
 
-    if (statusMessage) FirebaseSetup.setStatus("ok", statusMessage);
+    const roomStatus = document.getElementById("roomSelectStatus");
+    if (roomStatus) {
+      roomStatus.className = "firebase-status loading";
+      roomStatus.textContent = "Chargement des salles…";
+    }
+    this.startRoomsListener();
+    if (statusMessage && roomStatus) {
+      roomStatus.className = "firebase-status ok";
+      roomStatus.textContent = statusMessage;
+    }
   }
 
   removePlayerFromGame(game, playerId) {
@@ -5518,7 +5835,7 @@ class GameController {
   }
 
   leaveGame() {
-    if (!confirm("Quitter la partie ?\n\nTu seras retiré de la salle. Les autres joueurs pourront continuer.")) return;
+    if (!confirm("Quitter cette salle ?\n\nTu retourneras au choix des salles. Ton pseudo est conservé.")) return;
 
     const playerId = this.playerId;
     this._isLeaving = true;
@@ -5532,8 +5849,7 @@ class GameController {
       return g;
     }).then(() => {
       this._isLeaving = false;
-      this.stopGameListeners();
-      this.goToHome("Tu as quitté la partie — entre ton pseudo pour revenir.");
+      this.goToRoomSelect("Tu as quitté — choisis une autre salle.");
     }).catch(() => {
       this._isLeaving = false;
       alert("Impossible de quitter pour le moment. Réessaie.");
@@ -5548,18 +5864,19 @@ class GameController {
         return alert("Seul le 1er joueur (👑 hôte) peut recommencer la partie pour tous.");
       }
       if (!confirm(
-        "Recommencer toute la partie ?\n\n" +
-        "• La salle sera supprimée pour tout le monde\n" +
+        "Recommencer toute la salle ?\n\n" +
+        "• La salle sera remise à zéro pour tout le monde\n" +
         "• Tu retourneras à l'accueil\n" +
-        "• Chaque joueur devra se reconnecter"
+        "• Tu devras entrer ton pseudo et choisir une nouvelle salle"
       )) return;
 
       this.stopGameListeners();
       localStorage.removeItem(this.sessionStorageKey());
+      localStorage.removeItem(GameController.PSEUDO_KEY);
       this.playerId = Math.random().toString(36).substring(2, 11);
       this.roomRef().remove()
-        .finally(() => this.goToHome("Partie remise à zéro — entre ton pseudo pour une nouvelle partie."))
-        .catch(() => this.goToHome("Partie remise à zéro — entre ton pseudo pour une nouvelle partie."));
+        .finally(() => this.goToLogin("Salle remise à zéro — entre ton pseudo et choisis une salle."))
+        .catch(() => this.goToLogin("Salle remise à zéro — entre ton pseudo et choisis une salle."));
     });
   }
 
@@ -5572,6 +5889,10 @@ const gameController = db
   ? new GameController()
   : {
       join() { alert(FirebaseSetup.errorMessage || "Firebase non configuré."); },
+      continueToRooms() { alert(FirebaseSetup.errorMessage || "Firebase non configuré."); },
+      selectRoom() { alert(FirebaseSetup.errorMessage || "Firebase non configuré."); },
+      goToLogin() { location.reload(); },
+      goToRoomSelect() { location.reload(); },
       leaveGame() { location.reload(); },
       restartAndGoHome() { location.reload(); },
       restartGame() { location.reload(); },
@@ -5581,7 +5902,7 @@ const gameController = db
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
+    navigator.serviceWorker.register("./sw.js").then((reg) => reg.update()).catch(() => {});
   });
 }
 </script>

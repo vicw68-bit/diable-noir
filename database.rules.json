@@ -8,7 +8,7 @@
     "rooms": {
       "$roomId": {
         ".read": "auth != null",
-        ".write": "auth != null && $roomId === 'main'",
+        ".write": "auth != null && $roomId.matches(/^(enfer|taverne|purgatoire|cave|abysses)$/)",
         ".validate": "newData.hasChildren(['players'])"
       }
     }
