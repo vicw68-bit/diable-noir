@@ -241,7 +241,17 @@
     body.in-game #roomSelect,
     body.room-select #login { display: none; }
 
-    body.room-select #roomSelect {
+    #roomSelect {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      width: 100%;
+      min-height: calc(100dvh - 24px);
+      padding: 28px 16px 40px;
+    }
+
+    #roomSelect:not(.hidden) {
       display: flex;
     }
 
@@ -312,15 +322,6 @@
       color: rgba(255, 120, 120, 0.55);
       margin-bottom: 8px;
       z-index: 1;
-    }
-
-    #roomSelect {
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      width: 100%;
-      min-height: calc(100dvh - 24px);
-      padding: 28px 16px 40px;
     }
 
     .room-select {
@@ -4501,7 +4502,10 @@ class GameController {
 
   startRoomsListener() {
     this.stopRoomsListener();
-    if (!db) return;
+    if (!db) {
+      this.renderRoomList(null);
+      return;
+    }
     this._onRoomsOverview = (snapshot) => {
       const statusEl = document.getElementById("roomSelectStatus");
       if (statusEl && document.body.classList.contains("room-select")) {
@@ -4510,13 +4514,24 @@ class GameController {
       }
       this.renderRoomList(snapshot.val());
     };
-    this.roomsOverviewRef().on("value", this._onRoomsOverview);
+    this._onRoomsError = (err) => {
+      const statusEl = document.getElementById("roomSelectStatus");
+      if (statusEl) {
+        statusEl.className = "firebase-status error";
+        statusEl.textContent = "Impossible de lire les salles — tu peux quand même rejoindre";
+      }
+      this.renderRoomList(null);
+    };
+    this.roomsOverviewRef().on("value", this._onRoomsOverview, this._onRoomsError);
+    this._roomsListenerBound = true;
   }
 
   stopRoomsListener() {
-    if (this._onRoomsOverview && db) {
-      this.roomsOverviewRef().off("value", this._onRoomsOverview);
+    if (this._roomsListenerBound && db) {
+      this.roomsOverviewRef().off("value");
+      this._roomsListenerBound = false;
       this._onRoomsOverview = null;
+      this._onRoomsError = null;
     }
   }
 
@@ -5788,6 +5803,7 @@ class GameController {
       roomStatus.className = "firebase-status loading";
       roomStatus.textContent = "Chargement des salles…";
     }
+    this.renderRoomList(null);
     this.startRoomsListener();
     if (statusMessage && roomStatus) {
       roomStatus.className = "firebase-status ok";

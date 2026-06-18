@@ -6,6 +6,7 @@
       ".validate": "newData.hasChildren(['t']) && newData.child('t').isNumber()"
     },
     "rooms": {
+      ".read": "auth != null",
       "$roomId": {
         ".read": "auth != null",
         ".write": "auth != null && $roomId.matches(/^(enfer|taverne|purgatoire|cave|abysses)$/)",
