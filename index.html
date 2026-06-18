@@ -5488,6 +5488,7 @@ class GameController {
       if (!snapshot.exists()) {
         if (document.body.classList.contains("in-game")) {
           this.stopGameListeners();
+          if (this._isLeaving) return;
           localStorage.removeItem(this.sessionStorageKey());
           this.goToLogin("La salle a été remise à zéro — entre ton pseudo et choisis une salle.");
         }
@@ -6059,22 +6060,40 @@ class GameController {
     if (!confirm("Quitter cette salle ?\n\nTu retourneras au choix des salles. Ton pseudo est conservé.")) return;
 
     const playerId = this.playerId;
+    const roomRef = this.roomRef();
     this._isLeaving = true;
-    this.roomRef().transaction((g) => {
-      if (!g?.players?.[playerId]) return;
-      const pseudo = g.players[playerId]?.pseudo || "?";
-      if (!this.removePlayerFromGame(g, playerId)) return;
-      if (!g.message?.includes("quitté") && !g.message?.includes("quitté la partie")) {
-        g.message = `👋 ${pseudo} a quitté la partie.`;
-      }
-      return g;
-    }).then(() => {
-      this._isLeaving = false;
-      this.goToRoomSelect("Tu as quitté — choisis une autre salle.");
-    }).catch(() => {
-      this._isLeaving = false;
-      alert("Impossible de quitter pour le moment. Réessaie.");
-    });
+    this.stopGameListeners();
+
+    roomRef.once("value")
+      .then((snap) => {
+        const game = snap.val();
+        if (!game?.players?.[playerId]) return;
+
+        const playerIds = Object.keys(game.players);
+        if (playerIds.length <= 1) {
+          return roomRef.remove();
+        }
+
+        return roomRef.transaction((g) => {
+          if (!g?.players?.[playerId]) return;
+          const pseudo = g.players[playerId]?.pseudo || "?";
+          if (!this.removePlayerFromGame(g, playerId)) return;
+          if (!g.message?.includes("quitté") && !g.message?.includes("quitté la partie")) {
+            g.message = `👋 ${pseudo} a quitté la partie.`;
+          }
+          return g;
+        });
+      })
+      .then(() => {
+        this._isLeaving = false;
+        localStorage.removeItem(this.sessionStorageKey());
+        this.goToRoomSelect("Tu as quitté — choisis une autre salle.");
+      })
+      .catch(() => {
+        this._isLeaving = false;
+        if (document.body.classList.contains("in-game")) this.listenGame();
+        alert("Impossible de quitter pour le moment. Réessaie.");
+      });
   }
 
   restartAndGoHome() {
