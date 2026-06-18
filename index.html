@@ -414,6 +414,48 @@
       margin-top: 2px;
     }
 
+    .room-card__players {
+      font-size: 0.72rem;
+      color: rgba(255, 190, 190, 0.7);
+      margin-top: 5px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .room-card__players--empty {
+      color: rgba(255, 140, 140, 0.35);
+      font-style: italic;
+    }
+
+    .lobby-toast {
+      position: fixed;
+      bottom: max(20px, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 8500;
+      max-width: min(92vw, 360px);
+      padding: 10px 20px;
+      background: rgba(12, 2, 2, 0.94);
+      border: 1px solid rgba(255, 70, 70, 0.45);
+      border-radius: 999px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+      color: #fff;
+      font-size: 0.88rem;
+      text-align: center;
+      pointer-events: none;
+      animation: lobby-toast-in 0.28s ease-out;
+    }
+
+    .lobby-toast.hidden { display: none; }
+
+    .lobby-toast--join { border-color: rgba(100, 220, 140, 0.5); }
+    .lobby-toast--leave { border-color: rgba(255, 120, 80, 0.45); }
+
+    @keyframes lobby-toast-in {
+      from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
     .room-card__meta {
       flex-shrink: 0;
       text-align: right;
@@ -2525,6 +2567,7 @@
 </div>
 
 <div id="whisperBanner" class="whisper-banner hidden" role="status"></div>
+<div id="lobbyToast" class="lobby-toast hidden" role="status" aria-live="polite"></div>
 
 <div id="codexModal" class="codex-modal hidden" aria-hidden="true">
   <div class="codex-modal__panel">
@@ -3476,6 +3519,25 @@ const TargetFlash = {
     if (!event || event.key === this.lastEventKey) return;
     this.lastEventKey = event.key;
     this.show(event);
+  },
+};
+
+const LobbyToast = {
+  _timer: null,
+
+  show(text, kind = "join") {
+    const el = document.getElementById("lobbyToast");
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove("hidden", "lobby-toast--join", "lobby-toast--leave");
+    el.classList.add(kind === "leave" ? "lobby-toast--leave" : "lobby-toast--join");
+    clearTimeout(this._timer);
+    this._timer = setTimeout(() => el.classList.add("hidden"), 3200);
+  },
+
+  hide() {
+    clearTimeout(this._timer);
+    document.getElementById("lobbyToast")?.classList.add("hidden");
   },
 };
 
@@ -4578,6 +4640,7 @@ class GameController {
     this._whisperTimer = null;
     this._lastMessageForSound = "";
     this._wasFinished = false;
+    this._lobbyKnown = null;
     this.setupListeners();
     GameSounds.syncBtn();
     this.restorePseudoField();
@@ -4840,12 +4903,19 @@ class GameController {
     }
   }
 
+  getRoomPseudos(game) {
+    if (!game?.players) return [];
+    const order = game.playerOrder || Object.keys(game.players);
+    return order.map((id) => game.players[id]?.pseudo).filter(Boolean);
+  }
+
   renderRoomList(roomsData) {
     const list = document.getElementById("roomList");
     if (!list) return;
     list.innerHTML = GameController.ROOMS.map((room) => {
       const game = roomsData?.[room.id];
       const count = game?.players ? Object.keys(game.players).length : 0;
+      const pseudos = this.getRoomPseudos(game);
       const started = !!game?.started;
       const finished = !!game?.sharedState?.finished;
       let statusClass = "room-card__status--wait";
@@ -4858,15 +4928,53 @@ class GameController {
       } else if (count) {
         statusText = `${count} en attente`;
       }
+      const playersLine = pseudos.length
+        ? `<div class="room-card__players" title="${escapeHtml(pseudos.join(", "))}">👥 ${escapeHtml(pseudos.join(" · "))}</div>`
+        : `<div class="room-card__players room-card__players--empty">Personne pour l'instant</div>`;
       return `<button type="button" class="room-card" onclick="gameController.selectRoom('${room.id}')">
         <span class="room-card__icon" aria-hidden="true">${room.icon}</span>
         <span class="room-card__body">
           <div class="room-card__name">${room.name}</div>
           <div class="room-card__desc">${room.desc}</div>
+          ${playersLine}
         </span>
         <span class="room-card__meta"><span class="${statusClass}">${statusText}</span></span>
       </button>`;
     }).join("");
+  }
+
+  detectLobbyChanges(game, order, players) {
+    if (game.started || game.sharedState?.finished) {
+      this._lobbyKnown = null;
+      return;
+    }
+
+    const current = new Map();
+    order.forEach((id) => {
+      if (players[id]?.pseudo) current.set(id, players[id].pseudo);
+    });
+
+    if (!this._lobbyKnown) {
+      this._lobbyKnown = current;
+      return;
+    }
+
+    for (const [id, pseudo] of current) {
+      if (!this._lobbyKnown.has(id) && id !== this.playerId) {
+        LobbyToast.show(`👋 ${pseudo} a rejoint`, "join");
+      }
+    }
+    for (const [id, pseudo] of this._lobbyKnown) {
+      if (!current.has(id)) {
+        LobbyToast.show(`🚪 ${pseudo} a quitté`, "leave");
+      }
+    }
+    this._lobbyKnown = current;
+  }
+
+  resetLobbyTracking() {
+    this._lobbyKnown = null;
+    LobbyToast.hide();
   }
 
   continueToRooms() {
@@ -5034,6 +5142,7 @@ class GameController {
         this.updateRoomHeader();
         TurnNotify.requestPermission();
         this.listenGame();
+        this._lobbyKnown = null;
         return new Promise((r) => {
           requestAnimationFrame(() => requestAnimationFrame(r));
         });
@@ -5654,8 +5763,11 @@ class GameController {
     panel.classList.toggle("hidden", !show);
     if (!show) {
       list.innerHTML = "";
+      this._lobbyKnown = null;
       return;
     }
+
+    this.detectLobbyChanges(game, order, players);
 
     list.innerHTML = "";
     order.forEach((id, idx) => {
@@ -6070,6 +6182,7 @@ class GameController {
   goToLogin(statusMessage) {
     this.stopGameListeners();
     this.stopRoomsListener();
+    this.resetLobbyTracking();
     this.room = null;
     this._pendingPseudo = null;
     this.selectedTarget = null;
@@ -6098,6 +6211,7 @@ class GameController {
 
   goToRoomSelect(statusMessage) {
     this.stopGameListeners();
+    this.resetLobbyTracking();
     this.room = null;
     this.selectedTarget = null;
     this.lastGame = null;

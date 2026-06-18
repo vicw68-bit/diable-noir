@@ -13,7 +13,7 @@
 
 - **2 joueurs minimum** (idéal en groupe)
 - **Temps réel** : tout le monde voit la même partie via Firebase
-- **Une seule salle publique** : partagez le lien, entrez un pseudo, c'est parti
+- **5 salles publiques** : choisissez votre salle, retrouvez vos potes
 - **Objectif** : être le premier à se débarrasser de toutes ses cartes… sans rester avec le **Diable Noir** 😈
 
 > 🍺 Jouez responsablement. L'alcool est optionnel — remplacez par de l'eau ou un soft si vous préférez.
@@ -23,11 +23,22 @@
 ## 🚀 Jouer en 30 secondes
 
 1. Ouvrez **[diable-noir.fr](https://diable-noir.fr/)**
-2. Entrez un **pseudo** → validez
-3. Le **premier joueur** (👑 hôte) clique sur **Démarrer**
-4. À votre tour : **choisissez une cible** sur le cercle (si la carte le demande), puis **cliquez une carte**
+2. Entrez un **pseudo** → validez (animation du diable 😈)
+3. **Choisissez une salle** parmi les 5 disponibles (pseudos visibles avant de rejoindre)
+4. Le **premier joueur** (👑 hôte) clique sur **Démarrer**
+5. À votre tour : **choisissez une cible** sur le cercle (si la carte le demande), puis **cliquez une carte**
 
 **Astuce** : bouton **?** en jeu = codex complet de toutes les cartes.
+
+### Les 5 salles
+
+| Salle | Ambiance |
+|-------|----------|
+| 🔥 L'Enfer | Fournaise endiablée |
+| 🍺 La Taverne | Entre potes, sans filtre |
+| ⚖️ Le Purgatoire | Votes & trahisons |
+| 🍷 La Cave Secrète | Sombre et vicieuse |
+| 🌑 Les Abysses | Là où tout bascule |
 
 ---
 
@@ -64,6 +75,7 @@ Détails complets → **[Règles du jeu](docs/regles-du-jeu.md)** · **[Liste de
 
 ## ✨ Fonctionnalités
 
+- **5 salles publiques** avec joueurs visibles avant de rejoindre
 - Multijoueur temps réel (Firebase)
 - **Codex** intégré (bouton `?`)
 - Sons, notifications « C'est ton tour », installable en **PWA** (écran d'accueil)

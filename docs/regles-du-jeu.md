@@ -10,7 +10,7 @@ Quand la **pioche est vide** et qu'il ne reste qu'un joueur avec des cartes, si 
 
 ## Mise en place
 
-1. **2 joueurs minimum** (pas de maximum fixe, mais une seule salle partagée en ligne).
+1. **2 joueurs minimum** (pas de maximum fixe ; choisissez une des **5 salles** en ligne).
 2. Chaque joueur choisit un **pseudo** unique.
 3. Le **premier arrivé** (👑 hôte) lance la partie avec **Démarrer**.
 4. Les cartes sont mélangées ; chaque joueur reçoit une main de départ.

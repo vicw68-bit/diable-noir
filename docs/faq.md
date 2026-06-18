@@ -6,20 +6,20 @@
 
 ### Comment rejoindre une partie ?
 
-Ouvrez [le jeu](https://diable-noir.fr/), entrez un pseudo et validez. Attendez que l'hôte démarre (minimum 2 joueurs).
+Ouvrez [le jeu](https://diable-noir.fr/), entrez un pseudo, **choisissez une salle** parmi les 5 disponibles (les pseudos présents sont affichés), puis attendez que l'hôte démarre (minimum 2 joueurs).
+
+### Les 5 salles — c'est quoi ?
+
+Cinq salles publiques indépendantes : **L'Enfer**, **La Taverne**, **Le Purgatoire**, **La Cave Secrète**, **Les Abysses**. Choisissez celle où sont vos potes (leurs pseudos s'affichent sur la carte de la salle).
 
 ### « Partie déjà en cours » — que faire ?
 
-- Si vous y étiez : reconnectez-vous avec **exactement le même pseudo**.
+- Si vous y étiez : reconnectez-vous avec **exactement le même pseudo** dans la **même salle**.
 - Sinon : demandez à l'hôte de cliquer **Recommencer**, ou attendez la fin de la partie.
 
 ### Puis-je jouer sur téléphone ?
 
 Oui. Le jeu est responsive. Sur iOS/Android vous pouvez l'ajouter à l'écran d'accueil (PWA) via le menu du navigateur.
-
-### Pourquoi une seule salle ?
-
-Pour l'instant tout le monde partage la salle Firebase `main`. Partagez le même lien avec votre groupe.
 
 ---
 

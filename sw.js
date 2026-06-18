@@ -1,4 +1,4 @@
-const CACHE = "diable-noir-v8";
+const CACHE = "diable-noir-v9";
 
 self.addEventListener("install", (event) => {
   if (self.location.protocol !== "https:") return;
