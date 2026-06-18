@@ -452,7 +452,7 @@
     .door-transition {
       position: fixed;
       inset: 0;
-      z-index: 9000;
+      z-index: 9600;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -587,12 +587,45 @@
     }
 
     .door-transition--exit {
-      animation: door-fade-out 0.48s ease-out forwards;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease-out;
     }
 
-    @keyframes door-fade-out {
-      from { opacity: 1; }
-      to { opacity: 0; }
+    /* Rideau noir — masque tout pendant la jointure */
+    .join-curtain {
+      position: fixed;
+      inset: 0;
+      z-index: 9500;
+      background: #000000;
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .join-curtain.hidden {
+      display: none;
+    }
+
+    .join-curtain--fade-out {
+      opacity: 0;
+      transition: opacity 0.55s ease-out;
+    }
+
+    body.room-joining #roomSelect,
+    body.room-joining #login {
+      display: none !important;
+    }
+
+    body.room-joining .app-main {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    body.room-joining.in-game .app-main {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
     }
 
     body.room-joining #roomSelect {
@@ -601,9 +634,7 @@
     }
 
     body.door-entering #roomSelect .room-select {
-      opacity: 0.25;
-      filter: blur(3px);
-      transition: opacity 0.3s, filter 0.3s;
+      display: none;
     }
 
     body.room-joining .room-card {
@@ -2423,6 +2454,8 @@
 
 <div id="devilChargeFlash" class="devil-charge-flash hidden" aria-hidden="true"></div>
 
+<div id="joinCurtain" class="join-curtain hidden" aria-hidden="true"></div>
+
 <div id="doorTransition" class="door-transition hidden" aria-hidden="true">
   <div class="door-transition__frame">
     <div class="door-transition__light"></div>
@@ -3510,14 +3543,41 @@ const LoginFX = {
 
 const RoomJoinFX = {
   OPEN_MS: 1300,
-  DISMISS_MS: 480,
+  FADE_MS: 550,
   _openPromise: null,
   _resolveOpen: null,
+
+  showCurtain() {
+    const curtain = document.getElementById("joinCurtain");
+    if (!curtain) return;
+    curtain.classList.remove("hidden", "join-curtain--fade-out");
+    curtain.style.opacity = "1";
+  },
+
+  hideCurtain() {
+    return new Promise((resolve) => {
+      const curtain = document.getElementById("joinCurtain");
+      if (!curtain) {
+        resolve();
+        return;
+      }
+      void curtain.offsetWidth;
+      curtain.classList.add("join-curtain--fade-out");
+      setTimeout(() => {
+        curtain.classList.add("hidden");
+        curtain.classList.remove("join-curtain--fade-out");
+        curtain.style.opacity = "";
+        resolve();
+      }, this.FADE_MS);
+    });
+  },
 
   start(roomMeta) {
     const overlay = document.getElementById("doorTransition");
     const label = document.getElementById("doorTransitionRoom");
     if (!overlay) return;
+
+    this.showCurtain();
 
     if (label) {
       label.textContent = roomMeta ? `${roomMeta.icon} ${roomMeta.name}` : "Entrée…";
@@ -3528,6 +3588,7 @@ const RoomJoinFX = {
     document.body.classList.add("door-entering", "room-joining");
 
     overlay.classList.remove("hidden", "door-transition--exit", "door-transition--hold", "door-transition--active");
+    overlay.style.opacity = "";
     void overlay.offsetWidth;
 
     this._openPromise = new Promise((resolve) => {
@@ -3552,29 +3613,26 @@ const RoomJoinFX = {
   },
 
   dismiss() {
-    return new Promise((resolve) => {
-      const overlay = document.getElementById("doorTransition");
-      if (!overlay) {
-        document.body.classList.remove("door-entering", "room-joining");
-        resolve();
-        return;
-      }
-      overlay.classList.remove("door-transition--active", "door-transition--hold");
-      overlay.classList.add("door-transition--exit");
-      setTimeout(() => {
-        overlay.classList.add("hidden");
-        overlay.classList.remove("door-transition--exit");
-        document.body.classList.remove("door-entering", "room-joining");
-        this._openPromise = null;
-        resolve();
-      }, this.DISMISS_MS);
+    const overlay = document.getElementById("doorTransition");
+    overlay?.classList.add("hidden", "door-transition--exit");
+    overlay?.classList.remove("door-transition--active", "door-transition--hold");
+    overlay.style.opacity = "0";
+    document.body.classList.remove("door-entering");
+    this._openPromise = null;
+    return this.hideCurtain().then(() => {
+      document.body.classList.remove("room-joining");
     });
   },
 
   reset() {
     const overlay = document.getElementById("doorTransition");
+    const curtain = document.getElementById("joinCurtain");
     overlay?.classList.add("hidden");
     overlay?.classList.remove("door-transition--active", "door-transition--hold", "door-transition--exit");
+    overlay.style.opacity = "";
+    curtain?.classList.add("hidden");
+    curtain?.classList.remove("join-curtain--fade-out");
+    curtain.style.opacity = "";
     document.body.classList.remove("door-entering", "room-joining");
     this._resolveOpen = null;
     this._openPromise = null;
@@ -4976,8 +5034,11 @@ class GameController {
         this.updateRoomHeader();
         TurnNotify.requestPermission();
         this.listenGame();
-        return RoomJoinFX.dismiss();
+        return new Promise((r) => {
+          requestAnimationFrame(() => requestAnimationFrame(r));
+        });
       })
+      .then(() => RoomJoinFX.dismiss())
       .then(() => {
         this._joinAnimating = false;
         this.setJoinLoading(false);
