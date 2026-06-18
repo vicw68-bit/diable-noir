@@ -1,71 +1,122 @@
 # 😈 Diable Noir
 
-Jeu de cartes à boire multijoueur en temps réel avec Firebase.
+**Jeu de cartes à boire multijoueur en ligne** — jouez depuis le navigateur, sans installation.
 
-## 🎮 Jouer en ligne
+[![Jouer](https://img.shields.io/badge/Jouer-maintenant-ff3333?style=for-the-badge)](https://vicw68-bit.github.io/diable-noir/)
+[![Licence MIT](https://img.shields.io/badge/Licence-MIT-blue?style=flat-square)](LICENSE)
 
-**https://vicw68-bit.github.io/diable-noir/**
+---
 
-Partagez ce lien — tout le monde joue dans la même salle Firebase, sans installation.
+## 🎯 C'est quoi ?
 
-## Déployer sur GitHub Pages
+**Diable Noir** est un party game inspiré des jeux de cartes type Uno, avec des gorgées, des malédictions et beaucoup de trahisons.
 
-1. Poussez le contenu de ce dossier sur la branche `main` du dépôt [vicw68-bit/diable-noir](https://github.com/vicw68-bit/diable-noir)
-2. GitHub → **Settings → Pages** → Source : **Deploy from branch** → `main` → `/ (root)`
-3. Attendez 1–2 minutes, puis ouvrez le lien ci-dessus
+- **2 joueurs minimum** (idéal en groupe)
+- **Temps réel** : tout le monde voit la même partie via Firebase
+- **Une seule salle publique** : partagez le lien, entrez un pseudo, c'est parti
+- **Objectif** : être le premier à se débarrasser de toutes ses cartes… sans rester avec le **Diable Noir** 😈
 
-Fichiers nécessaires sur GitHub :
-- `index.html` (config Firebase incluse)
-- `assets/` (images des cartes PNG)
+> 🍺 Jouez responsablement. L'alcool est optionnel — remplacez par de l'eau ou un soft si vous préférez.
 
-## Firebase
+---
 
-Projet : **diable-noir**  
-Realtime Database activée.
+## 🚀 Jouer en 30 secondes
 
-### 1. Activer l'authentification anonyme (obligatoire)
+1. Ouvrez **[vicw68-bit.github.io/diable-noir](https://vicw68-bit.github.io/diable-noir/)**
+2. Entrez un **pseudo** → validez
+3. Le **premier joueur** (👑 hôte) clique sur **Démarrer**
+4. À votre tour : **choisissez une cible** sur le cercle (si la carte le demande), puis **cliquez une carte**
 
-Firebase Console → **Authentication** → **Sign-in method** → **Anonymous** → **Activer**
+**Astuce** : bouton **?** en jeu = codex complet de toutes les cartes.
 
-Sans cette étape, le jeu affichera « Accès refusé ».
+---
 
-### 2. Publier les règles de sécurité
+## 📖 Règles (résumé)
 
-Les règles sont dans `database.rules.json` : accès **réservé aux utilisateurs authentifiés**, limité à `rooms/main` et au test `_ping`.
+| Élément | Règle |
+|--------|--------|
+| **Tour** | Jouez **1 carte**, puis piochez **1 carte** (sauf effets spéciaux) |
+| **Timer** | **25 secondes** par tour ; **25 s** aussi pour répondre (contre, Tribunal, Pickpocket…) |
+| **Cible** | Certaines cartes demandent de cliquer un joueur sur le cercle avant de jouer |
+| **Contres** | **Miroir**, **Protection**, **Retour de Flamme** — jouables depuis la main quand vous êtes visé |
+| **Fin de partie** | Pioche vide + un seul joueur a encore des cartes + c'est le **Diable Noir** → **cul sec** |
+| **Gorgées** | Compteur visible sur chaque joueur ; classement affiché en fin de partie |
 
-**Option A — Console Firebase**  
-Realtime Database → **Règles** → copier le contenu de `database.rules.json` → **Publier**
+Détails complets → **[Règles du jeu](docs/regles-du-jeu.md)** · **[Liste des cartes](docs/liste-des-cartes.md)** · **[FAQ](docs/faq.md)**
 
-**Option B — CLI Firebase**
+---
+
+## 🃏 Types de cartes (aperçu)
+
+| Symbole | Type | Exemples |
+|--------|------|----------|
+| ★ | Bonus | Pioche 2, Cadeau, Alliance |
+| ⚔ | Malus ciblé | Donne 2/3/5, Tribunal, Ennemi Public |
+| ☄ | Malus global | Bois 2, Tous Sauf Toi, Gauche |
+| ◆ | Spécial | Bouclier, Miroir, Bombe |
+| ? | Renseignement | Espion, Détective, Rayon X |
+| ♠ | Vol & échange | Voleur, Pickpocket, Échange Total |
+| ↻ | Tours & sens | Inversion, Passe Ton Tour, Gel |
+| ✦ | Chaos | Roulette Russe, Virus, Panique |
+| ☠ | Malédiction | Diable Noir, Malédiction |
+
+---
+
+## ✨ Fonctionnalités
+
+- Multijoueur temps réel (Firebase)
+- **Codex** intégré (bouton `?`)
+- Sons, notifications « C'est ton tour », installable en **PWA** (écran d'accueil)
+- Reconnexion par **même pseudo**
+- Infos secrètes (Espion / Détective) visibles seulement par le joueur qui joue
+- **Tribunal** : vote in-app pour qui boit 4 🍺
+
+---
+
+## 📚 Documentation
+
+| Document | Contenu |
+|----------|---------|
+| [Règles du jeu](docs/regles-du-jeu.md) | Déroulement, contres, fin de partie |
+| [Liste des cartes](docs/liste-des-cartes.md) | Toutes les cartes et leurs effets |
+| [FAQ](docs/faq.md) | Problèmes fréquents & astuces |
+| [Développement](docs/developpement.md) | Firebase, déploiement, structure du projet |
+
+Wiki GitHub (miroir) : [github.com/vicw68-bit/diable-noir/wiki](https://github.com/vicw68-bit/diable-noir/wiki)
+
+---
+
+## 🛠 Développeurs
+
+Projet **100 % front** : un `index.html`, Firebase Realtime Database, GitHub Pages.
 
 ```bash
-npm install -g firebase-tools
-firebase login
-firebase deploy --only database --project diable-noir
+git clone https://github.com/vicw68-bit/diable-noir.git
+# Ouvrir index.html via un serveur local ou GitHub Pages
 ```
 
-### Domaine autorisé (si erreur de clé API)
+Configuration Firebase, règles de sécurité et déploiement → **[docs/developpement.md](docs/developpement.md)**
 
-Firebase Console → **Authentication** → **Settings** → **Authorized domains**  
-Ajoutez : `vicw68-bit.github.io`
+---
 
-Si la clé API a des restrictions HTTP : Google Cloud Console → APIs → Credentials → autoriser `https://vicw68-bit.github.io/*`
-
-## Comment jouer
-
-1. Ouvrez le lien GitHub Pages
-2. Entrez un pseudo → **Entrer**
-3. Le premier joueur clique **Démarrer**
-4. À votre tour : choisissez une cible si besoin, cliquez une carte
-5. **Recommencer** efface la salle pour une nouvelle partie
-
-## Problèmes fréquents
+## ⚠️ Problème ?
 
 | Symptôme | Solution |
 |----------|----------|
-| Partie déjà en cours | Reconnectez-vous avec **exactement le même pseudo**, ou cliquez **Recommencer** / supprimez `rooms/main` |
-| PERMISSION_DENIED | Activez **Authentication → Anonymous**, puis publiez `database.rules.json` |
-| Clé API refusée | Ajoutez `vicw68-bit.github.io` aux domaines autorisés |
-| Cartes sans image | Ajoutez les PNG dans le dossier `assets/` sur GitHub |
+| Partie déjà en cours | Reconnectez-vous avec le **même pseudo**, ou l'hôte clique **Recommencer** |
+| Accès refusé Firebase | Activez **Auth anonyme** + publiez `database.rules.json` |
+| Cartes sans image | Optionnel : ajoutez les PNG dans `assets/` |
 
-Licence MIT — vicw68-bit
+→ Voir la **[FAQ complète](docs/faq.md)**
+
+---
+
+## 📄 Licence
+
+[MIT](LICENSE) — © vicw68-bit
+
+---
+
+<p align="center">
+  <a href="https://vicw68-bit.github.io/diable-noir/"><strong>▶ JOUER MAINTENANT</strong></a>
+</p>

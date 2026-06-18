@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: FAQ & dépannage
+    url: https://github.com/vicw68-bit/diable-noir/blob/main/docs/faq.md
+    about: Problèmes de connexion, partie bloquée, Firebase…
+  - name: Règles du jeu
+    url: https://github.com/vicw68-bit/diable-noir/blob/main/docs/regles-du-jeu.md
+    about: Comment jouer, contres, fin de partie

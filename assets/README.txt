@@ -14,16 +14,15 @@ Liste des fichiers :
 
   diable.png          give2.png           give3.png           give5.png
   double_dist.png     draw2.png           extra_turn.png      protection.png
-  gift.png            alliance.png        plus2.png           plus3.png
-  plus5.png           double_penalty.png  relentless.png      tribunal.png
-  public_enemy.png    drink2.png          drink3.png          drink5.png
-  all_except.png      left.png            discard.png         shield.png
-  mirror.png          double_effect.png   bomb.png            backfire.png
-  spy.png             detective.png       xray.png            thief.png
-  pickpocket.png      mystery_hand.png    black_market.png    full_swap.png
-  reverse.png         skip.png            freeze.png          all_draw.png
-  roulette.png        virus.png           curse.png           poison_gift.png
-  panic.png
+  gift.png            alliance.png        double_penalty.png  relentless.png
+  tribunal.png        public_enemy.png    drink2.png          drink3.png
+  drink5.png          all_except.png      left.png            discard.png
+  shield.png          mirror.png          double_effect.png   bomb.png
+  backfire.png        spy.png             detective.png       xray.png
+  thief.png           pickpocket.png      mystery_hand.png    black_market.png
+  full_swap.png       reverse.png         skip.png            freeze.png
+  all_draw.png        roulette.png        virus.png           curse.png
+  poison_gift.png     panic.png
 
 Couleurs par type (illustrations intégrées) :
   ★ Bonus (vert/or)   ⚔ Malus ciblé (rouge)   ☄ Malus global (orange)
