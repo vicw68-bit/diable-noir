@@ -448,6 +448,138 @@
       color: #fff;
     }
 
+    /* Transition porte — entrée en salle */
+    .door-transition {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at center, #1a0000 0%, #050000 70%);
+      pointer-events: all;
+    }
+
+    .door-transition.hidden { display: none; }
+
+    .door-transition__frame {
+      position: relative;
+      width: min(300px, 78vw);
+      height: min(400px, 58vh);
+      border: 4px solid #3a0808;
+      border-radius: 50% 50% 8px 8px / 28% 28% 8px 8px;
+      box-shadow:
+        0 0 40px rgba(255, 0, 0, 0.35),
+        inset 0 0 60px rgba(0, 0, 0, 0.9);
+      overflow: hidden;
+      background: #080000;
+    }
+
+    .door-transition__light {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 60%, rgba(255, 90, 40, 0.95) 0%, rgba(200, 20, 0, 0.5) 35%, transparent 70%);
+      opacity: 0;
+      transform: scale(0.6);
+      transition: opacity 0.7s ease 0.35s, transform 0.9s ease 0.35s;
+    }
+
+    .door-transition--active .door-transition__light {
+      opacity: 1;
+      transform: scale(1.15);
+    }
+
+    .door-transition__doors {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      z-index: 2;
+    }
+
+    .door-transition__wing {
+      flex: 1;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 40%),
+        linear-gradient(180deg, #4a0a0a 0%, #1a0202 55%, #0a0000 100%);
+      border: 2px solid #0a0000;
+      box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.85);
+      transform-origin: left center;
+      transition: transform 0.95s cubic-bezier(0.45, 0.05, 0.2, 1);
+    }
+
+    .door-transition__wing--right {
+      transform-origin: right center;
+      border-left-width: 1px;
+    }
+
+    .door-transition__wing--left {
+      border-right-width: 1px;
+    }
+
+    .door-transition__wing-knob {
+      position: absolute;
+      top: 52%;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffcc88, #8a5a20);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .door-transition__wing--left .door-transition__wing-knob { right: 14px; }
+    .door-transition__wing--right .door-transition__wing-knob { left: 14px; }
+
+    .door-transition--active .door-transition__wing--left {
+      transform: perspective(700px) rotateY(-82deg);
+    }
+
+    .door-transition--active .door-transition__wing--right {
+      transform: perspective(700px) rotateY(82deg);
+    }
+
+    .door-transition__room {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 18%;
+      z-index: 3;
+      text-align: center;
+      font-weight: 900;
+      font-size: clamp(1rem, 4vw, 1.35rem);
+      letter-spacing: 0.12em;
+      color: #fff;
+      text-shadow: 0 0 18px rgba(255, 60, 0, 0.9);
+      opacity: 0;
+      transform: translateY(12px) scale(0.95);
+      transition: opacity 0.45s ease 0.75s, transform 0.45s ease 0.75s;
+      pointer-events: none;
+    }
+
+    .door-transition--active .door-transition__room {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .door-transition--exit {
+      animation: door-zoom-through 0.42s ease-in forwards;
+    }
+
+    @keyframes door-zoom-through {
+      from { opacity: 1; transform: scale(1); }
+      to { opacity: 0; transform: scale(2.2); }
+    }
+
+    body.door-entering #roomSelect .room-select {
+      opacity: 0.25;
+      filter: blur(3px);
+      transition: opacity 0.3s, filter 0.3s;
+    }
+
+    body.room-joining .room-card {
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
     .devil {
       position: relative;
       width: min(440px, 94vw);
@@ -2260,6 +2392,17 @@
 
 <div id="devilChargeFlash" class="devil-charge-flash hidden" aria-hidden="true"></div>
 
+<div id="doorTransition" class="door-transition hidden" aria-hidden="true">
+  <div class="door-transition__frame">
+    <div class="door-transition__light"></div>
+    <div class="door-transition__room" id="doorTransitionRoom"></div>
+    <div class="door-transition__doors">
+      <div class="door-transition__wing door-transition__wing--left"><span class="door-transition__wing-knob"></span></div>
+      <div class="door-transition__wing door-transition__wing--right"><span class="door-transition__wing-knob"></span></div>
+    </div>
+  </div>
+</div>
+
 <div id="game" class="screen hidden">
   <div class="game-container">
     <div class="top-section">
@@ -3331,6 +3474,47 @@ const LoginFX = {
       flash.classList.remove("devil-charge-flash--exit");
       flash.classList.add("hidden");
     }, 450);
+  },
+};
+
+const RoomJoinFX = {
+  DURATION_MS: 1550,
+
+  playEnter(roomMeta) {
+    return new Promise((resolve) => {
+      const overlay = document.getElementById("doorTransition");
+      const label = document.getElementById("doorTransitionRoom");
+      if (!overlay) {
+        resolve();
+        return;
+      }
+      if (label) {
+        label.textContent = roomMeta ? `${roomMeta.icon} ${roomMeta.name}` : "Entrée…";
+      }
+      overlay.classList.remove("hidden", "door-transition--exit");
+      void overlay.offsetWidth;
+      document.body.classList.add("door-entering", "room-joining");
+      overlay.classList.add("door-transition--active");
+      try { navigator.vibrate?.([35, 25, 90]); } catch { /* ignore */ }
+
+      setTimeout(() => {
+        overlay.classList.remove("door-transition--active");
+        overlay.classList.add("door-transition--exit");
+        setTimeout(() => {
+          overlay.classList.add("hidden");
+          overlay.classList.remove("door-transition--exit");
+          document.body.classList.remove("door-entering", "room-joining");
+          resolve();
+        }, 420);
+      }, this.DURATION_MS);
+    });
+  },
+
+  reset() {
+    const overlay = document.getElementById("doorTransition");
+    overlay?.classList.add("hidden");
+    overlay?.classList.remove("door-transition--active", "door-transition--exit");
+    document.body.classList.remove("door-entering", "room-joining");
   },
 };
 
@@ -4573,10 +4757,27 @@ class GameController {
     if (!FirebaseSetup.ready) {
       return alert("Firebase pas encore connecté. Attendez le message vert ou corrigez la configuration.");
     }
-    this._pendingPseudo = pseudo;
-    localStorage.setItem(GameController.PSEUDO_KEY, pseudo);
-    document.getElementById("roomSelectPseudo").textContent = pseudo;
-    this.goToRoomSelect("Choisis une salle pour rejoindre la partie.");
+    if (this._joinAnimating) return;
+
+    this._joinAnimating = true;
+    this.setJoinLoading(true);
+
+    LoginFX.playCharge()
+      .then(() => {
+        LoginFX.finish();
+        return new Promise((r) => setTimeout(r, 280));
+      })
+      .then(() => {
+        this._pendingPseudo = pseudo;
+        localStorage.setItem(GameController.PSEUDO_KEY, pseudo);
+        document.getElementById("roomSelectPseudo").textContent = pseudo;
+        this.goToRoomSelect("Choisis une salle pour rejoindre la partie.");
+      })
+      .finally(() => {
+        this._joinAnimating = false;
+        this.setJoinLoading(false);
+        LoginFX.reset();
+      });
   }
 
   selectRoom(roomId) {
@@ -4656,7 +4857,9 @@ class GameController {
     this._joinAnimating = true;
     this.setJoinLoading(true);
 
-    LoginFX.playCharge().then(() => {
+    const roomMeta = GameController.ROOMS.find((r) => r.id === this.room);
+
+    RoomJoinFX.playEnter(roomMeta).then(() => {
       FirebaseSetup.setStatus("loading", "Connexion en cours…");
 
       let rejoined = false;
@@ -4700,7 +4903,6 @@ class GameController {
           return this.roomRef().child(`players/${this.playerId}`).set(defaultPlayer(pseudo));
         })
         .then(() => {
-          LoginFX.finish();
           this.stopRoomsListener();
           document.body.classList.remove("room-select");
           document.getElementById("roomSelect")?.classList.add("hidden");
@@ -4726,6 +4928,7 @@ class GameController {
     }).catch((err) => {
       this._joinAnimating = false;
       this.room = null;
+      RoomJoinFX.reset();
       LoginFX.reset();
       this.setJoinLoading(false);
       if (err?.message === "FINISHED") {
@@ -5766,6 +5969,7 @@ class GameController {
     const sub = document.querySelector(".app-subtitle");
     if (sub) sub.textContent = "Multijoueur en ligne";
     LoginFX.reset();
+    RoomJoinFX.reset();
 
     if (statusMessage) FirebaseSetup.setStatus("ok", statusMessage);
   }
@@ -5797,6 +6001,7 @@ class GameController {
     document.getElementById("handHud")?.classList.add("hidden");
     document.getElementById("gameEndOverlay")?.classList.add("hidden");
     LoginFX.reset();
+    RoomJoinFX.reset();
 
     const roomStatus = document.getElementById("roomSelectStatus");
     if (roomStatus) {
