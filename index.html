@@ -4641,6 +4641,7 @@ class GameController {
     this._lastMessageForSound = "";
     this._wasFinished = false;
     this._lobbyKnown = null;
+    this._roomsPollTimer = null;
     this.setupListeners();
     GameSounds.syncBtn();
     this.restorePseudoField();
@@ -4851,6 +4852,8 @@ class GameController {
     return db.ref(`rooms/${this.room}`);
   }
 
+  static ROOMS_POLL_MS = 2000;
+
   roomsOverviewRef() {
     return db.ref("rooms");
   }
@@ -4892,9 +4895,29 @@ class GameController {
     };
     this.roomsOverviewRef().on("value", this._onRoomsOverview, this._onRoomsError);
     this._roomsListenerBound = true;
+    this.refreshRoomsFromServer();
+    this._roomsPollTimer = setInterval(() => this.refreshRoomsFromServer(), GameController.ROOMS_POLL_MS);
+  }
+
+  refreshRoomsFromServer() {
+    if (!db || !document.body.classList.contains("room-select")) return;
+    const ref = this.roomsOverviewRef();
+    const apply = (snap) => {
+      if (!document.body.classList.contains("room-select")) return;
+      this.renderRoomList(snap.val());
+    };
+    if (typeof ref.get === "function") {
+      ref.get({ source: "server" }).then(apply).catch(() => {});
+    } else {
+      ref.once("value", apply);
+    }
   }
 
   stopRoomsListener() {
+    if (this._roomsPollTimer) {
+      clearInterval(this._roomsPollTimer);
+      this._roomsPollTimer = null;
+    }
     if (this._roomsListenerBound && db) {
       this.roomsOverviewRef().off("value");
       this._roomsListenerBound = false;
@@ -4905,8 +4928,21 @@ class GameController {
 
   getRoomPseudos(game) {
     if (!game?.players) return [];
-    const order = game.playerOrder || Object.keys(game.players);
-    return order.map((id) => game.players[id]?.pseudo).filter(Boolean);
+    const ids = game.playerOrder || Object.keys(game.players);
+    return ids
+      .filter((id) => game.players[id]?.pseudo)
+      .map((id) => game.players[id].pseudo);
+  }
+
+  bindPlayerPresence() {
+    if (!db || !this.room || !this.playerId) return;
+    const playerRef = this.roomRef().child(`players/${this.playerId}`);
+    playerRef.onDisconnect().remove().catch(() => {});
+  }
+
+  cancelPlayerPresence() {
+    if (!db || !this.room || !this.playerId) return Promise.resolve();
+    return this.roomRef().child(`players/${this.playerId}`).onDisconnect().cancel().catch(() => {});
   }
 
   renderRoomList(roomsData) {
@@ -5055,6 +5091,12 @@ class GameController {
       if (e.target === pseudo || e.target.closest(".devil__mouth-cta")) return;
       pseudo.focus();
     });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && document.body.classList.contains("room-select")) {
+        this.refreshRoomsFromServer();
+      }
+    });
   }
 
   updateRoomHeader() {
@@ -5121,11 +5163,15 @@ class GameController {
         if (session?.playerId) this.playerId = session.playerId;
         this.saveSession(pseudo);
         return this.roomRef().child(`players/${this.playerId}`).set(defaultPlayer(pseudo))
-          .then(() => ({ rejoined: false, rejoinedInStartedGame: false }));
+          .then(() => {
+            this.bindPlayerPresence();
+            return { rejoined: false, rejoinedInStartedGame: false };
+          });
       });
 
     Promise.all([joinFirebase, RoomJoinFX.whenOpen()])
       .then(([result]) => {
+        this.bindPlayerPresence();
         this.stopRoomsListener();
         document.body.classList.add("in-game");
         document.getElementById("game").classList.remove("hidden");
@@ -6302,27 +6348,36 @@ class GameController {
     roomRef.once("value")
       .then((snap) => {
         const game = snap.val();
-        if (!game?.players?.[playerId]) return;
+        if (!game?.players?.[playerId]) return this.cancelPlayerPresence();
 
         const playerIds = Object.keys(game.players);
-        if (playerIds.length <= 1) {
-          return roomRef.remove();
-        }
+        const playerRef = roomRef.child(`players/${playerId}`);
 
-        return roomRef.transaction((g) => {
-          if (!g?.players?.[playerId]) return;
-          const pseudo = g.players[playerId]?.pseudo || "?";
-          if (!this.removePlayerFromGame(g, playerId)) return;
-          if (!g.message?.includes("quitté") && !g.message?.includes("quitté la partie")) {
-            g.message = `👋 ${pseudo} a quitté la partie.`;
+        return this.cancelPlayerPresence().then(() => {
+          if (playerIds.length <= 1) {
+            return roomRef.remove();
           }
-          return g;
+
+          if (!game.started) {
+            return playerRef.remove();
+          }
+
+          return roomRef.transaction((g) => {
+            if (!g?.players?.[playerId]) return;
+            const pseudo = g.players[playerId]?.pseudo || "?";
+            if (!this.removePlayerFromGame(g, playerId)) return;
+            if (!g.message?.includes("quitté") && !g.message?.includes("quitté la partie")) {
+              g.message = `👋 ${pseudo} a quitté la partie.`;
+            }
+            return g;
+          });
         });
       })
       .then(() => {
         this._isLeaving = false;
         localStorage.removeItem(this.sessionStorageKey());
         this.goToRoomSelect("Tu as quitté — choisis une autre salle.");
+        this.refreshRoomsFromServer();
       })
       .catch(() => {
         this._isLeaving = false;
