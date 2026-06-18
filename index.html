@@ -2,7 +2,13 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#ff3333">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Diable Noir">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/diable.png">
   <title>😈 Diable Noir - Jeu de Cartes</title>
   <style>
     :root {
@@ -177,6 +183,21 @@
         inset 0 1px 0 rgba(255, 180, 120, 0.15),
         0 0 20px rgba(255, 100, 0, 0.22);
     }
+
+    .codex-btn, .sound-btn {
+      background: linear-gradient(180deg, #141828 0%, #0c1018 100%);
+      border: 1px solid rgba(120, 160, 255, 0.35);
+      color: #aaccff;
+      box-shadow: inset 0 1px 0 rgba(160, 200, 255, 0.08);
+    }
+
+    .codex-btn:hover:not(:disabled), .sound-btn:hover:not(:disabled) {
+      background: linear-gradient(180deg, #1c2440 0%, #101828 100%);
+      border-color: rgba(140, 180, 255, 0.55);
+      color: #cce0ff;
+    }
+
+    .sound-btn.sound-btn--off { opacity: 0.55; }
 
     @media (max-width: 520px) {
       .app-header { padding: 8px 10px 9px; gap: 8px; }
@@ -987,6 +1008,47 @@
     .player.protected { border-color: #00ff88; }
     .player.enemy { border-color: #ff00ff; }
 
+    .player.target-valid {
+      border-color: #00ffcc;
+      box-shadow: 0 0 14px rgba(0, 255, 204, 0.35);
+    }
+
+    .player.target-invalid {
+      opacity: 0.32;
+      filter: grayscale(0.6);
+      pointer-events: none;
+    }
+
+    .player.tribunal-pick {
+      border-color: #cc88ff;
+      animation: turn-glow 1.8s ease-in-out infinite;
+    }
+
+    .player.tribunal-done {
+      border-color: #8866cc;
+      opacity: 0.75;
+    }
+
+    .card.playable-ready {
+      box-shadow: 0 0 14px rgba(0, 255, 204, 0.45);
+      outline: 2px solid rgba(0, 255, 204, 0.55);
+    }
+
+    .card.needs-target-pick {
+      animation: card-needs-target 1.3s ease-in-out infinite;
+    }
+
+    @keyframes card-needs-target {
+      0%, 100% { box-shadow: 0 0 8px rgba(255, 200, 0, 0.25); }
+      50% { box-shadow: 0 0 18px rgba(255, 200, 0, 0.55); outline: 2px solid rgba(255, 200, 0, 0.5); }
+    }
+
+    .card.highlighted-pick {
+      transform: translateY(-10px) scale(1.04);
+      outline: 2px solid #ffcc00;
+      z-index: 5;
+    }
+
     .player-name { font-weight: 700; font-size: 0.9em; }
     .player-badges { font-size: 1em; margin: 4px 0; letter-spacing: 1px; min-height: 1.3em; }
     .player-status { font-size: 0.75em; color: #999; }
@@ -1747,6 +1809,162 @@
       box-shadow: 0 0 22px rgba(255, 0, 0, 0.55);
       animation: turn-glow 1.5s ease-in-out infinite;
     }
+
+    .whisper-banner {
+      position: fixed;
+      top: 58px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 280;
+      max-width: min(92vw, 420px);
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #1a1030 0%, #0e0820 100%);
+      border: 1px solid rgba(160, 120, 255, 0.5);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(80, 40, 160, 0.35);
+      font-size: 0.9rem;
+      line-height: 1.4;
+      text-align: center;
+      animation: whisper-in 0.25s ease-out;
+    }
+
+    .whisper-banner.hidden { display: none; }
+
+    @keyframes whisper-in {
+      from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .codex-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+    }
+
+    .codex-modal.hidden { display: none; }
+
+    .codex-modal__panel {
+      width: min(100%, 720px);
+      max-height: 85vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: #121218;
+      border: 1px solid rgba(255, 80, 80, 0.35);
+      border-radius: 16px 16px 12px 12px;
+      box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .codex-modal__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .codex-modal__head h2 {
+      font-size: 1rem;
+      letter-spacing: 0.12em;
+      color: #ff6666;
+    }
+
+    .codex-modal__close {
+      background: transparent;
+      border: none;
+      color: #aaa;
+      font-size: 1.4rem;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    .codex-modal__body {
+      overflow-y: auto;
+      padding: 12px 14px 20px;
+    }
+
+    .codex-section { margin-bottom: 16px; }
+
+    .codex-section__title {
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    .codex-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .codex-card {
+      background: #1a1a22;
+      border-radius: 10px;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .codex-card__icon { font-size: 1.5rem; margin-bottom: 4px; }
+    .codex-card__name { font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; }
+    .codex-card__desc { font-size: 0.68rem; color: #aaa; line-height: 1.35; }
+
+    .game-end-overlay__ranking {
+      width: 100%;
+      margin: 12px 0 16px;
+      text-align: left;
+      font-size: 0.82rem;
+    }
+
+    .game-end-overlay__ranking h3 {
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .game-end-rank {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .game-end-rank--loser {
+      background: rgba(255, 50, 50, 0.15);
+      border: 1px solid rgba(255, 80, 80, 0.35);
+    }
+
+    .game-end-rank__pos { color: #888; min-width: 1.5em; }
+    .game-end-rank__drinks { font-weight: 700; color: #ffaa44; }
+
+    .tribunal-votes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+      justify-content: center;
+    }
+
+    .tribunal-vote-chip {
+      font-size: 0.72rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(160, 120, 255, 0.15);
+      border: 1px solid rgba(160, 120, 255, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -1759,6 +1977,8 @@
     </div>
   </div>
   <div class="header-actions">
+    <button id="codexBtn" class="codex-btn" type="button" onclick="Codex.open()" title="Codex des cartes">?</button>
+    <button id="soundBtn" class="sound-btn" type="button" onclick="GameSounds.toggle()" title="Sons on/off">🔊</button>
     <button id="forcePassBtn" class="force-pass-btn hidden" onclick="gameController.forcePassTurn()" title="Anti-bug : annule l'action en cours, passe ton tour et pioche 1 carte">
       <span class="header-btn__icon" aria-hidden="true">⏭</span>
       <span class="force-pass-label">Passer ton tour</span>
@@ -1924,6 +2144,24 @@
   <div id="pickpocketCards" class="panel-cards"></div>
 </div>
 
+<div id="tribunalPanel" class="floating-panel hidden">
+  <h3>⚖️ Tribunal — vote !</h3>
+  <p id="tribunalText">Qui doit boire 4 🍺 ? Clique un joueur sur le cercle.</p>
+  <div id="tribunalVotes" class="tribunal-votes"></div>
+</div>
+
+<div id="whisperBanner" class="whisper-banner hidden" role="status"></div>
+
+<div id="codexModal" class="codex-modal hidden" aria-hidden="true">
+  <div class="codex-modal__panel">
+    <div class="codex-modal__head">
+      <h2>📖 CODEX DES CARTES</h2>
+      <button type="button" class="codex-modal__close" onclick="Codex.close()" aria-label="Fermer">×</button>
+    </div>
+    <div id="codexBody" class="codex-modal__body"></div>
+  </div>
+</div>
+
 <div id="cardInspect" class="card-inspect hidden" aria-hidden="true">
   <div class="card-inspect__backdrop"></div>
   <div class="card-inspect__panel">
@@ -1947,6 +2185,7 @@
     <div id="gameEndEmoji" class="game-end-overlay__emoji"></div>
     <h2 id="gameEndTitle" class="game-end-overlay__title"></h2>
     <p id="gameEndText" class="game-end-overlay__text"></p>
+    <div id="gameEndRanking" class="game-end-overlay__ranking hidden"></div>
     <p id="gameEndSub" class="game-end-overlay__sub"></p>
     <button id="restartBtn" class="game-end-overlay__btn hidden" onclick="gameController.restartGame()">🔄 Recommencer</button>
   </div>
@@ -2089,6 +2328,144 @@ function shuffle(array) {
   return arr;
 }
 
+const GameSounds = {
+  enabled: localStorage.getItem("dn-sound") !== "off",
+  ctx: null,
+
+  init() {
+    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (this.ctx.state === "suspended") this.ctx.resume();
+  },
+
+  toggle() {
+    this.enabled = !this.enabled;
+    localStorage.setItem("dn-sound", this.enabled ? "on" : "off");
+    this.syncBtn();
+    if (this.enabled) this.play("card");
+  },
+
+  syncBtn() {
+    const btn = document.getElementById("soundBtn");
+    if (!btn) return;
+    btn.textContent = this.enabled ? "🔊" : "🔇";
+    btn.classList.toggle("sound-btn--off", !this.enabled);
+    btn.title = this.enabled ? "Couper les sons" : "Activer les sons";
+  },
+
+  play(type) {
+    if (!this.enabled) return;
+    try {
+      this.init();
+      const ctx = this.ctx;
+      const presets = {
+        card: [{ f: 520, t: "sine", d: 0.07, v: 0.07 }, { f: 780, t: "sine", d: 0.05, v: 0.05, delay: 0.06 }],
+        counter: [{ f: 280, t: "square", d: 0.1, v: 0.05 }, { f: 420, t: "square", d: 0.08, v: 0.04, delay: 0.09 }],
+        drink: [{ f: 200, t: "triangle", d: 0.12, v: 0.09 }],
+        win: [{ f: 523, t: "sine", d: 0.12, v: 0.08 }, { f: 659, t: "sine", d: 0.12, v: 0.08, delay: 0.1 }, { f: 784, t: "sine", d: 0.2, v: 0.08, delay: 0.2 }],
+        lose: [{ f: 180, t: "sawtooth", d: 0.35, v: 0.06 }],
+        turn: [{ f: 660, t: "sine", d: 0.1, v: 0.07 }, { f: 880, t: "sine", d: 0.12, v: 0.06, delay: 0.11 }],
+      };
+      (presets[type] || presets.card).forEach((p) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = p.t;
+        osc.frequency.value = p.f;
+        const start = ctx.currentTime + (p.delay || 0);
+        gain.gain.setValueAtTime(p.v, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + p.d);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + p.d);
+      });
+    } catch { /* ignore */ }
+  },
+};
+
+const TurnNotify = {
+  _lastKey: null,
+
+  requestPermission() {
+    if (!("Notification" in window) || Notification.permission !== "default") return;
+    Notification.requestPermission().catch(() => {});
+  },
+
+  maybeNotify(game, isMyTurn, blocking) {
+    if (!isMyTurn || blocking || document.visibilityState === "visible") return;
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const key = `${game.currentPlayerIndex}-${game.turnDeadlineAt}`;
+    if (this._lastKey === key) return;
+    this._lastKey = key;
+    try {
+      new Notification("Diable Noir", {
+        body: "C'est ton tour !",
+        icon: assetUrl("diable.png"),
+        tag: "diable-noir-turn",
+      });
+      GameSounds.play("turn");
+    } catch { /* ignore */ }
+  },
+};
+
+const Codex = {
+  TYPE_NAMES: {
+    bonus: "★ Bonus",
+    malus_target: "⚔ Malus ciblé",
+    malus_global: "☄ Malus global",
+    special: "◆ Spécial",
+    info: "? Info",
+    steal: "♠ Vol",
+    uno: "↻ Uno",
+    chaos: "✦ Chaos",
+    curse: "☠ Malédiction",
+  },
+
+  open() {
+    const modal = document.getElementById("codexModal");
+    const body = document.getElementById("codexBody");
+    if (!modal || !body) return;
+    body.innerHTML = "";
+    const byType = {};
+    Object.keys(CardVisuals.ART).forEach((id) => {
+      const card = { id, type: Effects.getCardTypeForCodex(id) };
+      const type = card.type || "bonus";
+      if (!byType[type]) byType[type] = [];
+      byType[type].push(card);
+    });
+    Object.entries(this.TYPE_NAMES).forEach(([type, label]) => {
+      const cards = byType[type];
+      if (!cards?.length) return;
+      const section = document.createElement("div");
+      section.className = "codex-section";
+      section.innerHTML = `<div class="codex-section__title">${label}</div>`;
+      const grid = document.createElement("div");
+      grid.className = "codex-grid";
+      cards.forEach((card) => {
+        const meta = CardVisuals.meta(card);
+        const el = document.createElement("div");
+        el.className = "codex-card";
+        el.innerHTML = `
+          <div class="codex-card__icon">${meta.icon}</div>
+          <div class="codex-card__name">${card.id.replace(/_/g, " ")}</div>
+          <div class="codex-card__desc">${meta.desc}</div>`;
+        grid.appendChild(el);
+      });
+      section.appendChild(grid);
+      body.appendChild(section);
+    });
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+    modal.onclick = (e) => { if (e.target === modal) this.close(); };
+  },
+
+  close() {
+    const modal = document.getElementById("codexModal");
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+  },
+};
+
 /** Illustrations intégrées + PNG optionnels dans assets/ */
 const CardVisuals = {
   TYPE_LABELS: {
@@ -2099,9 +2476,9 @@ const CardVisuals = {
   ART: {
     DIABLE_NOIR: { icon: "😈", badge: "PERDU", desc: "Non jouable, non défaussable. Quand la pioche est vide et que tout le monde a joué ses cartes, celui qui reste avec cette carte boit cul sec." },
     CURSE: { icon: "☠️", badge: "MALÉDICTION", desc: "Non jouable. Tant qu'elle reste dans ta main, tu bois 1 🍺 au début de chaque tour." },
-    GIVE_2: { icon: "🍻", badge: "+2 🍺", desc: "Cible 1 joueur : il boit 2 🍺. Contrable avec Protection ou Miroir." },
-    GIVE_3: { icon: "🍻", badge: "+3 🍺", desc: "Cible 1 joueur : il boit 3 🍺. Contrable avec Protection ou Miroir." },
-    GIVE_5: { icon: "🍻", badge: "+5 🍺", desc: "Cible 1 joueur : il boit 5 🍺. Contrable avec Protection ou Miroir." },
+    GIVE_2: { icon: "🍻", badge: "+2 🍺", desc: "Cible 1 joueur : il boit 2 🍺. Contrable (Miroir, Protection, Retour de Flamme). Bouclier passif possible." },
+    GIVE_3: { icon: "🍻", badge: "+3 🍺", desc: "Cible 1 joueur : il boit 3 🍺. Contrable (Miroir, Protection, Retour de Flamme). Bouclier passif possible." },
+    GIVE_5: { icon: "🍻", badge: "+5 🍺", desc: "Cible 1 joueur : il boit 5 🍺. Contrable (Miroir, Protection, Retour de Flamme). Bouclier passif possible." },
     DOUBLE_DISTRIBUTION: { icon: "👥", badge: "+2 next", desc: "Ta prochaine carte Donne 2/3/5 ou +2/+3/+5 inflige 2 🍺 supplémentaires à la cible, puis l'effet expire." },
     DRAW_2: { icon: "🃏", badge: "+2 cartes", desc: "Pioche 2 cartes immédiatement." },
     EXTRA_TURN: { icon: "🔁", badge: "Rejoue", desc: "Tu rejoues immédiatement après ce tour (sans passer la main)." },
@@ -2113,8 +2490,8 @@ const CardVisuals = {
     PLUS5: { icon: "➕", badge: "+5 malus", desc: "Cible 1 joueur : il boit 5 🍺. Contrable (Miroir, Protection, Retour de Flamme)." },
     DOUBLE_PENALTY: { icon: "⏳", badge: "Différé", desc: "Cible 1 joueur : boit 2 🍺 maintenant + 2 🍺 supplémentaires au début de son prochain tour." },
     RELENTLESS: { icon: "🎯", badge: "Acharnement", desc: "Cible 1 joueur : boit 1 🍺 × nombre d'adversaires. Contrable." },
-    TRIBUNAL: { icon: "⚖️", badge: "4 🍺 oral", desc: "Annonce « Tribunal » : votez à l'oral pour qui boit 4 🍺. Le tour passe au joueur suivant." },
-    PUBLIC_ENEMY: { icon: "👿", badge: "Ennemi", desc: "Cible 1 joueur : Ennemi Public jusqu'à son prochain tour (+1 🍺 sur les cartes Donne +2/+3/+5 reçues)." },
+    TRIBUNAL: { icon: "⚖️", badge: "4 🍺 vote", desc: "Tous les joueurs votent in-app pour qui boit 4 🍺. Majorité gagne (égalité = tirage au sort)." },
+    PUBLIC_ENEMY: { icon: "👿", badge: "Ennemi", desc: "Cible 1 joueur : Ennemi Public jusqu'à son prochain tour (+1 🍺 sur les cartes Donne 2/3/5 reçues)." },
     DRINK_2: { icon: "🍺", badge: "Bois 2", desc: "Tu bois 2 🍺 toi-même." },
     DRINK_3: { icon: "🍺", badge: "Bois 3", desc: "Tu bois 3 🍺 toi-même." },
     DRINK_5: { icon: "🍺", badge: "Bois 5", desc: "Tu bois 5 🍺 toi-même." },
@@ -2745,7 +3122,6 @@ const LoginFX = {
 function defaultSharedState() {
   return {
     extraTurn: false,
-    doubleNextEffect: false,
     bombActive: false,
     tribunal: null,
     pickpocket: null,
@@ -2788,9 +3164,6 @@ class Deck {
     deck.push({ id: "DIABLE_NOIR", type: "curse", name: "Diable Noir", img: "diable.png" });
 
     const bonus = [
-      { id: "GIVE_2", name: "Donne 2", img: "give2.png", qty: 5 },
-      { id: "GIVE_3", name: "Donne 3", img: "give3.png", qty: 4 },
-      { id: "GIVE_5", name: "Donne 5", img: "give5.png", qty: 3 },
       { id: "DOUBLE_DISTRIBUTION", name: "Double Distribution", img: "double_dist.png", qty: 3 },
       { id: "DRAW_2", name: "Pioche 2", img: "draw2.png", qty: 2 },
       { id: "EXTRA_TURN", name: "Deuxième Tour", img: "extra_turn.png", qty: 2 },
@@ -2801,9 +3174,9 @@ class Deck {
     bonus.forEach(c => { for (let i = 0; i < c.qty; i++) deck.push({ id: c.id, type: "bonus", name: c.name, img: c.img }); });
 
     const malusTarget = [
-      { id: "PLUS2", name: "Donne +2", img: "plus2.png", qty: 4 },
-      { id: "PLUS3", name: "Donne +3", img: "plus3.png", qty: 4 },
-      { id: "PLUS5", name: "Donne +5", img: "plus5.png", qty: 3 },
+      { id: "GIVE_2", name: "Donne 2", img: "give2.png", qty: 8 },
+      { id: "GIVE_3", name: "Donne 3", img: "give3.png", qty: 6 },
+      { id: "GIVE_5", name: "Donne 5", img: "give5.png", qty: 5 },
       { id: "DOUBLE_PENALTY", name: "Double Peine", img: "double_penalty.png", qty: 2 },
       { id: "RELENTLESS", name: "Acharnement", img: "relentless.png", qty: 2 },
       { id: "TRIBUNAL", name: "Tribunal", img: "tribunal.png", qty: 2 },
@@ -2911,7 +3284,92 @@ class Effects {
   }
 
   static isPlusXCard(cardId) {
-    return cardId === "PLUS2" || cardId === "PLUS3" || cardId === "PLUS5";
+    return this.isPlusGiveCard(cardId);
+  }
+
+  static isPlusGiveCard(cardId) {
+    return ["GIVE_2", "GIVE_3", "GIVE_5", "PLUS2", "PLUS3", "PLUS5"].includes(cardId);
+  }
+
+  static normalizeGiveId(cardId) {
+    const map = { PLUS2: "GIVE_2", PLUS3: "GIVE_3", PLUS5: "GIVE_5" };
+    return map[cardId] || cardId;
+  }
+
+  static setWhisper(game, playerId, text) {
+    if (!game.whispers) game.whispers = {};
+    game.whispers[playerId] = { text, ts: Date.now() };
+  }
+
+  static getCardTypeForCodex(cardId) {
+    const types = {
+      DIABLE_NOIR: "curse", CURSE: "chaos",
+      GIVE_2: "malus_target", GIVE_3: "malus_target", GIVE_5: "malus_target",
+      PLUS2: "malus_target", PLUS3: "malus_target", PLUS5: "malus_target",
+      DOUBLE_DISTRIBUTION: "bonus", DRAW_2: "bonus", EXTRA_TURN: "bonus",
+      PROTECTION: "bonus", GIFT: "bonus", ALLIANCE: "bonus",
+      DOUBLE_PENALTY: "malus_target", RELENTLESS: "malus_target",
+      TRIBUNAL: "malus_target", PUBLIC_ENEMY: "malus_target",
+      DRINK_2: "malus_global", DRINK_3: "malus_global", DRINK_5: "malus_global",
+      ALL_EXCEPT_YOU: "malus_global", LEFT: "malus_global", DISCARD: "malus_global",
+      SHIELD: "special", MIRROR: "special", DOUBLE_EFFECT: "special",
+      BOMB: "special", BACKFIRE: "special",
+      SPY: "info", DETECTIVE: "info", XRAY: "info",
+      THIEF: "steal", PICKPOCKET: "steal", MYSTERY_HAND: "steal",
+      BLACK_MARKET: "steal", FULL_SWAP: "steal",
+      REVERSE: "uno", SKIP: "uno", FREEZE: "uno", ALL_DRAW: "uno",
+      RUSSIAN_ROULETTE: "chaos", VIRUS: "chaos", POISON_GIFT: "chaos", PANIC: "chaos",
+    };
+    return types[cardId] || "bonus";
+  }
+
+  static getValidTargetIds(card, game, playerId) {
+    if (!this.needsTarget(card.id)) return [];
+    const order = game.playerOrder || Object.keys(game.players);
+    return order.filter((id) => this.validateTarget(card, id, game, playerId).ok);
+  }
+
+  static getUnionValidTargetIds(hand, game, playerId) {
+    const ids = new Set();
+    hand.forEach((card) => {
+      if (this.isUnplayable(card.id)) return;
+      this.getValidTargetIds(card, game, playerId).forEach((id) => ids.add(id));
+    });
+    return [...ids];
+  }
+
+  static tribunalNeedsVote(shared, playerId) {
+    return !!(shared?.tribunal && !shared.tribunal.votes?.[playerId]);
+  }
+
+  static isTribunalComplete(game, shared) {
+    const t = shared?.tribunal;
+    if (!t) return false;
+    const order = game.playerOrder || Object.keys(game.players);
+    return order.every((id) => game.players[id] && t.votes?.[id]);
+  }
+
+  static resolveTribunal(game, shared, messages) {
+    const t = shared.tribunal;
+    if (!t) return;
+    const counts = {};
+    Object.values(t.votes).forEach((targetId) => {
+      if (!game.players[targetId]) return;
+      counts[targetId] = (counts[targetId] || 0) + 1;
+    });
+    const entries = Object.entries(counts);
+    if (!entries.length) {
+      messages.push("→ ⚖️ Tribunal sans vote valide — annulé");
+      shared.tribunal = null;
+      return;
+    }
+    const max = Math.max(...entries.map(([, n]) => n));
+    const tied = entries.filter(([, n]) => n === max).map(([id]) => id);
+    const winnerId = tied[Math.floor(Math.random() * tied.length)];
+    const winner = game.players[winnerId];
+    winner.drinks = (winner.drinks || 0) + 4;
+    messages.push(`→ ⚖️ ${winner.pseudo} boit 4 🍺 (Tribunal — ${max} vote${max > 1 ? "s" : ""})`);
+    shared.tribunal = null;
   }
 
   static isAllianceBlock(cardId) {
@@ -2949,10 +3407,6 @@ class Effects {
     return b.join(" ");
   }
 
-  static isPlusGiveCard(cardId) {
-    return ["GIVE_2", "GIVE_3", "GIVE_5", "PLUS2", "PLUS3", "PLUS5"].includes(cardId);
-  }
-
   static prepareDrinkAttack(card, targetId, game, casterId, messages) {
     const atk = this.getAttackDescriptor(card, targetId, game);
     if (!atk) return null;
@@ -2971,11 +3425,11 @@ class Effects {
     const base = { cardId: card.id, cardName: card.name, cardType: card.type };
 
     switch (card.id) {
-      case "GIVE_2": return { ...base, kind: "drinks", amount: 2, cardType: "bonus" };
-      case "GIVE_3": return { ...base, kind: "drinks", amount: 3, cardType: "bonus" };
-      case "GIVE_5": return { ...base, kind: "drinks", amount: 5, cardType: "bonus" };
+      case "GIVE_2":
       case "PLUS2": return { ...base, kind: "drinks", amount: 2, cardType: "malus_target" };
+      case "GIVE_3":
       case "PLUS3": return { ...base, kind: "drinks", amount: 3, cardType: "malus_target" };
+      case "GIVE_5":
       case "PLUS5": return { ...base, kind: "drinks", amount: 5, cardType: "malus_target" };
       case "DOUBLE_PENALTY":
         return { ...base, kind: "drinks", amount: 2, cardType: "malus_target", delayedDrinks: 2 };
@@ -2993,7 +3447,7 @@ class Effects {
     return hand.map((c, i) => ({ card: c, index: i })).filter(({ card }) => {
       if (card.id === "PROTECTION") return attack.kind === "drinks";
       if (card.id === "MIRROR") return this.isMalusAttack(attack);
-      if (card.id === "BACKFIRE") return attack.cardType === "malus_target";
+      if (card.id === "BACKFIRE") return this.isPlusGiveCard(attack.cardId) || attack.cardType === "malus_target";
       return false;
     });
   }
@@ -3207,7 +3661,7 @@ class Effects {
 
       case "DOUBLE_DISTRIBUTION":
         caster.doubleDistBonus = true;
-        messages.push("→ 👥 prochaine carte Donne/+2/+3/+5 : +2 🍺 en plus sur la cible");
+        messages.push("→ 👥 prochaine carte Donne 2/3/5 : +2 🍺 en plus sur la cible");
         break;
 
       case "DRAW_2":
@@ -3242,7 +3696,8 @@ class Effects {
         break;
 
       case "TRIBUNAL":
-        messages.push("→ ⚖️ Tribunal ! Votez à l'oral pour qui boit 4 🍺");
+        shared.tribunal = { casterId: playerId, votes: {}, startedAt: Date.now() };
+        messages.push("→ ⚖️ Tribunal ! Chaque joueur vote pour qui boit 4 🍺");
         break;
 
       case "PUBLIC_ENEMY":
@@ -3313,19 +3768,24 @@ class Effects {
       case "SPY":
         if (target) {
           const shown = target.hand.slice(0, 2).map(c => c.name).join(", ") || "(main vide)";
-          messages.push(`→ 🕵️ cartes de ${target.pseudo}: ${shown}`);
+          messages.push(`→ 🕵️ ${caster.pseudo} espionne ${target.pseudo}`);
+          this.setWhisper(game, playerId, `🕵️ Cartes de ${target.pseudo} : ${shown}`);
         }
         break;
       case "DETECTIVE":
         if (target && target.hand.length > 0) {
           const c = target.hand[Math.floor(Math.random() * target.hand.length)];
-          messages.push(`→ 🕵️ voit: ${c.name}`);
+          messages.push(`→ 🔍 ${caster.pseudo} enquête sur ${target.pseudo}`);
+          this.setWhisper(game, playerId, `🔍 Tu vois : ${c.name}`);
+        } else if (target) {
+          messages.push(`→ 🔍 ${caster.pseudo} enquête sur ${target.pseudo} (main vide)`);
         }
         break;
       case "XRAY":
         if (target) {
           const n = target.hand.filter(c => c.type === "special").length;
-          messages.push(`→ 📡 ${target.pseudo} a ${n} carte(s) spéciale(s)`);
+          messages.push(`→ 📡 ${caster.pseudo} scanne ${target.pseudo}`);
+          this.setWhisper(game, playerId, `📡 ${target.pseudo} a ${n} carte(s) spéciale(s)`);
         }
         break;
 
@@ -3454,7 +3914,7 @@ class Effects {
   }
 
   static hasBlockingAction(shared) {
-    return !!(shared?.pickpocket || shared?.pendingReaction);
+    return !!(shared?.pickpocket || shared?.pendingReaction || shared?.tribunal);
   }
 
   static getEndgameLoser(game) {
@@ -3539,7 +3999,8 @@ class Effects {
 
   static blocksTurnAdvance(cardId, shared) {
     if (shared.pendingReaction) return true;
-    if (cardId === "PICKPOCKET" && shared.pickpocket) return true;
+    if (shared.pickpocket) return true;
+    if (shared.tribunal) return true;
     return false;
   }
 }
@@ -3553,11 +4014,17 @@ class GameController {
     this.playerId = Math.random().toString(36).substring(2, 11);
     this.room = "main";
     this.selectedTarget = null;
+    this.highlightedCardIndex = null;
     this.lastGame = null;
     this._turnTick = null;
     this._autoPassPending = false;
     this._isLeaving = false;
+    this._lastWhisperTs = 0;
+    this._whisperTimer = null;
+    this._lastMessageForSound = "";
+    this._wasFinished = false;
     this.setupListeners();
+    GameSounds.syncBtn();
   }
 
   turnTimeLeft(game) {
@@ -3700,6 +4167,31 @@ class GameController {
           : `⏱️ Pickpocket expiré — aucune carte à voler.`;
         if (result.messages.length) msg = result.messages.join("\n") + "\n" + msg;
         g.message = msg;
+        g.sharedState = shared;
+        this.checkWinCondition(g);
+        return g;
+      }
+
+      if (shared.tribunal) {
+        const t = shared.tribunal;
+        const order = g.playerOrder || Object.keys(g.players || {});
+        order.forEach((id) => {
+          if (!t.votes[id] && g.players[id]) {
+            const candidates = order.filter((oid) => g.players[oid]);
+            if (candidates.length) {
+              t.votes[id] = candidates[Math.floor(Math.random() * candidates.length)];
+            }
+          }
+        });
+        const casterId = t.casterId;
+        const msgs = ["⏱️ Tribunal expiré — vote aléatoire pour les indécis."];
+        Effects.resolveTribunal(g, shared, msgs);
+        this.drawCardAfterPlay(g, casterId);
+        const result = this.advanceToNextTurn(g, shared);
+        let msg = msgs.join("\n");
+        if (result.messages.length) msg = result.messages.join("\n") + "\n" + msg;
+        g.message = msg;
+        this.clearActionDeadline(g);
         g.sharedState = shared;
         this.checkWinCondition(g);
         return g;
@@ -3864,6 +4356,7 @@ class GameController {
               ? `✅ Reconnecté en tant que ${pseudo}`
               : `✅ Connecté en tant que ${pseudo} — en attente du démarrage`;
           FirebaseSetup.setStatus("ok", statusMsg);
+          TurnNotify.requestPermission();
           this.listenGame();
         })
         .then(() => {
@@ -4059,7 +4552,7 @@ class GameController {
       this.roomRef().transaction((g) => {
         if (!g?.started || g.sharedState?.finished) return;
         const s = g.sharedState || defaultSharedState();
-        if (s.pickpocket || s.pendingReaction) return;
+        if (s.pickpocket || s.pendingReaction || s.tribunal) return;
 
         const currentId = g.playerOrder[g.currentPlayerIndex];
         if (currentId !== this.playerId) return;
@@ -4165,7 +4658,11 @@ class GameController {
         this.checkWinCondition(g);
         return g;
       }).then((result) => {
-        if (result.committed) this.selectedTarget = null;
+        if (result?.committed) {
+          this.selectedTarget = null;
+          this.highlightedCardIndex = null;
+          GameSounds.play("card");
+        }
       });
     });
   }
@@ -4257,10 +4754,49 @@ class GameController {
       const reactionMsg = Effects.resolveReaction(g, s, handIndex);
       if (!reactionMsg) return;
 
+      if (handIndex !== null && handIndex !== undefined) GameSounds.play("counter");
+
       this.finishPlayAfterReaction(g, s, casterId, reactionMsg, sourceCard);
       g.sharedState = s;
       return g;
     });
+  }
+
+  tribunalVote(targetId) {
+    if (!targetId) return;
+    this.roomRef().transaction((g) => {
+      const s = g.sharedState || defaultSharedState();
+      const t = s.tribunal;
+      if (!t || t.votes[this.playerId]) return;
+      if (!g.players[targetId]) return;
+
+      t.votes[this.playerId] = targetId;
+
+      if (Effects.isTribunalComplete(g, s)) {
+        const casterId = t.casterId;
+        const msgs = [];
+        Effects.resolveTribunal(g, s, msgs);
+        this.drawCardAfterPlay(g, casterId);
+        const result = this.advanceToNextTurn(g, s);
+        let msg = msgs.join("\n");
+        if (result.messages.length) msg = result.messages.join("\n") + "\n" + msg;
+        g.message = msg;
+        this.clearActionDeadline(g);
+        GameSounds.play("drink");
+      }
+
+      g.sharedState = s;
+      return g;
+    });
+  }
+
+  onPlayerClick(targetId, game) {
+    const shared = game.sharedState || defaultSharedState();
+    if (Effects.tribunalNeedsVote(shared, this.playerId)) {
+      this.tribunalVote(targetId);
+      return;
+    }
+    this.toggleTarget(targetId, game);
   }
 
   declineReaction() {
@@ -4269,7 +4805,7 @@ class GameController {
 
   toggleTarget(targetId, game) {
     const shared = game.sharedState || defaultSharedState();
-    if (Effects.hasBlockingAction(shared)) return;
+    if (Effects.hasBlockingAction(shared) && !Effects.tribunalNeedsVote(shared, this.playerId)) return;
 
     const order = game.playerOrder || Object.keys(game.players || {});
     if (order[game.currentPlayerIndex] !== this.playerId) return;
@@ -4281,7 +4817,7 @@ class GameController {
   selectTarget(targetId) {
     this.roomRef().once("value").then((snapshot) => {
       const game = snapshot.val();
-      if (game) this.toggleTarget(targetId, game);
+      if (game) this.onPlayerClick(targetId, game);
     });
   }
 
@@ -4334,6 +4870,7 @@ class GameController {
     const loser = players[shared.loserId];
     const iLost = shared.loserId === this.playerId;
     const winnerCount = Object.keys(players).length - 1;
+    const order = game.playerOrder || Object.keys(players);
 
     overlay.classList.remove("hidden");
     overlay.classList.toggle("game-end-overlay--lose", iLost);
@@ -4348,7 +4885,27 @@ class GameController {
       ? "Pioche vide · une seule carte en jeu · c'était le Diable Noir."
       : `Pioche vide · ${winnerCount} gagnant${winnerCount > 1 ? "s" : ""} · fin de partie.`;
 
-    const order = Object.keys(players);
+    const rankingEl = document.getElementById("gameEndRanking");
+    if (rankingEl) {
+      const ranking = order
+        .map((id) => ({
+          id,
+          pseudo: players[id]?.pseudo || "?",
+          drinks: players[id]?.drinks || 0,
+          isLoser: id === shared.loserId,
+        }))
+        .sort((a, b) => b.drinks - a.drinks);
+
+      rankingEl.classList.remove("hidden");
+      rankingEl.innerHTML = `
+        <h3>🍺 Classement des gorgées</h3>
+        ${ranking.map((row, i) => `
+          <div class="game-end-rank${row.isLoser ? " game-end-rank--loser" : ""}">
+            <span><span class="game-end-rank__pos">${i + 1}.</span> ${row.pseudo}${row.isLoser ? " 😈" : ""}</span>
+            <span class="game-end-rank__drinks">${row.drinks} 🍺</span>
+          </div>`).join("")}`;
+    }
+
     const restartBtn = document.getElementById("restartBtn");
     if (restartBtn) {
       const isHost = order[0] === this.playerId;
@@ -4379,6 +4936,18 @@ class GameController {
       }
       this.renderFromGame(game);
     });
+  }
+
+  showWhisper(game) {
+    const w = game.whispers?.[this.playerId];
+    const el = document.getElementById("whisperBanner");
+    if (!el || !w) return;
+    if (w.ts <= this._lastWhisperTs) return;
+    this._lastWhisperTs = w.ts;
+    el.textContent = w.text;
+    el.classList.remove("hidden");
+    clearTimeout(this._whisperTimer);
+    this._whisperTimer = setTimeout(() => el.classList.add("hidden"), 9000);
   }
 
   renderLobbyPlayers(game, order, players) {
@@ -4420,10 +4989,14 @@ class GameController {
     const myHand = players[this.playerId]?.hand || [];
     const isMyTurn = game.started && order[game.currentPlayerIndex] === this.playerId;
     const blocking = Effects.hasBlockingAction(shared);
+    const needsTribunalVote = Effects.tribunalNeedsVote(shared, this.playerId);
     const secondsLeft = this.turnSecondsLeft(game);
     const actionSecondsLeft = this.actionSecondsLeft(game);
 
-    if (!isMyTurn || blocking) this.selectedTarget = null;
+    if ((!isMyTurn || (blocking && !needsTribunalVote)) && !needsTribunalVote) {
+      this.selectedTarget = null;
+      this.highlightedCardIndex = null;
+    }
 
     document.body.classList.toggle("game-started", !!game.started);
 
@@ -4474,6 +5047,18 @@ class GameController {
         center.textContent = showActionTimer
           ? `⏳ Pickpocket… (${actionSecondsLeft}s)`
           : "⏳ Pickpocket…";
+      } else if (shared.tribunal) {
+        const voted = Object.keys(shared.tribunal.votes || {}).length;
+        const total = order.length;
+        if (needsTribunalVote) {
+          center.textContent = showActionTimer
+            ? `⚖️ Tribunal — vote ! (${actionSecondsLeft}s)`
+            : "⚖️ Tribunal — vote !";
+        } else {
+          center.textContent = showActionTimer
+            ? `⚖️ Tribunal — ${voted}/${total} votes (${actionSecondsLeft}s)`
+            : `⚖️ Tribunal — ${voted}/${total} votes`;
+        }
       } else if (isMyTurn) {
         center.textContent = showTurnTimer
           ? `🎮 Ton tour — ${secondsLeft}s`
@@ -4490,7 +5075,21 @@ class GameController {
 
     this.renderGameEndOverlay(game, shared, players);
 
+    if (shared.finished && shared.loserId && !this._wasFinished) {
+      if (shared.loserId === this.playerId) GameSounds.play("lose");
+      else GameSounds.play("win");
+    }
+    this._wasFinished = !!shared.finished;
+
     TargetFlash.handle(game, this.playerId);
+
+    this.showWhisper(game);
+    TurnNotify.maybeNotify(game, isMyTurn, blocking && !needsTribunalVote);
+
+    if (game.message && game.message !== this._lastMessageForSound) {
+      if (/\bboit\b/i.test(game.message) && !shared.finished) GameSounds.play("drink");
+      this._lastMessageForSound = game.message;
+    }
 
     document.getElementById("message").innerHTML = MessageVisuals.format(game.message || "", players);
 
@@ -4510,6 +5109,8 @@ class GameController {
     const radius = size / 2 - 55;
 
     const canPickTarget = isMyTurn && !shared.finished && !blocking;
+    const validTargetIds = canPickTarget ? Effects.getUnionValidTargetIds(myHand, game, this.playerId) : [];
+    const hasTargetCards = canPickTarget && validTargetIds.length > 0;
     const currentId = game.started ? order[game.currentPlayerIndex] : null;
 
     order.forEach((id, idx) => {
@@ -4527,6 +5128,7 @@ class GameController {
       if (player.frozen) el.classList.add("frozen");
       if (player.shieldActive) el.classList.add("protected");
       if (player.enemyOfPublic) el.classList.add("enemy");
+      if (shared.tribunal?.votes?.[id]) el.classList.add("tribunal-done");
 
       el.style.left = `${cx + radius * Math.cos(angle)}px`;
       el.style.top = `${cy + radius * Math.sin(angle)}px`;
@@ -4545,9 +5147,17 @@ class GameController {
         <div class="player-status">${status}</div>
       `;
 
-      if (canPickTarget) {
+      if (needsTribunalVote) {
+        el.classList.add("clickable", "tribunal-pick");
+        el.onclick = () => this.onPlayerClick(id, game);
+      } else if (canPickTarget) {
+        if (hasTargetCards && !validTargetIds.includes(id)) {
+          el.classList.add("target-invalid");
+        } else if (hasTargetCards) {
+          el.classList.add("target-valid");
+        }
         el.classList.add("clickable");
-        el.onclick = () => this.toggleTarget(id, game);
+        el.onclick = () => this.onPlayerClick(id, game);
       }
       playersLayer.appendChild(el);
     });
@@ -4579,9 +5189,14 @@ class GameController {
           el.classList.add("disabled", "inspect-only");
           el.dataset.playable = "0";
         } else if (Effects.needsTarget(card.id) && !this.selectedTarget) {
-          el.classList.add("disabled", "needs-target", "inspect-only");
-          el.dataset.playable = "0";
-          el.title = `${card.name} — choisis d'abord une cible (${Effects.getTargetHint(card.id)})`;
+          el.classList.add("disabled", "needs-target", "needs-target-pick", "inspect-only");
+          if (this.highlightedCardIndex === idx) el.classList.add("highlighted-pick");
+          el.dataset.playable = "pending";
+          el.title = `${card.name} — choisis une cible (${Effects.getTargetHint(card.id)})`;
+          el.onclick = () => {
+            this.highlightedCardIndex = this.highlightedCardIndex === idx ? null : idx;
+            this.renderFromGame(game);
+          };
         } else {
           const v = Effects.validateTarget(card, this.selectedTarget, game, this.playerId);
           if (!v.ok) {
@@ -4589,6 +5204,7 @@ class GameController {
             el.dataset.playable = "0";
             el.title = v.msg;
           } else {
+            el.classList.add("playable-ready");
             el.dataset.playable = "1";
             el.onclick = () => {
               const targetName = this.selectedTarget ? players[this.selectedTarget]?.pseudo : null;
@@ -4623,12 +5239,14 @@ class GameController {
     const banner = document.getElementById("actionBanner");
     const reactionPanel = document.getElementById("reactionPanel");
     const pickpocketPanel = document.getElementById("pickpocketPanel");
+    const tribunalPanel = document.getElementById("tribunalPanel");
     const reactionCards = document.getElementById("reactionCards");
     const pickpocketCards = document.getElementById("pickpocketCards");
 
     banner.classList.add("hidden");
     reactionPanel.classList.add("hidden");
     pickpocketPanel.classList.add("hidden");
+    tribunalPanel?.classList.add("hidden");
     reactionCards.innerHTML = "";
     pickpocketCards.innerHTML = "";
 
@@ -4669,7 +5287,7 @@ class GameController {
       banner.classList.remove("hidden");
       bannerOpen = true;
       document.getElementById("bannerTitle").textContent = "👥 Double Dist.";
-      document.getElementById("bannerText").textContent = "Prochaine Donne/+X : +2 🍺.";
+      document.getElementById("bannerText").textContent = "Prochaine Donne 2/3/5 : +2 🍺.";
     }
 
     if (isMyTurn && !Effects.hasBlockingAction(shared) && Effects.handNeedsTargetPick(myHand)) {
@@ -4698,6 +5316,47 @@ class GameController {
         el.onclick = () => this.pickpocketSteal(idx);
         pickpocketCards.appendChild(el);
       });
+    }
+
+    if (shared.tribunal && Effects.tribunalNeedsVote(shared, this.playerId)) {
+      panelOpen = true;
+      tribunalPanel?.classList.remove("hidden");
+      const votesEl = document.getElementById("tribunalVotes");
+      if (votesEl) {
+        votesEl.innerHTML = "";
+        const order = game.playerOrder || Object.keys(game.players);
+        order.forEach((id) => {
+          const voteTarget = shared.tribunal.votes[id];
+          if (!voteTarget) return;
+          const chip = document.createElement("span");
+          chip.className = "tribunal-vote-chip";
+          chip.textContent = `${game.players[id]?.pseudo} → ${game.players[voteTarget]?.pseudo}`;
+          votesEl.appendChild(chip);
+        });
+      }
+    }
+
+    const handLabel = document.getElementById("handLabel");
+    const actionBlocking = Effects.hasBlockingAction(shared);
+    if (handLabel && game.started && !shared.finished) {
+      const playable = myHand.filter((c, i) => {
+        if (Effects.isUnplayable(c.id)) return false;
+        if (isTargeted && counterIndices.includes(i)) return true;
+        if (!isMyTurn || actionBlocking) return false;
+        if (Effects.needsTarget(c.id) && !this.selectedTarget) return false;
+        return Effects.validateTarget(c, this.selectedTarget, game, this.playerId).ok;
+      }).length;
+      const pending = isMyTurn && !actionBlocking && myHand.some((c) =>
+        Effects.needsTarget(c.id) && !Effects.isUnplayable(c.id) && !this.selectedTarget
+      );
+      handLabel.classList.remove("hidden");
+      handLabel.textContent = pending
+        ? "🎯 Choisis une cible, puis une carte (jaunes = à cibler)"
+        : playable > 0
+          ? `🃏 ${playable} carte${playable > 1 ? "s" : ""} jouable${playable > 1 ? "s" : ""}`
+          : "🃏 Ta main";
+    } else if (handLabel) {
+      handLabel.classList.add("hidden");
     }
 
     document.body.classList.toggle("panel-open", panelOpen);
@@ -4748,7 +5407,7 @@ class GameController {
 
     const shared = game.sharedState || defaultSharedState();
     const involvesLeaver = (obj) => obj && (obj.targetId === playerId || obj.casterId === playerId || obj.playerId === playerId);
-    if (involvesLeaver(shared.pendingReaction) || involvesLeaver(shared.pickpocket) || involvesLeaver(shared.tribunal)) {
+    if (involvesLeaver(shared.pendingReaction) || involvesLeaver(shared.pickpocket) || shared.tribunal) {
       this.clearBlockingActions(shared);
       this.clearActionDeadline(game);
       game.message = `👋 Un joueur a quitté — action en cours annulée.`;
@@ -4831,6 +5490,12 @@ const gameController = db
       forcePassTurn() {},
       declineReaction() {},
     };
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
