@@ -6,7 +6,7 @@
 
 ### Comment rejoindre une partie ?
 
-Ouvrez [le jeu](https://vicw68-bit.github.io/diable-noir/), entrez un pseudo et validez. Attendez que l'hôte démarre (minimum 2 joueurs).
+Ouvrez [le jeu](https://diable-noir.fr/), entrez un pseudo et validez. Attendez que l'hôte démarre (minimum 2 joueurs).
 
 ### « Partie déjà en cours » — que faire ?
 
@@ -59,7 +59,7 @@ Seulement **vous**. Les autres voient un message générique dans le journal.
 
 ### Clé API refusée
 
-Ajoutez `vicw68-bit.github.io` dans Firebase → Authentication → **Authorized domains**.
+Ajoutez `diable-noir.fr`, `www.diable-noir.fr` et `vicw68-bit.github.io` dans Firebase → Authentication → **Authorized domains**.
 
 ### Cartes sans image PNG
 

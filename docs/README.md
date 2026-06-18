@@ -15,9 +15,10 @@ Bienvenue dans la documentation du jeu **Diable Noir**.
 | Guide | Description |
 |-------|-------------|
 | [Développement](developpement.md) | Firebase, déploiement, structure du code |
+| [Domaine OVH](domaine.md) | DNS diable-noir.fr → GitHub Pages |
 
 ## Liens rapides
 
-- **[Jouer en ligne](https://vicw68-bit.github.io/diable-noir/)**
+- **[Jouer en ligne](https://diable-noir.fr/)**
 - **[Code source](https://github.com/vicw68-bit/diable-noir)**
 - **[Signaler un bug](https://github.com/vicw68-bit/diable-noir/issues/new/choose)**

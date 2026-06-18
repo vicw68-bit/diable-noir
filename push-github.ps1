@@ -43,7 +43,8 @@ git push -u origin main
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "OK — https://github.com/vicw68-bit/diable-noir" -ForegroundColor Green
-    Write-Host "GitHub Pages : https://vicw68-bit.github.io/diable-noir/" -ForegroundColor Green
+    Write-Host "Site : https://diable-noir.fr" -ForegroundColor Green
+    Write-Host "Secours : https://vicw68-bit.github.io/diable-noir/" -ForegroundColor Gray
 } else {
     Write-Host "Échec du push. Connectez-vous à GitHub (git credential manager ou token)." -ForegroundColor Red
 }

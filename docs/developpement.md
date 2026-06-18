@@ -56,15 +56,18 @@ firebase deploy --only database --project diable-noir
 ### 3. Domaines autorisés
 
 Firebase → Authentication → Settings → **Authorized domains**  
-Ajouter : `vicw68-bit.github.io` (et `localhost` pour le dev si besoin)
+Ajouter : `diable-noir.fr`, `www.diable-noir.fr`, `vicw68-bit.github.io` (et `localhost` pour le dev si besoin)
 
 ## GitHub Pages
 
 1. Repo → **Settings** → **Pages**
 2. Source : branche `main`, dossier `/ (root)`
-3. Fichiers requis : `index.html`, `assets/` (optionnel), `manifest.webmanifest`, `sw.js`
+3. Fichiers requis : `index.html`, `assets/` (optionnel), `manifest.webmanifest`, `sw.js`, `CNAME`
 
-URL : https://vicw68-bit.github.io/diable-noir/
+URL principale : https://diable-noir.fr  
+URL secours : https://vicw68-bit.github.io/diable-noir/
+
+Voir [domaine.md](domaine.md) pour la configuration DNS OVH.
 
 ## Modifier le jeu
 

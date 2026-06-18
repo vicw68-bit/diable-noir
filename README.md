@@ -2,7 +2,7 @@
 
 **Jeu de cartes à boire multijoueur en ligne** — jouez depuis le navigateur, sans installation.
 
-[![Jouer](https://img.shields.io/badge/Jouer-maintenant-ff3333?style=for-the-badge)](https://vicw68-bit.github.io/diable-noir/)
+[![Jouer](https://img.shields.io/badge/Jouer-maintenant-ff3333?style=for-the-badge)](https://diable-noir.fr/)
 [![Licence MIT](https://img.shields.io/badge/Licence-MIT-blue?style=flat-square)](LICENSE)
 
 ---
@@ -22,7 +22,7 @@
 
 ## 🚀 Jouer en 30 secondes
 
-1. Ouvrez **[vicw68-bit.github.io/diable-noir](https://vicw68-bit.github.io/diable-noir/)**
+1. Ouvrez **[diable-noir.fr](https://diable-noir.fr/)**
 2. Entrez un **pseudo** → validez
 3. Le **premier joueur** (👑 hôte) clique sur **Démarrer**
 4. À votre tour : **choisissez une cible** sur le cercle (si la carte le demande), puis **cliquez une carte**
@@ -118,5 +118,5 @@ Configuration Firebase, règles de sécurité et déploiement → **[docs/develo
 ---
 
 <p align="center">
-  <a href="https://vicw68-bit.github.io/diable-noir/"><strong>▶ JOUER MAINTENANT</strong></a>
+  <a href="https://diable-noir.fr/"><strong>▶ JOUER MAINTENANT</strong></a>
 </p>
