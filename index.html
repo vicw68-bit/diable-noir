@@ -1913,7 +1913,13 @@
     }
 
     .codex-card__icon { font-size: 1.5rem; margin-bottom: 4px; }
-    .codex-card__name { font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; }
+    .codex-card__name { font-size: 0.78rem; font-weight: 700; margin-bottom: 2px; }
+    .codex-card__badge {
+      font-size: 0.65rem;
+      color: #ffaa66;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
     .codex-card__desc { font-size: 0.68rem; color: #aaa; line-height: 1.35; }
 
     .game-end-overlay__ranking {
@@ -2410,12 +2416,12 @@ const TurnNotify = {
 const Codex = {
   TYPE_NAMES: {
     bonus: "★ Bonus",
-    malus_target: "⚔ Malus ciblé",
-    malus_global: "☄ Malus global",
-    special: "◆ Spécial",
-    info: "? Info",
-    steal: "♠ Vol",
-    uno: "↻ Uno",
+    malus_target: "⚔ Malus ciblés",
+    malus_global: "☄ Malus globaux",
+    special: "◆ Spéciales",
+    info: "? Renseignement",
+    steal: "♠ Vol & échange",
+    uno: "↻ Tours & sens",
     chaos: "✦ Chaos",
     curse: "☠ Malédiction",
   },
@@ -2435,6 +2441,7 @@ const Codex = {
     Object.entries(this.TYPE_NAMES).forEach(([type, label]) => {
       const cards = byType[type];
       if (!cards?.length) return;
+      cards.sort((a, b) => CardVisuals.frenchName(a.id).localeCompare(CardVisuals.frenchName(b.id), "fr"));
       const section = document.createElement("div");
       section.className = "codex-section";
       section.innerHTML = `<div class="codex-section__title">${label}</div>`;
@@ -2446,7 +2453,8 @@ const Codex = {
         el.className = "codex-card";
         el.innerHTML = `
           <div class="codex-card__icon">${meta.icon}</div>
-          <div class="codex-card__name">${card.id.replace(/_/g, " ")}</div>
+          <div class="codex-card__name">${CardVisuals.frenchName(card.id)}</div>
+          <div class="codex-card__badge">${meta.badge}</div>
           <div class="codex-card__desc">${meta.desc}</div>`;
         grid.appendChild(el);
       });
@@ -2479,15 +2487,12 @@ const CardVisuals = {
     GIVE_2: { icon: "🍻", badge: "+2 🍺", desc: "Cible 1 joueur : il boit 2 🍺. Contrable (Miroir, Protection, Retour de Flamme). Bouclier passif possible." },
     GIVE_3: { icon: "🍻", badge: "+3 🍺", desc: "Cible 1 joueur : il boit 3 🍺. Contrable (Miroir, Protection, Retour de Flamme). Bouclier passif possible." },
     GIVE_5: { icon: "🍻", badge: "+5 🍺", desc: "Cible 1 joueur : il boit 5 🍺. Contrable (Miroir, Protection, Retour de Flamme). Bouclier passif possible." },
-    DOUBLE_DISTRIBUTION: { icon: "👥", badge: "+2 next", desc: "Ta prochaine carte Donne 2/3/5 ou +2/+3/+5 inflige 2 🍺 supplémentaires à la cible, puis l'effet expire." },
+    DOUBLE_DISTRIBUTION: { icon: "👥", badge: "+2 suivant", desc: "Ta prochaine carte Donne 2/3/5 inflige 2 🍺 supplémentaires à la cible, puis l'effet expire." },
     DRAW_2: { icon: "🃏", badge: "+2 cartes", desc: "Pioche 2 cartes immédiatement." },
     EXTRA_TURN: { icon: "🔁", badge: "Rejoue", desc: "Tu rejoues immédiatement après ce tour (sans passer la main)." },
     PROTECTION: { icon: "🔰", badge: "Anti-gorgée", desc: "Cible 1 joueur (toi inclus) : protégé contre la prochaine gorgée jusqu'à son prochain tour." },
     GIFT: { icon: "🎁", badge: "+2 pioche", desc: "Cible 1 joueur : il pioche 2 cartes." },
     ALLIANCE: { icon: "🤝", badge: "Pacte", desc: "Cible 1 joueur : alliance mutuelle. Les effets ciblés entre alliés sont bloqués jusqu'au prochain tour de chacun." },
-    PLUS2: { icon: "➕", badge: "+2 malus", desc: "Cible 1 joueur : il boit 2 🍺. Contrable (Miroir, Protection, Retour de Flamme). Bouclier passif possible." },
-    PLUS3: { icon: "➕", badge: "+3 malus", desc: "Cible 1 joueur : il boit 3 🍺. Contrable (Miroir, Protection, Retour de Flamme)." },
-    PLUS5: { icon: "➕", badge: "+5 malus", desc: "Cible 1 joueur : il boit 5 🍺. Contrable (Miroir, Protection, Retour de Flamme)." },
     DOUBLE_PENALTY: { icon: "⏳", badge: "Différé", desc: "Cible 1 joueur : boit 2 🍺 maintenant + 2 🍺 supplémentaires au début de son prochain tour." },
     RELENTLESS: { icon: "🎯", badge: "Acharnement", desc: "Cible 1 joueur : boit 1 🍺 × nombre d'adversaires. Contrable." },
     TRIBUNAL: { icon: "⚖️", badge: "4 🍺 vote", desc: "Tous les joueurs votent in-app pour qui boit 4 🍺. Majorité gagne (égalité = tirage au sort)." },
@@ -2512,13 +2517,62 @@ const CardVisuals = {
     BLACK_MARKET: { icon: "🏴", badge: "Échange", desc: "Cible 1 joueur : échange 1 carte aléatoire entre vos deux mains." },
     FULL_SWAP: { icon: "🔄", badge: "Mains", desc: "Cible 1 joueur : vous échangez toutes vos cartes en main." },
     REVERSE: { icon: "↩️", badge: "Sens", desc: "Inverse le sens du jeu (horaire ↔ anti-horaire)." },
-    SKIP: { icon: "⏭️", badge: "Skip", desc: "Cible 1 joueur : il passe son prochain tour. Contrable avec Miroir ou Protection." },
+    SKIP: { icon: "⏭️", badge: "Passe tour", desc: "Cible 1 joueur : il passe son prochain tour. Contrable avec Miroir ou Protection." },
     FREEZE: { icon: "❄️", badge: "Gel", desc: "Cible 1 joueur : gelé — perd son prochain tour. Non contrable." },
     ALL_DRAW: { icon: "📥", badge: "Tous +1", desc: "Tous les joueurs piochent 1 carte." },
     RUSSIAN_ROULETTE: { icon: "🎰", badge: "50/50", desc: "50 % : tu bois 4 🍺. 50 % : tous les autres boivent 4 🍺 chacun." },
     VIRUS: { icon: "🦠", badge: "Voisins", desc: "Cible 1 joueur au centre : ses voisins immédiats boivent 2 🍺 chacun." },
     POISON_GIFT: { icon: "☠️", badge: "Empoisonné", desc: "Cible 1 joueur : tu lui donnes une carte aléatoire de ta main." },
     PANIC: { icon: "😱", badge: "Panique", desc: "Échange aléatoire de cartes avec ton voisin (selon le sens du jeu)." },
+  },
+
+  NAMES: {
+    DIABLE_NOIR: "Diable Noir",
+    CURSE: "Malédiction",
+    GIVE_2: "Donne 2",
+    GIVE_3: "Donne 3",
+    GIVE_5: "Donne 5",
+    DOUBLE_DISTRIBUTION: "Double Distribution",
+    DRAW_2: "Pioche 2",
+    EXTRA_TURN: "Deuxième Tour",
+    PROTECTION: "Protection Temporaire",
+    GIFT: "Cadeau",
+    ALLIANCE: "Alliance",
+    DOUBLE_PENALTY: "Double Peine",
+    RELENTLESS: "Acharnement",
+    TRIBUNAL: "Tribunal",
+    PUBLIC_ENEMY: "Ennemi Public",
+    DRINK_2: "Bois 2",
+    DRINK_3: "Bois 3",
+    DRINK_5: "Bois 5",
+    ALL_EXCEPT_YOU: "Tous Sauf Toi",
+    LEFT: "Gauche",
+    DISCARD: "Défausse",
+    SHIELD: "Bouclier",
+    MIRROR: "Miroir",
+    DOUBLE_EFFECT: "Double Effet",
+    BOMB: "Bombe",
+    BACKFIRE: "Retour de Flamme",
+    SPY: "Espion",
+    DETECTIVE: "Détective",
+    XRAY: "Rayon X",
+    THIEF: "Voleur",
+    PICKPOCKET: "Pickpocket",
+    MYSTERY_HAND: "Main Mystère",
+    BLACK_MARKET: "Marché Noir",
+    FULL_SWAP: "Échange Total",
+    REVERSE: "Inversion",
+    SKIP: "Passe Ton Tour",
+    FREEZE: "Gel",
+    ALL_DRAW: "Tout le Monde Pioche",
+    RUSSIAN_ROULETTE: "Roulette Russe",
+    VIRUS: "Virus",
+    POISON_GIFT: "Cadeau Empoisonné",
+    PANIC: "Panique",
+  },
+
+  frenchName(cardId) {
+    return this.NAMES[cardId] || cardId.replace(/_/g, " ");
   },
 
   meta(card) {
@@ -3288,12 +3342,43 @@ class Effects {
   }
 
   static isPlusGiveCard(cardId) {
-    return ["GIVE_2", "GIVE_3", "GIVE_5", "PLUS2", "PLUS3", "PLUS5"].includes(cardId);
+    return ["GIVE_2", "GIVE_3", "GIVE_5"].includes(this.normalizeGiveId(cardId));
   }
 
   static normalizeGiveId(cardId) {
     const map = { PLUS2: "GIVE_2", PLUS3: "GIVE_3", PLUS5: "GIVE_5" };
     return map[cardId] || cardId;
+  }
+
+  static harmonizeCard(card) {
+    const id = this.normalizeGiveId(card.id);
+    if (id === card.id) return card;
+    const defs = {
+      GIVE_2: { name: "Donne 2", img: "give2.png", type: "malus_target" },
+      GIVE_3: { name: "Donne 3", img: "give3.png", type: "malus_target" },
+      GIVE_5: { name: "Donne 5", img: "give5.png", type: "malus_target" },
+    };
+    return { ...card, ...defs[id], id };
+  }
+
+  static gameHasPlusCards(game) {
+    const isPlus = (c) => c?.id === "PLUS2" || c?.id === "PLUS3" || c?.id === "PLUS5";
+    if (game.deck?.some(isPlus)) return true;
+    return Object.values(game.players || {}).some((p) => p.hand?.some(isPlus));
+  }
+
+  static migratePlusCardsInGame(game) {
+    let changed = false;
+    const fix = (card) => {
+      const h = this.harmonizeCard(card);
+      if (h.id !== card.id || h.name !== card.name) {
+        Object.assign(card, h);
+        changed = true;
+      }
+    };
+    game.deck?.forEach(fix);
+    Object.values(game.players || {}).forEach((p) => p.hand?.forEach(fix));
+    return changed;
   }
 
   static setWhisper(game, playerId, text) {
@@ -3305,7 +3390,6 @@ class Effects {
     const types = {
       DIABLE_NOIR: "curse", CURSE: "chaos",
       GIVE_2: "malus_target", GIVE_3: "malus_target", GIVE_5: "malus_target",
-      PLUS2: "malus_target", PLUS3: "malus_target", PLUS5: "malus_target",
       DOUBLE_DISTRIBUTION: "bonus", DRAW_2: "bonus", EXTRA_TURN: "bonus",
       PROTECTION: "bonus", GIFT: "bonus", ALLIANCE: "bonus",
       DOUBLE_PENALTY: "malus_target", RELENTLESS: "malus_target",
@@ -3422,15 +3506,13 @@ class Effects {
   static getAttackDescriptor(card, targetId, game) {
     if (!targetId || !game.players[targetId]) return null;
     const target = game.players[targetId];
-    const base = { cardId: card.id, cardName: card.name, cardType: card.type };
+    const cardId = this.normalizeGiveId(card.id);
+    const base = { cardId, cardName: card.name, cardType: card.type };
 
-    switch (card.id) {
-      case "GIVE_2":
-      case "PLUS2": return { ...base, kind: "drinks", amount: 2, cardType: "malus_target" };
-      case "GIVE_3":
-      case "PLUS3": return { ...base, kind: "drinks", amount: 3, cardType: "malus_target" };
-      case "GIVE_5":
-      case "PLUS5": return { ...base, kind: "drinks", amount: 5, cardType: "malus_target" };
+    switch (cardId) {
+      case "GIVE_2": return { ...base, kind: "drinks", amount: 2, cardType: "malus_target" };
+      case "GIVE_3": return { ...base, kind: "drinks", amount: 3, cardType: "malus_target" };
+      case "GIVE_5": return { ...base, kind: "drinks", amount: 5, cardType: "malus_target" };
       case "DOUBLE_PENALTY":
         return { ...base, kind: "drinks", amount: 2, cardType: "malus_target", delayedDrinks: 2 };
       case "RELENTLESS": {
@@ -3632,6 +3714,7 @@ class Effects {
     const players = game.players;
     const caster = players[playerId];
     const target = targetId ? players[targetId] : null;
+    card = this.harmonizeCard(card);
     const targetLabel = target ? ` → ${target.pseudo}` : "";
     const messages = [`${caster.pseudo} joue ${card.name}${targetLabel}`];
 
@@ -3639,9 +3722,6 @@ class Effects {
       case "GIVE_2":
       case "GIVE_3":
       case "GIVE_5":
-      case "PLUS2":
-      case "PLUS3":
-      case "PLUS5":
       case "DOUBLE_PENALTY":
       case "RELENTLESS":
         if (!opts?.deferAttack) {
@@ -3903,7 +3983,7 @@ class Effects {
   static needsTarget(cardId) {
     return [
       "GIVE_2", "GIVE_3", "GIVE_5", "GIFT", "ALLIANCE", "PROTECTION",
-      "PLUS2", "PLUS3", "PLUS5", "DOUBLE_PENALTY", "RELENTLESS", "PUBLIC_ENEMY",
+      "DOUBLE_PENALTY", "RELENTLESS", "PUBLIC_ENEMY",
       "THIEF", "PICKPOCKET", "BLACK_MARKET", "FULL_SWAP",
       "SPY", "DETECTIVE", "XRAY", "SKIP", "FREEZE", "VIRUS", "POISON_GIFT",
     ].includes(cardId);
@@ -3984,7 +4064,6 @@ class Effects {
   static getTargetHint(cardId) {
     const hints = {
       GIVE_2: "1 joueur boit 2 🍺", GIVE_3: "1 joueur boit 3 🍺", GIVE_5: "1 joueur boit 5 🍺",
-      PLUS2: "1 joueur boit +2 🍺", PLUS3: "1 joueur boit +3 🍺", PLUS5: "1 joueur boit +5 🍺",
       GIFT: "1 joueur pioche 2 cartes", ALLIANCE: "1 coéquipier", PROTECTION: "1 joueur (toi inclus)",
       DOUBLE_PENALTY: "1 joueur — malus différé", RELENTLESS: "1 joueur — acharnement",
       PUBLIC_ENEMY: "1 joueur — Ennemi Public", THIEF: "1 joueur — vole une carte",
@@ -4542,8 +4621,9 @@ class GameController {
       }
 
       const hand = game.players[this.playerId]?.hand || [];
-      const card = hand[index];
-      if (!card) return;
+      const raw = hand[index];
+      if (!raw) return;
+      const card = Effects.harmonizeCard(raw);
       if (Effects.isUnplayable(card.id)) return alert(`❌ Tu ne peux pas jouer ${card.name}`);
 
       const validation = Effects.validateTarget(card, targetId, game, this.playerId);
@@ -4558,7 +4638,7 @@ class GameController {
         if (currentId !== this.playerId) return;
 
         const playerHand = g.players[this.playerId].hand;
-        const played = playerHand[index];
+        const played = Effects.harmonizeCard(playerHand[index]);
         if (!played || Effects.isUnplayable(played.id)) return;
 
         const playValidation = Effects.validateTarget(played, targetId, g, this.playerId);
@@ -4934,6 +5014,13 @@ class GameController {
         this.goToHome("Tu n'es plus dans la partie.");
         return;
       }
+      if (game && Effects.gameHasPlusCards(game) && !this._plusMigrating) {
+        this._plusMigrating = true;
+        this.roomRef().transaction((g) => {
+          if (!g || !Effects.migratePlusCardsInGame(g)) return;
+          return g;
+        }).finally(() => { this._plusMigrating = false; });
+      }
       this.renderFromGame(game);
     });
   }
@@ -5174,6 +5261,7 @@ class GameController {
       : [];
 
     myHand.forEach((card, idx) => {
+      card = Effects.harmonizeCard(card);
       const el = document.createElement("div");
       el.className = "card";
       if (card.id === "DIABLE_NOIR" || card.id === "CURSE") el.classList.add("diable-noir");
