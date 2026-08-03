@@ -1890,7 +1890,7 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
-      pointer-events: none;
+      pointer-events: auto;
     }
 
     .card-inspect.hidden { display: none; }
@@ -1900,6 +1900,7 @@
       inset: 0;
       background: rgba(0, 0, 0, 0.82);
       backdrop-filter: blur(4px);
+      cursor: pointer;
     }
 
     .card-inspect__panel {
@@ -1913,6 +1914,35 @@
       text-align: center;
       box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7), 0 0 30px var(--accent-glow);
       animation: inspect-in 0.2s ease-out;
+      pointer-events: auto;
+    }
+
+    .card-inspect__close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: 1px solid rgba(255, 80, 80, 0.45);
+      border-radius: 50%;
+      background: linear-gradient(180deg, #2a0c0c 0%, #140404 100%);
+      color: #ff8888;
+      font-size: 1.35rem;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 12px rgba(255, 0, 0, 0.2);
+      z-index: 2;
+    }
+
+    .card-inspect__close:hover {
+      background: linear-gradient(180deg, #3a1212 0%, #1c0606 100%);
+      color: #ffaaaa;
+      border-color: rgba(255, 120, 120, 0.7);
+      transform: none;
     }
 
     @keyframes inspect-in {
@@ -1955,6 +1985,8 @@
       font-size: 0.75rem;
       color: #666;
     }
+
+    .card-inspect__hint strong { color: #999; font-weight: 600; }
 
     .card.hold-hint .card-inner {
       box-shadow: 0 0 16px rgba(0, 255, 204, 0.5);
@@ -2580,12 +2612,13 @@
 </div>
 
 <div id="cardInspect" class="card-inspect hidden" aria-hidden="true">
-  <div class="card-inspect__backdrop"></div>
-  <div class="card-inspect__panel">
+  <div class="card-inspect__backdrop" id="cardInspectBackdrop"></div>
+  <div class="card-inspect__panel" role="dialog" aria-modal="true" aria-labelledby="cardInspectTitle">
+    <button type="button" class="card-inspect__close" id="cardInspectClose" aria-label="Fermer l'aperçu">×</button>
     <div id="cardInspectPreview" class="card-inspect__preview"></div>
     <h3 id="cardInspectTitle" class="card-inspect__title"></h3>
     <p id="cardInspectDesc" class="card-inspect__desc"></p>
-    <p id="cardInspectHint" class="card-inspect__hint">Relâche pour fermer</p>
+    <p id="cardInspectHint" class="card-inspect__hint">Relâche ou appuie sur <strong>×</strong> pour fermer</p>
   </div>
 </div>
 
@@ -3032,8 +3065,42 @@ const CardInspect = {
   _startY: 0,
   _showing: false,
   _suppressClick: false,
+  _bound: false,
+
+  ensureBound() {
+    if (this._bound) return;
+    this._bound = true;
+
+    const release = () => {
+      if (!this._showing && !this._activeEl) return;
+      if (this._showing) this._suppressClick = true;
+      this.hide();
+    };
+
+    document.addEventListener("pointerup", release, true);
+    document.addEventListener("pointercancel", release, true);
+    window.addEventListener("blur", () => this.hide());
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) this.hide();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this._showing) this.hide();
+    });
+
+    document.getElementById("cardInspectClose")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.hide();
+    });
+    document.getElementById("cardInspectBackdrop")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.hide();
+    });
+  },
 
   attach(el, card) {
+    this.ensureBound();
+
     el.addEventListener("click", (e) => {
       if (this._suppressClick) {
         e.preventDefault();
@@ -3042,12 +3109,14 @@ const CardInspect = {
       }
     }, true);
 
-    const onDown = (x, y) => {
+    const onDown = (x, y, pointerId) => {
       this._clearTimer();
       this._activeEl = el;
       this._startX = x;
       this._startY = y;
       this._showing = false;
+
+      try { el.setPointerCapture?.(pointerId); } catch { /* ignore */ }
 
       el.classList.add("hold-hint");
       this._timer = setTimeout(() => {
@@ -3060,27 +3129,18 @@ const CardInspect = {
 
     const onMove = (x, y) => {
       if (this._activeEl !== el) return;
-      if (Math.hypot(x - this._startX, y - this._startY) > this.MOVE_PX) this._cancelHold(el);
-    };
-
-    const onUp = () => {
-      if (this._activeEl !== el) return;
-      if (this._showing) this._suppressClick = true;
-      this._cancelHold(el);
-      this.hide();
+      if (Math.hypot(x - this._startX, y - this._startY) > this.MOVE_PX) {
+        this._clearTimer();
+        el.classList.remove("hold-hint");
+        if (!this._showing) this._activeEl = null;
+      }
     };
 
     el.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return;
-      onDown(e.clientX, e.clientY);
+      onDown(e.clientX, e.clientY, e.pointerId);
     });
     el.addEventListener("pointermove", (e) => onMove(e.clientX, e.clientY));
-    el.addEventListener("pointerup", onUp);
-    el.addEventListener("pointercancel", onUp);
-    el.addEventListener("pointerleave", (e) => {
-      if (this._showing && this._activeEl === el) this.hide();
-      if (this._activeEl === el && e.buttons === 0) this._cancelHold(el);
-    });
   },
 
   _clearTimer() {
@@ -3088,13 +3148,6 @@ const CardInspect = {
       clearTimeout(this._timer);
       this._timer = null;
     }
-  },
-
-  _cancelHold(el) {
-    this._clearTimer();
-    el?.classList.remove("hold-hint");
-    this._activeEl = null;
-    this._showing = false;
   },
 
   show(card, sourceEl) {
@@ -3113,19 +3166,22 @@ const CardInspect = {
     document.getElementById("cardInspectDesc").textContent = CardVisuals.description(card);
     const hint = document.getElementById("cardInspectHint");
     if (hint) {
-      hint.textContent = sourceEl?.dataset?.playable === "1"
-        ? "Relâche pour fermer · clic rapide pour jouer"
-        : "Relâche pour fermer";
+      hint.innerHTML = sourceEl?.dataset?.playable === "1"
+        ? "Relâche ou <strong>×</strong> pour fermer · clic rapide pour jouer"
+        : "Relâche ou appuie sur <strong>×</strong> pour fermer";
     }
     overlay.classList.remove("hidden");
     overlay.setAttribute("aria-hidden", "false");
+    this._showing = true;
   },
 
   hide() {
+    this._clearTimer();
     const overlay = document.getElementById("cardInspect");
-    if (!overlay) return;
-    overlay.classList.add("hidden");
-    overlay.setAttribute("aria-hidden", "true");
+    if (overlay) {
+      overlay.classList.add("hidden");
+      overlay.setAttribute("aria-hidden", "true");
+    }
     document.querySelectorAll(".card.hold-hint").forEach(el => el.classList.remove("hold-hint"));
     this._showing = false;
     this._activeEl = null;
